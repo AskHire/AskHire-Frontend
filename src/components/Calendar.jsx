@@ -3,7 +3,7 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 export default function Calendar() {
   return (
     <FullCalendar
-      plugins={[ dayGridPlugin ]}
+      plugins={[ dayGridPlugin ]}//hey
       initialView="dayGridMonth"
     />
   )
