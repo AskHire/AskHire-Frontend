@@ -151,30 +151,34 @@ const ManageQuestions = () => {
               ) : (
                 // View Mode
                 <div>
-                  <h2 className="text-xl font-semibold mb-2">{question.questionText}</h2>
-                  <ul className="list-disc list-inside mb-4">
-                    {question.options.map((option, index) => (
-                      <li key={index} className="text-gray-600">
-                        {option}
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="text-sm text-gray-500">
-                    <span className="font-semibold">Correct Answer:</span> {question.correctAnswer}
-                  </p>
-                  <div className="mt-2">
-                    <button
-                      onClick={() => handleEditQuestion(question)}
-                      className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 mr-2"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteQuestion(question.id)}
-                      className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600"
-                    >
-                      Delete
-                    </button>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h2 className="text-xl font-semibold mb-2">{question.questionText}</h2>
+                      <ul className="list-disc list-inside mb-4">
+                        {question.options.map((option, index) => (
+                          <li key={index} className="text-gray-600">
+                            {option}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-sm text-gray-500">
+                        <span className="font-semibold">Correct Answer:</span> {question.correctAnswer}
+                      </p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleEditQuestion(question)}
+                        className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteQuestion(question.id)}
+                        className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
