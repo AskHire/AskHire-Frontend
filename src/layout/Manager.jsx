@@ -1,7 +1,8 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import Footer from "../components/Footer";
-import SidebarManager from "../components/SideBarManager";
+import SidebarManager from "../components/SidebarManager";
+import ManagerUpperbar from "../components/ManagerUpperbar";
 
 const Manager = () => {
   return (
@@ -14,8 +15,14 @@ const Manager = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 p-6">
-          <Outlet />
+        <div className="flex flex-col flex-1">
+          {/* Upper Bar */}
+          <ManagerUpperbar />
+
+          {/* Main Dashboard Content */}
+          <div className="flex-1 bg-gray-100 px-6 pb-6">
+            <Outlet />
+          </div>
         </div>
       </div>
 
