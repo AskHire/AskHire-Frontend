@@ -1,4 +1,5 @@
 import React from 'react';
+import ManagerTopbar from '../../components/ManagerTopbar';
 
 const ManageVacancy = () => {
   // Sample data for active vacancies
@@ -13,6 +14,9 @@ const ManageVacancy = () => {
   ];
 
   return (
+    <div className="bg-gray-100 flex-auto min-h-screen">
+    <ManagerTopbar />
+
     <div className="p-6 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">Manage Vacancy</h1>
 
@@ -60,6 +64,7 @@ const ManageVacancy = () => {
           </tbody>
         </table>
       </div>
+    </div>
     </div>
   );
 };

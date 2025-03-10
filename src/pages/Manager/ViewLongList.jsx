@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FaUserCircle } from 'react-icons/fa';
 import { MdSchedule, MdVisibility } from 'react-icons/md';
 import { IoIosArrowDown } from 'react-icons/io';
+import ManagerTopbar from '../../components/ManagerTopbar';
 
 const ViewLongList = () => {
   const [selectedVacancy, setSelectedVacancy] = useState('Software Engineer');
@@ -19,6 +20,9 @@ const ViewLongList = () => {
   ];
 
   return (
+    <div className="bg-gray-100 flex-auto min-h-screen">
+    <ManagerTopbar />
+
     <div className="p-6 bg-[#E6ECFA] min-h-screen flex flex-col items-center">
       {/* Vacancy Selection */}
       <div className="bg-white p-4 rounded-lg shadow-md w-full max-w-2xl mb-6">
@@ -84,6 +88,7 @@ const ViewLongList = () => {
       <button className="mt-6 px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700">
         Schedule Long-List Interviews
       </button>
+    </div>
     </div>
   );
 };

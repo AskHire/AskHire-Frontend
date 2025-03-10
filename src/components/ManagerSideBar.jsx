@@ -16,6 +16,7 @@ import {
 
 const SidebarNavigation = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
   const menuItems = [
@@ -36,23 +37,36 @@ const SidebarNavigation = () => {
 
   return (
     <div className="flex h-screen">
-      <div className={`flex flex-col border-r border-gray-200 bg-white ${collapsed ? 'w-16' : 'w-64'} transition-all duration-300 shadow-sm relative`}>
-        {/* Toggle button for mobile */}
-        <button 
-          className="absolute -right-4 top-4 bg-white rounded-full p-1 border border-gray-200 shadow-sm md:hidden"
-          onClick={() => setCollapsed(!collapsed)}
-        >
-          {collapsed ? <Menu size={16} /> : <X size={16} />}
-        </button>
+      {/* Mobile Menu Button */}
+      <button 
+        className="absolute top-4 left-4 z-50 md:hidden bg-white rounded-full p-2 shadow-md border border-gray-200"
+        onClick={() => setMobileOpen(!mobileOpen)}
+      >
+        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
 
-        {/* Logo area */}
-        <div className="px-4 py-4 border-b border-gray-200">
+      {/* Sidebar */}
+      <div 
+        className={`fixed md:relative h-full bg-white border-r border-gray-200 shadow-sm transition-all duration-300 
+        ${collapsed ? 'w-16' : 'w-64'} 
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        md:flex flex-col z-40`}
+      >
+        {/* Logo Area */}
+        <div className="px-4 py-4 border-b border-gray-200 flex justify-between items-center">
           <h1 className={`text-blue-800 font-bold text-xl ${collapsed ? 'text-center' : ''}`}>
             {collapsed ? "AH" : "AskHire"}
           </h1>
+          {/* Collapse Toggle */}
+          <button 
+            className="hidden md:block bg-gray-100 p-1 rounded-full hover:bg-gray-200"
+            onClick={() => setCollapsed(!collapsed)}
+          >
+            {collapsed ? <Menu size={16} /> : <X size={16} />}
+          </button>
         </div>
 
-        {/* Main navigation */}
+        {/* Main Navigation */}
         <div className="flex flex-col flex-1 overflow-y-auto py-4 space-y-1">
           {menuItems.map((item) => (
             <NavItem 
@@ -66,7 +80,7 @@ const SidebarNavigation = () => {
           ))}
         </div>
 
-        {/* Footer navigation */}
+        {/* Footer Navigation */}
         <div className="border-t border-gray-200 py-4 space-y-1">
           {footerItems.map((item) => (
             <NavItem 
@@ -80,8 +94,6 @@ const SidebarNavigation = () => {
           ))}
         </div>
       </div>
-
-      {/* Remove the content area as it will be rendered by the Outlet in the Manager layout */}
     </div>
   );
 };

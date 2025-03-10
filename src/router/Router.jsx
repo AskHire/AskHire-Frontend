@@ -27,6 +27,9 @@ import UserRoles from "../pages/Admin/UserRoles";
 import ManageManager from "../pages/Admin/ManageManager";
 import ManageCandidate from "../pages/Admin/ManageCandidate";
 import SystemNotification from "../pages/Admin/SystemNotification";
+import LongList2 from "../pages/Manager/LongList2";
+import LongListInterviewScheduler from "../pages/Manager/LongListInterviewSheduler";
+import InterviewScheduler from "../pages/Manager/InterviewSheduler";
 
 
 const router = createBrowserRouter([
@@ -95,7 +98,14 @@ const router = createBrowserRouter([
       {
         path: "LongList",
         element: <LongList />,
+       
       },
+      {
+        path: "LongList2",
+        element: <LongList2 />,
+       
+      },
+    
       {
         path: "ViewLongList",
         element: <ViewLongList />,
@@ -107,6 +117,16 @@ const router = createBrowserRouter([
       {
         path: "NotifyCandidates",
         element: <NotifyCandidates />,
+      },
+      {
+        path: "LongListInterviewSheduler",
+        element: <LongListInterviewScheduler />,
+       
+      },
+      {
+        path: "InterviewSheduler",
+        element: <InterviewScheduler />,
+       
       },
       {
         path: "AutomatedInterviews",

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ManagerTopbar from '../../components/ManagerTopbar';
 
 const SetupVacancy = () => {
   const [jobRole, setJobRole] = useState('');
@@ -32,6 +33,9 @@ const SetupVacancy = () => {
   };
 
   return (
+    <div className="bg-gray-100 flex-auto min-h-screen">
+    <ManagerTopbar />
+
     <div className="p-6 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">Setup Vacancy</h1>
 
@@ -177,6 +181,7 @@ const SetupVacancy = () => {
           </button>
         </div>
       </form>
+    </div>
     </div>
   );
 };

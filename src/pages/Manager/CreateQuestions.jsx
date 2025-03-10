@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ManagerTopbar from '../../components/ManagerTopbar';
 
 const CreateQuestions = () => {
   const [jobRole, setJobRole] = useState('');
@@ -33,6 +34,9 @@ const CreateQuestions = () => {
   };
 
   return (
+    <div className="bg-gray-100 flex-auto min-h-screen">
+    <ManagerTopbar />
+
     <div className="p-6 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">Create Questions</h1>
 
@@ -136,6 +140,7 @@ const CreateQuestions = () => {
           + Add New Question
         </button>
       </div>
+    </div>
     </div>
   );
 };
