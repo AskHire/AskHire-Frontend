@@ -6,18 +6,21 @@ import SidebarManager from "../components/SideBarManager";
 const Manager = () => {
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Sidebar and Content Wrapper */}
+      {/* Main content wrapper */}
       <div className="flex flex-1">
-        {/* Sidebar (Not Fixed) */}
-        <div className="w-64 bg-white border-r border-gray-300">
-          <SidebarManager />
-        </div>
-
-        {/* Main Content */}
+        {/* Sidebar will be rendered by the customized SidebarManager */}
+        <SidebarManager />
+        
+        {/* Main Content - taking remaining space */}
+        <div className="flex-1 overflow-auto">
           <Outlet />
         </div>
-      {/* Footer Below Sidebar */}
-      <Footer />
+      </div>
+      
+      {/* Responsive Footer */}
+      <div className="w-full">
+        <Footer />
+      </div>
     </div>
   );
 };
