@@ -11,6 +11,10 @@
   },
   "dependencies": {
     "chart.js": "^4.4.8",
+    "@fullcalendar/daygrid": "^6.1.15",
+    "@fullcalendar/interaction": "^6.1.15",
+    "@fullcalendar/react": "^6.1.15",
+    "@fullcalendar/timegrid": "^6.1.15",
     "localforage": "^1.10.0",
     "lucide-react": "^0.476.0",
     "match-sorter": "^8.0.0",
@@ -23,6 +27,7 @@
     "recharts": "^2.15.1",
     "sort-by": "^1.2.0"
   },
+
   "devDependencies": {
     "@eslint/js": "^9.19.0",
     "@types/react": "^19.0.8",
