@@ -1,4 +1,4 @@
-import { EllipsisVerticalIcon } from '@heroicons/react/24/solid';
+import { BiDotsVerticalRounded } from "react-icons/bi";
 import { useState } from 'react';
 
 const interviews = [
@@ -59,7 +59,7 @@ const Interviews = () => {
         {(showAll ? interviews : interviews.slice(0, 4)).map((interview) => (
           <div
             key={interview.id}
-            className="flex items-center justify-between p-4 transition rounded-lg shadow-sm bg-gray-50 hover:bg-gray-100"
+            className="flex items-center justify-between p-3 transition bg-white rounded-lg shadow-sm hover:bg-gray-100"
           >
             {/* Profile Section */}
             <div className="flex items-center gap-3">
@@ -79,7 +79,7 @@ const Interviews = () => {
               <span className="min-w-[100px] text-center">{interview.date}</span>
               <span className="text-green-600">{interview.time}</span>
               <button className="text-gray-500 transition hover:text-gray-700">
-                <EllipsisVerticalIcon className="w-5 h-5" />
+                <BiDotsVerticalRounded className="w-5 h-5" />
               </button>
             </div>
           </div>
