@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 
 const CreateQuestions = () => {
   const [jobRole, setJobRole] = useState('');
@@ -21,19 +22,33 @@ const CreateQuestions = () => {
     setOptions(newOptions);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission (e.g., send data to an API)
-    console.log({
+
+    // Prepare the data to send to the backend
+    const questionData = {
       jobRole,
       questionText,
       options,
       correctAnswer,
-    });
+    };
+
+    try {
+      // Send the data to the backend using axios
+      const response = await axios.post('http://localhost:5000/api/questions', questionData);
+      console.log('Question created:', response.data);
+      // Reset form state after submission
+      setJobRole('');
+      setQuestionText('');
+      setOptions(['', '']);
+      setCorrectAnswer('');
+    } catch (error) {
+      console.error('Error creating question:', error);
+    }
   };
 
   return (
-    <div className=" bg-gray-100 min-h-screen">
+    <div className="bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">Create Questions</h1>
 
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md">
