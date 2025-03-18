@@ -25,28 +25,28 @@ const PieChart = () => {
   };
 
   // Chart Options
-const options = {
+  const options = {
     responsive: true,
+    maintainAspectRatio: false, // Ensures dynamic resizing
     plugins: {
-        legend: {
-            position: "bottom", // Display legend at the bottom
-            labels: {
-                boxWidth: 20, // Width of the colored box
-                padding: 10, // Padding between legend items
-                
-            },
+      legend: {
+        position: "bottom", // Display legend at the bottom
+        labels: {
+          boxWidth: 20, // Width of the colored box
+          padding: 10, // Padding between legend items
         },
+      },
     },
-};
+  };
 
-return (
-    <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-md">
-        <h2 className="mb-4 mr-1 text-lg font-bold text-gray-700">New Candidates</h2>
-        <div className="flex justify-center w-64 h-64">
-            <Pie data={data} options={options} />
-        </div>
+  return (
+    <div className="flex flex-col w-full p-4 rounded-lg ">
+      <h2 className="mb-4 text-lg font-bold text-gray-700">New Candidates</h2>
+      <div className="w-full h-64 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
+        <Pie data={data} options={options} />
+      </div>
     </div>
-);
+  );
 };
 
 export default PieChart;

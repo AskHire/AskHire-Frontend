@@ -29,6 +29,7 @@ const BarChart = () => {
   // Chart Options
   const options = {
     responsive: true,
+    maintainAspectRatio: false, // Allows dynamic resizing
     plugins: {
       legend: {
         display: false, // Hide legend
@@ -47,9 +48,9 @@ const BarChart = () => {
   };
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow-md ">
+    <div className="p-4 rounded-lg ">
       <h2 className="mb-2 text-lg font-bold text-gray-700">Users Overview</h2>
-      <div style={{ width: '560px' }}>
+      <div className="w-full h-80">
         <Bar data={data} options={options} />
       </div>
     </div>
