@@ -11,21 +11,21 @@ const Footer = () => {
   <footer className="footer bg-blue-950 text-white p-10 flex justify-between">
     <nav>
       <h6 className="text-white font-bold text-lg">Quick Links</h6>
-      <a className="link link-hover">Home</a>
-      <a className="link link-hover">Jobs</a>
-      <a className="link link-hover">Companies</a>
+      <a className="link link-hover">Home</a><br/>
+      <a className="link link-hover">Jobs</a><br/>
+      <a className="link link-hover">Companies</a><br/>
     </nav>
     <nav>
       <h6 className="text-white font-bold text-lg">About Us</h6>
-      <a className="link link-hover">Our Story</a>
-      <a className="link link-hover">Careers</a>
-      <a className="link link-hover">Contact</a>
+      <a className="link link-hover">Our Story</a><br/>
+      <a className="link link-hover">Careers</a><br/>
+      <a className="link link-hover">Contact</a><br/>
     </nav>
     <nav>
       <h6 className="text-white font-bold text-lg">Support</h6>
-      <a className="link link-hover">Help Center</a>
-      <a className="link link-hover">FAQs</a>
-      <a className="link link-hover">Privacy Policy</a>
+      <a className="link link-hover">Help Center</a><br/>
+      <a className="link link-hover">FAQs</a><br/>
+      <a className="link link-hover">Privacy Policy</a><br/>
     </nav>
   </footer>
 </div>
