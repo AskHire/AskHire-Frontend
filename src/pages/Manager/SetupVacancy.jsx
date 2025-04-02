@@ -31,7 +31,7 @@ const SetupVacancy = () => {
     const fetchJobRoles = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:5175/api/JobRole');
+        const response = await axios.get('http://localhost:5190/api/JobRole');
         setJobRoles(response.data);
         
         // Set the first job role as selected if available
@@ -74,7 +74,7 @@ const SetupVacancy = () => {
     };
     
     try {
-      const response = await axios.post("http://localhost:5175/api/Vacancy", dataToSubmit, {
+      const response = await axios.post("http://localhost:5190/api/Vacancy", dataToSubmit, {
         headers: { "Content-Type": "application/json" }
       });
       alert("Vacancy created successfully!");

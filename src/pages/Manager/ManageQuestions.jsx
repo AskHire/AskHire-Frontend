@@ -28,7 +28,7 @@ const ManageQuestions = () => {
     const fetchJobRoles = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5175/api/JobRole');
+        const response = await fetch('http://localhost:5190/api/JobRole');
         
         if (!response.ok) {
           throw new Error(`API request failed with status ${response.status}`);
@@ -52,7 +52,7 @@ const ManageQuestions = () => {
     const fetchAllQuestions = async () => {
       try {
         setQuestionsLoading(true);
-        const response = await fetch('http://localhost:5175/api/Question');
+        const response = await fetch('http://localhost:5190/api/Question');
         
         if (!response.ok) {
           throw new Error('Failed to fetch questions');
@@ -98,7 +98,7 @@ const ManageQuestions = () => {
     if (!window.confirm('Are you sure you want to delete this question?')) return;
     
     try {
-      const response = await fetch(`http://localhost:5175/api/Question/${id}`, {
+      const response = await fetch(`http://localhost:5190/api/Question/${id}`, {
         method: 'DELETE',
       });
       
@@ -166,7 +166,7 @@ const ManageQuestions = () => {
     try {
       if (updatedQuestion.questionId) {
         // Update existing question
-        const response = await fetch(`http://localhost:5175/api/Question/${updatedQuestion.questionId}`, {
+        const response = await fetch(`http://localhost:5190/api/Question/${updatedQuestion.questionId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedQuestion),
@@ -185,7 +185,7 @@ const ManageQuestions = () => {
         );
       } else {
         // Create new question
-        const response = await fetch('http://localhost:5175/api/Question', {
+        const response = await fetch('http://localhost:5190/api/Question', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedQuestion),
