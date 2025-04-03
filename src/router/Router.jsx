@@ -13,7 +13,6 @@ import ManageQuestions from "../pages/Manager/ManageQuestions";
 import SetupVacancy from "../pages/Manager/SetupVacancy";
 import ManageVacancy from "../pages/Manager/ManageVacancy";
 import LongList from "../pages/Manager/LongList";
-import ViewLongList from "../pages/Manager/ViewLongList";
 import ViewDetails from "../pages/Manager/ViewDetails";
 import NotifyCandidates from "../pages/Manager/NotifyCandidates";
 import AutomatedInterviews from "../pages/Manager/AutomatedInterviews";
@@ -27,9 +26,9 @@ import UserRoles from "../pages/Admin/UserRoles";
 import ManageManager from "../pages/Admin/ManageManager";
 import ManageCandidate from "../pages/Admin/ManageCandidate";
 import SystemNotification from "../pages/Admin/SystemNotification";
-import LongList2 from "../pages/Manager/LongList2";
 import LongListInterviewScheduler from "../pages/Manager/LongListInterviewSheduler";
-import InterviewScheduler from "../pages/Manager/InterviewSheduler";
+import View_LongList from "../pages/Manager/View_LongList";
+import InterviewScheduler from "../pages/Manager/InterviewScheduler";
 
 
 const router = createBrowserRouter([
@@ -101,14 +100,9 @@ const router = createBrowserRouter([
        
       },
       {
-        path: "LongList2",
-        element: <LongList2 />,
+        path: "View_LongList",
+        element: <View_LongList />,
        
-      },
-    
-      {
-        path: "ViewLongList",
-        element: <ViewLongList />,
       },
       {
         path: "ViewDetails",
@@ -125,7 +119,7 @@ const router = createBrowserRouter([
       },
       {
         path: "InterviewSheduler",
-        element: <InterviewScheduler />,
+        element: <InterviewScheduler/>,
        
       },
       {

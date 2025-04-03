@@ -6,26 +6,33 @@ const LongList = () => {
   const [sortBy, setSortBy] = useState('Newest');
   const [searchTerm, setSearchTerm] = useState('');
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [vacancies, setVacancies] = useState([]);
 
   useEffect(() => {
     const handleResize = () => {
       setIsMobileView(window.innerWidth < 768);
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const vacancies = [
-    { id: 1, title: 'Software Engineer' },
-    { id: 2, title: 'Data Scientist' },
-    { id: 3, title: 'Project Manager' },
-    { id: 4, title: 'Front-End Developer' },
-    { id: 5, title: 'Back-End Developer' },
-    { id: 6, title: 'UI Engineer' },
-    { id: 7, title: 'UX Engineer' },
-    { id: 8, title: 'UI/UX Engineer' }
-  ];
+  // Fetch job roles from backend
+  useEffect(() => {
+    const fetchJobRoles = async () => {
+      try {
+        const response = await fetch("https://localhost:7256/api/JobRole"); // Update with your actual API URL
+        if (!response.ok) throw new Error("Failed to fetch job roles");
+
+        const data = await response.json();
+        setVacancies(data.map((job, index) => ({ id: index + 1, title: job.jobTitle })));
+      } catch (error) {
+        console.error("Error fetching job roles:", error);
+      }
+    };
+
+    fetchJobRoles();
+  }, []);
 
   return (
     <div className="bg-gray-100 flex-auto min-h-screen">
@@ -69,7 +76,6 @@ const LongList = () => {
           </div>
 
           {isMobileView ? (
-            // Mobile card view
             <div className="space-y-4">
               {vacancies.map((vacancy, index) => (
                 <div key={vacancy.id} className="bg-white shadow-md border border-gray-300 rounded-lg p-4">
@@ -96,7 +102,6 @@ const LongList = () => {
               ))}
             </div>
           ) : (
-            // Desktop table view
             <div className="overflow-x-auto">
               <table className="min-w-full border-separate border-spacing-y-2">
                 <thead>
@@ -118,14 +123,14 @@ const LongList = () => {
                           <span className="col-span-1 text-sm font-medium text-gray-700">{index + 1}</span>
                           <span className="col-span-3 text-sm font-medium text-gray-900">{vacancy.title}</span>
                           <div className="col-span-3">
-                            <Link to="/manager/LongList2" className="block">
+                            <Link to="/manager/LongList2">
                               <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-full shadow-md w-full">
                                 View Long-List
                               </button>
                             </Link>
                           </div>
                           <div className="col-span-4">
-                            <Link to="/manager/LongListInterviewSheduler" className="block">
+                            <Link to="/manager/LongListInterviewSheduler">
                               <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-full shadow-md w-full">
                                 Schedule Long-List Interviews
                               </button>
