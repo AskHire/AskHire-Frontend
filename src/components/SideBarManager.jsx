@@ -14,12 +14,8 @@ import {
 import { FiBriefcase, FiList } from "react-icons/fi";
 
 const SidebarManager = () => {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const location = useLocation();
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
+  const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation(); // Get current path
 
   const menuItems = [
     { icon: <AiOutlineDashboard size={18} />, label: "Dashboard", path: "/manager/dashboard" },
@@ -39,8 +35,9 @@ const SidebarManager = () => {
 
   return (
     <>
+      {/* Mobile Toggle Button - Open button on left side when closed */}
       {!mobileOpen && (
-        <div className="md:hidden top-4 left-4 z-50">
+        <div className="md:hidden fixed top-4 left-4 z-50">
           <button
             onClick={() => setMobileOpen(true)}
             className="p-2 rounded-full bg-white shadow-md"
@@ -50,6 +47,7 @@ const SidebarManager = () => {
         </div>
       )}
 
+      {/* Overlay for mobile */}
       {mobileOpen && (
         <div
           className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
@@ -57,15 +55,23 @@ const SidebarManager = () => {
         />
       )}
 
+      {/* Sidebar */}
       <div
         className={`fixed md:static h-screen z-40 flex flex-col bg-white border-r border-gray-200 shadow-lg md:shadow-none transition-all duration-300 w-56
         ${mobileOpen ? "translate-x-0" : "md:translate-x-0 -translate-x-full"}`}
       >
+        {/* Logo and close button row */}
         <div className="p-3 border-b border-gray-200 flex justify-between items-center">
           <div>
-          <h1 className="text-blue-800 font-bold text-lg">Ask<span className="text-black">Hire</span></h1>
+            <a href="/" className="text-lg font-bold text-blue-600">
+              Ask
+            </a>
+            <a href="/" className="text-lg font-bold text-base-600">
+              Hire
+            </a>
           </div>
-
+          
+          {/* Close button - on right side of sidebar when open */}
           {mobileOpen && (
             <button
               onClick={() => setMobileOpen(false)}
@@ -76,6 +82,7 @@ const SidebarManager = () => {
           )}
         </div>
 
+        {/* Navigation Menu - smaller items, more compact */}
         <nav className="overflow-y-auto py-2 space-y-0.5 flex-grow">
           {menuItems.map((item) => (
             <NavItem
@@ -88,6 +95,7 @@ const SidebarManager = () => {
           ))}
         </nav>
 
+        {/* Footer Menu (Always at Bottom) - more compact */}
         <div className="py-2 space-y-0.5 mt-auto border-t border-gray-200">
           {footerItems.map((item) => (
             <NavItem
