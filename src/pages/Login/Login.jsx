@@ -1,99 +1,63 @@
-import React, { useState } from 'react';
+import React from 'react'
+import { PiHandWaving } from "react-icons/pi";
 import { FcGoogle } from "react-icons/fc";
 
 const Login = () => {
-    const [formData, setFormData] = useState({
-        email: '',
-        password: ''
-      });
-    
-      const handleChange = (e) => {
-        setFormData({
-          ...formData,
-          [e.target.name]: e.target.value
-        });
-      };
-    
-      const handleSubmit = (e) => {
-        e.preventDefault();
-        // Handle login 
-        console.log('Login submitted:', formData);
-      };
   return (
-    <div className="flex min-h-screen bg-white">
-    {/* Left Side - Blue Background */}
-    <div className="hidden md:block md:w-2/5 bg-blue-500 relative rounded-r-3xl">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-blue-600 opacity-50 rounded-r-3xl "></div>
-    </div>
-    
-    {/* Right Side - Login Form */}
-    <div className="w-full md:w-3/5 px-16 py-4">
-      <h2 className="text-3xl font-bold mb-8">Log in</h2>
-      <p className="text-xl mb-8">Welcome Back 👋</p>
-      
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
+    <div>
+        <div className='w-1/2'>
+
         </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-          <div className="flex justify-end mt-1">
-            <a href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700">
-              Forgot Password?
-            </a>
+
+        <div className='w-1/3 float-right'>
+          <div className="hero">
+            <div className="hero-content flex-col lg:flex-row-reverse w-full">
+              {/*form size */}
+              <div className="card bg-base-200 w-full max-w-3xl">
+                <form className="card-body w-full">
+                  {/* Added Login Title */}
+                  <h3 className="text-lg font-bold text-start text-blue mb-1">Login</h3>
+                  <h4 className="text-lg font-bold text-start text-blue mb-1 flex items-center gap-2">
+                        Welcome Back <PiHandWaving className="text-yellow-500 text-2xl" />
+                    </h4>                 
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text-bo text-dark">Email</span>
+                    </label>
+                    <input type="email" placeholder="Email" className="input input-bordered input-sm"  
+                     required />
+                  </div>
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text text-dark">Password</span>
+                    </label>
+                    <input type="password" placeholder="assword" className="input input-bordered input-sm"  
+                       required />
+                        <label className="label gap-2">
+                      <p className='label-text text-black text-center'>
+                        or 
+                      </p>
+                      </label>
+                      <label className='justify-items-center'>
+                        <button className="flex items-center gap-2 px-4 py-1 bg-base-200 text-black rounded hover:bg-base-300"><FcGoogle />Signup with Google</button>
+                      </label>
+                    <label className="label">
+                      <p className='label-text text-black'>
+                        Don't have an account? <a href='/signup' className="label-text-alt link link-hover text-blue-600 hover:text-red-800 transition-colors duration-300 ">SignUp Now</a>
+                      </p>
+                    </label>
+                  </div>
+                  <div className="form-control mt-1">
+                    <button type="submit" className="btn bg-blue-600 text-white text-lg hover:bg-blue-950" >Login</button>
+                  </div>
+                </form>
+              </div>
+            </div>
           </div>
         </div>
-        
-        <button
-          type="submit"
-          className="w-full py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          Log in
-        </button>
-      </form>
-      
-      <div className="mt-6">
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">Or</span>
-          </div>
         </div>
-        
-       <button className="w-full mt-4 py-3 border border-gray-300 rounded-md flex items-center justify-center space-x-2 hover:bg-gray-50">
-          <FcGoogle />
-          <span>Sign in with Google</span>
-        </button>
-        
-        <p className="mt-4 text-center text-sm text-gray-600">
-          Do not you have an account?{' '}
-          <a href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
-            Sign up
-          </a>
-        </p>
-      </div>
-    </div>
-  </div>
+
   )
 }
 
-export default Login;
+export default Login

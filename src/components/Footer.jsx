@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react";
 import { FaPhoneSquareAlt } from "react-icons/fa";
 import { FaGooglePlus } from "react-icons/fa";
 import { FaFacebook } from "react-icons/fa6";
@@ -52,7 +52,7 @@ const Footer = () => {
   </nav>
 </footer>
     </div>
-  )
-}
+  );
+};
 
-export default Footer
+export default Footer;
