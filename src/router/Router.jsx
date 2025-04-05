@@ -31,8 +31,8 @@ import LongList2 from "../pages/Manager/LongList2";
 import LongListInterviewScheduler from "../pages/Manager/LongListInterviewSheduler";
 import InterviewScheduler from "../pages/Manager/InterviewSheduler";
 import Prescreen from "../components/Prescreen";
-import TextAssessment from "../components/TextPreScreen";
-import VoiceAssessment from "../components/Voiceprescreen";
+import TextAssessment from "../components/TextAssessment";
+import VoiceAssessment from "../components/VoiceAssessment";
 
 
 
