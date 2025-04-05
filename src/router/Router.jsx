@@ -30,6 +30,10 @@ import SystemNotification from "../pages/Admin/SystemNotification";
 import LongList2 from "../pages/Manager/LongList2";
 import LongListInterviewScheduler from "../pages/Manager/LongListInterviewSheduler";
 import InterviewScheduler from "../pages/Manager/InterviewSheduler";
+import Prescreen from "../components/Prescreen";
+import TextAssessment from "../components/TextPreScreen";
+import VoiceAssessment from "../components/Voiceprescreen";
+
 
 
 const router = createBrowserRouter([
@@ -64,6 +68,18 @@ const router = createBrowserRouter([
       {
         path: "interview",
         element: <Interview />,
+      },
+      {
+        path: "prescreen",
+        element:<Prescreen/>,
+      },
+      {
+        path: "TextAssessment",
+        element: <TextAssessment/>,
+      },
+      {
+        path: "VoiceAssessment",
+        element: <VoiceAssessment/>
       },
     ],
   },
