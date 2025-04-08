@@ -1,5 +1,4 @@
-
-
+import ManagerTopbar from '../../components/ManagerTopbar';
 import React, { useEffect, useState } from "react";
 import { ChevronDown, Search, Edit, Trash2, X } from "lucide-react";
 
@@ -121,6 +120,7 @@ const ManageVacancy = () => {
 
   return (
     <div className="bg-gray-100 min-h-screen p-6">
+      <ManagerTopbar />
       <h1 className="text-3xl font-bold mb-6">Manage Vacancy</h1>
 
       <div className="bg-white p-6 rounded-lg shadow-md">
