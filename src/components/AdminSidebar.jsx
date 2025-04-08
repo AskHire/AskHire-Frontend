@@ -22,23 +22,26 @@ const AdminSidebar = () => {
   }, [location.pathname]);
 
   const menuItems = [
-    { icon: <AiOutlineDashboard size={20} />, label: "Dashboard", path: "/admin/dashboard" },
-    { icon: <AiOutlineFileText size={20} />, label: "Create Job Roles", path: "/admin/CreateJobs" },
-    { icon: <FiList size={20} />, label: "User Roles", path: "/admin/ManageUserRoles" },
-    { icon: <AiOutlineAppstoreAdd size={20} />, label: "Manage Admin", path: "/admin/ManageAdmin" },
-    { icon: <FiBriefcase size={20} />, label: "Manage Manager", path: "/admin/ManageManager" },
-    { icon: <AiOutlineSetting size={20} />, label: "Manage Candidate", path: "/admin/ManageCandidate" },
-    { icon: <AiOutlineBell size={20} />, label: "System Notifications", path: "/admin/SystemNotification" },
+    { icon: <AiOutlineDashboard size={18} />, label: "Dashboard", path: "/admin/dashboard" },
+    { icon: <AiOutlineFileText size={18} />, label: "Create Job Roles", path: "/admin/CreateJobs" },
+    { icon: <FiList size={18} />, label: "User Roles", path: "/admin/ManageUserRoles" },
+    { icon: <AiOutlineAppstoreAdd size={18} />, label: "Manage Admin", path: "/admin/ManageAdmin" },
+    { icon: <FiBriefcase size={18} />, label: "Manage Manager", path: "/admin/ManageManager" },
+    { icon: <AiOutlineSetting size={18} />, label: "Manage Candidate", path: "/admin/ManageCandidate" },
+    { icon: <AiOutlineBell size={18} />, label: "System Notifications", path: "/admin/SystemNotification" },
   ];
 
   const footerItems = [
+
     { icon: <AiOutlineQuestionCircle size={20} />, label: "Support & Help", path: "/admin/Support" },
     { icon: <AiOutlineSetting size={20} />, label: "Settings", path: "/admin/Settings" },
     { icon: <AiOutlineLogout size={20} />, label: "Log Out", path: "/logout" }
+
   ];
 
   return (
     <>
+
       {/* Mobile Menu Button */}
       <button
         onClick={() => setMobileOpen(true)}
@@ -51,6 +54,8 @@ const AdminSidebar = () => {
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden"
+
+     
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -71,12 +76,15 @@ const AdminSidebar = () => {
               className="p-2 rounded-full md:hidden hover:bg-gray-100"
             >
               <AiOutlineClose size={20} />
+
             </button>
           )}
         </div>
 
+
         {/* Menu Items */}
         <nav className="flex-grow py-2 space-y-1 overflow-y-auto">
+
           {menuItems.map((item) => (
             <NavItem
               key={item.label}
@@ -88,8 +96,10 @@ const AdminSidebar = () => {
           ))}
         </nav>
 
+
         {/* Footer Menu Items */}
         <div className="py-2 mt-auto space-y-1 border-t border-gray-200">
+
           {footerItems.map((item) => (
             <NavItem
               key={item.label}
@@ -109,12 +119,14 @@ const NavItem = ({ icon, label, path, active }) => {
   return (
     <Link
       to={path}
+
       className={`flex items-center px-4 py-3 w-full text-left transition-colors duration-150 rounded-md ${
         active ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"
       }`}
     >
       {icon}
       <span className="ml-3 text-sm font-medium">{label}</span>
+
     </Link>
   );
 };

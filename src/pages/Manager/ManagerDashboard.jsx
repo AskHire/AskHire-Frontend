@@ -3,6 +3,7 @@ import Calendar from '../../components/Calendar';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { FiUsers, FiCalendar, FiBriefcase, FiFileText } from 'react-icons/fi'; // Import icons
+import ManagerTopbar from '../../components/ManagerTopbar';
 
 const ManagerDashboard = () => {
   const [currentMonth, setCurrentMonth] = useState('May 2023');
@@ -67,8 +68,9 @@ const ManagerDashboard = () => {
     { name: 'Dec', value: 60 }
   ];
 
-  return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+  return (       //<div className="bg-gray-100 min-h-screen p-6">
+    <div className=" bg-gray-100 min-h-screen p-6">
+      <ManagerTopbar />
       <h1 className="text-3xl font-bold mb-6">Manager Dashboard</h1>
 
       {/* Stats Cards */}

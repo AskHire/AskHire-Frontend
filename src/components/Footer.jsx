@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react";
 import { FaPhoneSquareAlt } from "react-icons/fa";
 import { FaGooglePlus } from "react-icons/fa";
 import { FaFacebook } from "react-icons/fa6";
@@ -10,19 +10,25 @@ const Footer = () => {
     <div>
   <footer className="flex justify-between p-10 text-white footer bg-blue-950">
     <nav>
+
       <h6 className="text-lg font-bold text-white">Quick Links</h6>
+
       <a className="link link-hover">Home</a><br/>
       <a className="link link-hover">Jobs</a><br/>
       <a className="link link-hover">Companies</a><br/>
     </nav>
     <nav>
+
       <h6 className="text-lg font-bold text-white">About Us</h6>
+
       <a className="link link-hover">Our Story</a><br/>
       <a className="link link-hover">Careers</a><br/>
       <a className="link link-hover">Contact</a><br/>
     </nav>
     <nav>
+
       <h6 className="text-lg font-bold text-white">Support</h6>
+
       <a className="link link-hover">Help Center</a><br/>
       <a className="link link-hover">FAQs</a><br/>
       <a className="link link-hover">Privacy Policy</a><br/>
@@ -52,7 +58,7 @@ const Footer = () => {
   </nav>
 </footer>
     </div>
-  )
-}
+  );
+};
 
-export default Footer
+export default Footer;

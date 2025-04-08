@@ -6,22 +6,24 @@ import AdminSidebar from "../components/AdminSidebar";
 
 const Admin = () => {
   return (
+
     <div className="flex flex-col min-h-screen bg-blue-50">
       {/* Sidebar and Content Wrapper */}
-      <div className="flex flex-1">
-        {/* Sidebar (Not Fixed) */}
-        <div className="w-64 bg-white border-r border-gray-300">
-            <AdminSidebar/>
-        </div>
 
-        {/* Main Content */}
-        <div className="flex-1 p-6">
+      <div className="flex flex-1">
+        {/* Sidebar will be rendered by the customized SidebarManager */}
+        <AdminSidebar/>
+        
+        {/* Main Content - taking remaining space */}
+        <div className="flex-1 overflow-auto">
           <Outlet />
         </div>
       </div>
-
-      {/* Footer Below Sidebar */}
-      <Footer/>
+      
+      {/* Responsive Footer */}
+      <div className="w-full">
+        <Footer />
+      </div>
     </div>
   );
 };

@@ -77,3 +77,4 @@ function StatCard({ icon, title, value, growth }) {
     </div>
   );
 }
+
