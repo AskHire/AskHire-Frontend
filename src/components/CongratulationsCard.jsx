@@ -1,68 +1,100 @@
 import React from 'react';
+import { HiCheckCircle, HiXCircle, HiArrowRight, HiQuestionMarkCircle, HiChartBar } from 'react-icons/hi';
+import { FaStar, FaCheck } from 'react-icons/fa';
+import { AiOutlineCheck, AiOutlineClose } from 'react-icons/ai';
+import { useNavigate } from 'react-router-dom';
 
-const CongratulationsCard = () => {
+const CongratulationsCard = ({ totalQuestions, correctAnswers, passMark, status }) => {
+  const navigate = useNavigate();
+
+  const handleButtonClick = () => {
+    if (status === 'pass') {
+      navigate('/interview');  // Redirect to the interview page
+    } else {
+      navigate('/');  // Redirect to the home page
+    }
+  };
+
   return (
-    <div className="flex justify-center items-center">
-      <div className="border border-gray-300 rounded-xl p-8 w-80 flex flex-col items-center justify-center shadow-md bg-white">
-        {/* Checkmark Icon */}
-        <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center mb-4">
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            className="h-8 w-8 text-white" 
-            viewBox="0 0 20 20" 
-            fill="currentColor"
-          >
-            <path 
-              fillRule="evenodd" 
-              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" 
-              clipRule="evenodd" 
-            />
-          </svg>
-        </div>
-        
-        {/* Congratulations Text */}
-        <h1 className="text-2xl font-bold text-green-500 mb-4">Congratulations!</h1>
-        
-        {/* Match Score Card */}
-        <div className="bg-green-100 w-full rounded-xl p-4 mb-6">
-          <div className="flex justify-between mb-1">
-            <span className="text-gray-600 text-sm">Match Score</span>
-            <div className="flex">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <svg 
-                  key={star}
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className="h-5 w-5 text-green-500" 
-                  viewBox="0 0 20 20" 
-                  fill="currentColor"
-                >
-                  <path 
-                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" 
-                  />
-                </svg>
-              ))}
-            </div>
+    <div className="bg-white shadow-lg rounded-lg p-6 text-center w-full max-w-md mx-auto border-2 border-blue-300">
+      {status === 'pass' ? (
+        <div className="mb-4">
+          <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+            <HiCheckCircle className="h-8 w-8 text-green-500" />
           </div>
-          <div className="text-4xl font-bold text-green-500 text-center">93%</div>
+          <h2 className="text-2xl font-bold mt-2 text-green-600">Congratulations!</h2>
         </div>
-        
-        {/* Continue Button */}
-        <button className="bg-blue-600 text-white w-full py-3 rounded-lg flex items-center justify-center">
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            className="h-5 w-5 mr-2" 
-            viewBox="0 0 20 20" 
-            fill="currentColor"
-          >
-            <path 
-              fillRule="evenodd" 
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" 
-              clipRule="evenodd" 
-            />
-          </svg>
-          Continue to Interview
-        </button>
+      ) : (
+        <div className="mb-4">
+          <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+            <HiXCircle className="h-8 w-8 text-red-500" />
+          </div>
+          <h2 className="text-2xl font-bold mt-2 text-red-600">Not Eligible</h2>
+        </div>
+      )}
+
+      {/* Match Score Section */}
+      <div className="bg-green-100 rounded-lg p-4 mb-4">
+        <div className="flex justify-between items-center">
+          <span className="text-green-800">Match Score</span>
+          <div className="flex">
+            {[...Array(5)].map((_, index) => (
+              <FaStar key={index} className="text-yellow-500" />
+            ))}
+          </div>
+        </div>
+        <div className="text-3xl font-bold text-green-800">{passMark}%</div>
       </div>
+
+      {/* Score Details Section */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="bg-blue-100 rounded-lg p-4">
+          <div className="flex items-center justify-center mb-2">
+            <HiQuestionMarkCircle className="h-6 w-6 text-blue-600" />
+          </div>
+          <p className="text-2xl font-bold text-blue-600">{totalQuestions}</p>
+          <p className="text-blue-600 text-sm">Total Questions</p>
+        </div>
+
+        <div className="bg-purple-100 rounded-lg p-4">
+          <div className="flex items-center justify-center mb-2">
+            <FaCheck className="h-6 w-6 text-purple-600" />
+          </div>
+          <p className="text-2xl font-bold text-purple-600">{correctAnswers}</p>
+          <p className="text-purple-600 text-sm">Correct Answers</p>
+        </div>
+
+        <div className="bg-green-100 rounded-lg p-4">
+          <div className="flex items-center justify-center mb-2">
+            <HiChartBar className="h-6 w-6 text-green-600" />
+          </div>
+          <p className="text-2xl font-bold text-green-600">{passMark}%</p>
+          <p className="text-green-600 text-sm">Your Score</p>
+        </div>
+
+        <div className={`${status === 'pass' ? 'bg-green-100' : 'bg-red-100'} rounded-lg p-4`}>
+          <div className="flex items-center justify-center mb-2">
+            {status === 'pass' ? (
+              <AiOutlineCheck className="h-6 w-6 text-green-600" />
+            ) : (
+              <AiOutlineClose className="h-6 w-6 text-red-600" />
+            )}
+          </div>
+          <p className={`text-2xl font-bold ${status === 'pass' ? 'text-green-600' : 'text-red-600'}`}>
+            {status === 'pass' ? 'Pass' : 'Fail'}
+          </p>
+          <p className={`${status === 'pass' ? 'text-green-600' : 'text-red-600'} text-sm`}>Status</p>
+        </div>
+      </div>
+
+      {/* Continue Button */}
+      <button 
+        className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center"
+        onClick={handleButtonClick}
+      >
+        <HiArrowRight className="h-5 w-5 mr-2" />
+        {status === 'pass' ? 'Continue to Interviews' : 'Back to Home'}
+      </button>
     </div>
   );
 };

@@ -15,7 +15,7 @@ import {
   FaClock
 } from 'react-icons/fa';
 
-const VoicePrescreen = () => {
+const VoiceAssessment = () => {
   // Voice assessment prompts
   const [prompts, setPrompts] = useState([
     {
@@ -690,4 +690,4 @@ const VoicePrescreen = () => {
   );
 };
 
-export default VoicePrescreen;
+export default VoiceAssessment;

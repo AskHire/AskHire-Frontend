@@ -36,13 +36,13 @@ const Prescreen = () => {
       </div>
       <div className="flex justify-center space-x-4">
         <button
-          onClick={() => navigate('/textPrescreen')}
+          onClick={() => navigate('/TextAssessment')}
           className="bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center"
         >
           <FaPlay className="mr-2" /> Start Text Assessment
         </button>
         <button
-          onClick={() => navigate('/VoicePrescreen')}
+          onClick={() => navigate('/VoiceAssessment')}
           className="bg-green-600 text-white px-6 py-3 rounded-lg flex items-center"
         >
           <FaMicrophone className="mr-2" /> Start Voice Assessment
