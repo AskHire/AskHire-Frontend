@@ -1,6 +1,9 @@
-const SystemNotification = () => {
-    return <h1>System Notification Page</h1>;
-  };
-  
-  export default SystemNotification;
-  
+import React from 'react'
+
+function SystemNotification() {
+  return (
+    <div>SystemNotification</div>
+  )
+}
+
+export default SystemNotification
