@@ -1,6 +1,6 @@
 import React from 'react'
 
-const SystemNotification = () => {
+function SystemNotification() {
   return (
     <div>SystemNotification</div>
   )
