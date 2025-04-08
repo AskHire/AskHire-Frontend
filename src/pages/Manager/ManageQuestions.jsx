@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Search, Edit, Trash2, X } from 'lucide-react';
+import ManagerTopbar from '../../components/ManagerTopbar';
 
 const ManageQuestions = () => {
   // Job role selector states
@@ -212,6 +213,7 @@ const ManageQuestions = () => {
 
   return (
     <div className="bg-gray-100 min-h-screen p-6">
+      <ManagerTopbar />
       <h1 className="text-3xl font-bold mb-6">Manage Questions</h1>
       
       {/* Job Role Selector */}

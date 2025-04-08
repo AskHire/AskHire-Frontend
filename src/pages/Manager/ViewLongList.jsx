@@ -20,7 +20,7 @@ const ViewLongList = () => {
   ];
 
   return (
-    <div className="bg-gray-100 flex-auto min-h-screen">
+    <div className="bg-gray-100 min-h-screen p-6">
     <ManagerTopbar />
 
     <div className="p-6 bg-[#E6ECFA] min-h-screen flex flex-col items-center">

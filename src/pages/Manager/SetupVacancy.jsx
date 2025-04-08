@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import ManagerTopbar from '../../components/ManagerTopbar';
 
 const SetupVacancy = () => {
   // Job role selector states
@@ -120,6 +121,7 @@ const SetupVacancy = () => {
 
   return (
     <div className="bg-gray-100 min-h-screen p-6">
+      <ManagerTopbar />
       <h1 className="text-3xl font-bold mb-6">Setup Vacancy</h1>
       
       {/* Job Role Selector Card */}
