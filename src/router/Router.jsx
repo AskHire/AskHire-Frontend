@@ -4,8 +4,6 @@ import Home from "../pages/home/Home";
 import Login from "../pages/Login/Login";
 import Signup from "../pages/signup/Signup";
 import Dashboard from "../pages/dashboard/Dashboard";
-import AboutUs from "../pages/about us/AboutUs";
-import Interview from "../pages/interview/Interview";
 import Job from "../pages/jobs/Job";
 import Manager from "../layout/Manager";
 import ManagerDashboard from "../pages/Manager/ManagerDashboard";
@@ -30,6 +28,12 @@ import SystemNotification from "../pages/Admin/SystemNotification";
 import LongList2 from "../pages/Manager/LongList2";
 import LongListInterviewScheduler from "../pages/Manager/LongListInterviewSheduler";
 import InterviewScheduler from "../pages/Manager/InterviewSheduler";
+import Prescreen from "../components/Prescreen";
+import TextAssessment from "../components/TextAssessment";
+import VoiceAssessment from "../components/VoiceAssessment";
+import Interview from "../components/Interview";
+import AboutUs from "../components/AboutUs";
+
 
 
 const router = createBrowserRouter([
@@ -50,8 +54,8 @@ const router = createBrowserRouter([
         element: <Signup />,
       },
       {
-        path: "about-us",
-        element: <AboutUs />,
+        path: "aboutus",
+        element:<AboutUs/>,
       },
       {
         path: "dashboard",
@@ -63,7 +67,19 @@ const router = createBrowserRouter([
       },
       {
         path: "interview",
-        element: <Interview />,
+        element: <Interview/>
+      },
+      {
+        path: "prescreen",
+        element:<Prescreen/>,
+      },
+      {
+        path: "TextAssessment",
+        element: <TextAssessment/>,
+      },
+      {
+        path: "VoiceAssessment",
+        element: <VoiceAssessment/>
       },
     ],
   },
