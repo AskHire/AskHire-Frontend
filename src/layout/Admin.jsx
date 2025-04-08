@@ -6,8 +6,10 @@ import AdminSidebar from "../components/AdminSidebar";
 
 const Admin = () => {
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Main content wrapper */}
+
+    <div className="flex flex-col min-h-screen bg-blue-50">
+      {/* Sidebar and Content Wrapper */}
+
       <div className="flex flex-1">
         {/* Sidebar will be rendered by the customized SidebarManager */}
         <AdminSidebar/>
