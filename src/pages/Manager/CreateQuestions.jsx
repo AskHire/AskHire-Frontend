@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import ManagerTopbar from '../../components/ManagerTopbar';
 
 const CreateQuestions = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -124,6 +125,7 @@ const CreateQuestions = () => {
 
   return (
     <div className="bg-gray-100 min-h-screen p-6">
+      <ManagerTopbar />
       <h1 className="text-3xl font-bold mb-6">Create Questions</h1>
       
       {/* Job Role Selector */}
