@@ -105,7 +105,7 @@ const router = createBrowserRouter([
        
       },
       {
-        path: "ViewDetails",
+        path: "ViewDetails/:id",
         element: <ViewDetails />,
       },
       {
@@ -118,7 +118,7 @@ const router = createBrowserRouter([
        
       },
       {
-        path: "InterviewSheduler",
+        path: "InterviewScheduler/:applicationId",
         element: <InterviewScheduler/>,
        
       },

@@ -1,29 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ManagerTopbar from '../../components/ManagerTopbar';
 
 const NotifyCandidates = () => {
   const [selectedTab, setSelectedTab] = useState('qualified');
   const [selectedCandidates, setSelectedCandidates] = useState([]);
+  const [candidatesByStatus, setCandidatesByStatus] = useState({ qualified: [], rejected: [], pending: [] });
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
-  const [type, setType] = useState('Normal'); // Default type
+  const [type, setType] = useState('Normal');
 
-  const tabs = [
-    { id: 'qualified', label: 'Qualified', count: 3, icon: '✓' },
-    { id: 'rejected', label: 'Rejected', count: 9, icon: '✕' },
-    { id: 'pending', label: 'Pending', count: 3, icon: '⌛' }
-  ];
+  useEffect(() => {
+    fetchCandidates();
+  }, []);
 
-  const candidates = [
-    { id: 'john', name: 'John Smith', position: 'Frontend Developer', score: 70 },
-    { id: 'will', name: 'Will Jacks', position: 'Frontend Developer', score: 85 },
-    { id: 'mick', name: 'Mick Tyson', position: 'Frontend Developer', score: 90 }
-  ];
+  const fetchCandidates = async () => {
+    try {
+      // Fetch all statuses in parallel
+      const [qualifiedRes, rejectedRes, pendingRes] = await Promise.all([
+        axios.get('https://localhost:7256/api/Candidates/status/qualified'),
+        axios.get('https://localhost:7256/api/Candidates/status/rejected'),
+        axios.get('https://localhost:7256/api/Candidates/status/pending')
+      ]);
 
-  const handleCandidateSelect = (candidateId) => {
-    setSelectedCandidates((prev) =>
-      prev.includes(candidateId) ? prev.filter(id => id !== candidateId) : [...prev, candidateId]
+      const candidatesData = {
+        qualified: qualifiedRes.data || [],
+        rejected: rejectedRes.data || [],
+        pending: pendingRes.data || []
+      };
+      
+      setCandidatesByStatus(candidatesData);
+      console.log('Fetched candidates:', candidatesData);
+    } catch (error) {
+      console.error('Failed to fetch candidates:', error);
+    }
+  };
+
+  const handleCandidateSelect = (applicationId) => {
+    setSelectedCandidates(prev =>
+      prev.includes(applicationId) ? prev.filter(id => id !== applicationId) : [...prev, applicationId]
     );
   };
 
@@ -40,18 +55,33 @@ const NotifyCandidates = () => {
         type
       });
 
-      console.log('Notification Sent:', response.data);
+      console.log('Notification sent:', response.data);
       alert('Notification sent successfully!');
 
-      // Reset fields after sending
+      // Reset form
       setSubject('');
       setMessage('');
       setSelectedCandidates([]);
     } catch (error) {
-      console.error('Error sending notification:', error);
+      console.error('Notification error:', error);
       alert('Failed to send notification.');
     }
   };
+
+  // Calculate counts from the actual data we have
+  const counts = {
+    qualified: Array.isArray(candidatesByStatus.qualified) ? candidatesByStatus.qualified.length : 0,
+    rejected: Array.isArray(candidatesByStatus.rejected) ? candidatesByStatus.rejected.length : 0,
+    pending: Array.isArray(candidatesByStatus.pending) ? candidatesByStatus.pending.length : 0
+  };
+
+  const tabs = [
+    { id: 'qualified', label: 'Qualified', icon: '✓', count: counts.qualified },
+    { id: 'rejected', label: 'Rejected', icon: '✕', count: counts.rejected },
+    { id: 'pending', label: 'Pending', icon: '⌛', count: counts.pending }
+  ];
+
+  const candidates = candidatesByStatus[selectedTab] || [];
 
   return (
     <div className="bg-gray-100 flex-auto min-h-screen">
@@ -60,7 +90,6 @@ const NotifyCandidates = () => {
         <div className="max-w-3xl mx-auto">
           <h1 className="text-2xl font-bold mb-6 text-gray-800">Notify Candidates</h1>
 
-          {/* Candidates Selection */}
           <div className="bg-white border border-blue-800 rounded-lg shadow-sm p-5 mb-6">
             <div className="flex justify-between items-center mb-4">
               <div className="text-gray-700">Select candidates to send notifications</div>
@@ -83,34 +112,42 @@ const NotifyCandidates = () => {
               ))}
             </div>
 
-            {/* Candidates List */}
+            {/* Candidate List */}
             <div className="space-y-3">
-              {candidates.map(candidate => (
-                <div
-                  key={candidate.id}
-                  className="border border-gray-100 rounded-lg p-4 flex items-center justify-between hover:border-gray-200"
-                >
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      className="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                      checked={selectedCandidates.includes(candidate.id)}
-                      onChange={() => handleCandidateSelect(candidate.id)}
-                    />
-                    <div>
-                      <h3 className="font-medium text-gray-800">{candidate.name}</h3>
-                      <p className="text-gray-500 text-sm">{candidate.position}</p>
+              {candidates.length === 0 ? (
+                <p className="text-center py-4 text-gray-500">No candidates found</p>
+              ) : (
+                candidates.map(candidate => (
+                  <div
+                    key={candidate.applicationId}
+                    className="border border-gray-100 rounded-lg p-4 flex items-center justify-between hover:border-gray-200"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        className="h-5 w-5 text-blue-600 rounded border-gray-300"
+                        checked={selectedCandidates.includes(candidate.applicationId)}
+                        onChange={() => handleCandidateSelect(candidate.applicationId)}
+                      />
+                      <div>
+                        <h3 className="font-medium text-gray-800">
+                          {candidate.user?.firstName} {candidate.user?.lastName}
+                        </h3>
+                        <p className="text-gray-500 text-sm">
+                          {candidate.vacancy?.jobRole?.jobTitle || 'No position'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      (candidate.cV_Mark || 0) >= 90 ? 'bg-green-100 text-green-800' :
+                      (candidate.cV_Mark || 0) >= 80 ? 'bg-green-100 text-green-700' :
+                      'bg-green-100 text-green-600'
+                    }`}>
+                      {candidate.cV_Mark || 0}%
                     </div>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    candidate.score >= 90 ? 'bg-green-100 text-green-800' :
-                    candidate.score >= 80 ? 'bg-green-100 text-green-700' :
-                    'bg-green-100 text-green-600'
-                  }`}>
-                    {candidate.score}%
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -121,7 +158,7 @@ const NotifyCandidates = () => {
               <input
                 type="text"
                 id="subject"
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-md"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
               />
@@ -132,7 +169,7 @@ const NotifyCandidates = () => {
               <textarea
                 id="message"
                 rows="4"
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-md"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
               ></textarea>
@@ -141,38 +178,32 @@ const NotifyCandidates = () => {
             <div className="mb-6">
               <label className="block mb-2 font-medium text-gray-700">Type</label>
               <div className="flex space-x-6">
-                <div className="flex items-center">
-                  <input
-                    id="normal"
-                    name="notification-type"
-                    type="radio"
-                    value="Normal"
-                    checked={type === 'Normal'}
-                    onChange={(e) => setType(e.target.value)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                  />
-                  <label htmlFor="normal" className="ml-2 text-gray-700">Normal</label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    id="important"
-                    name="notification-type"
-                    type="radio"
-                    value="Important"
-                    checked={type === 'Important'}
-                    onChange={(e) => setType(e.target.value)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                  />
-                  <label htmlFor="important" className="ml-2 text-gray-700">Important</label>
-                </div>
+                {['Normal', 'Important'].map(t => (
+                  <div key={t} className="flex items-center">
+                    <input
+                      id={t}
+                      name="notification-type"
+                      type="radio"
+                      value={t}
+                      checked={type === t}
+                      onChange={(e) => setType(e.target.value)}
+                      className="h-4 w-4 text-blue-600"
+                    />
+                    <label htmlFor={t} className="ml-2 text-gray-700">{t}</label>
+                  </div>
+                ))}
               </div>
             </div>
 
             <div className="flex justify-end">
               <button
-                type="button"
                 onClick={handleNotify}
-                className="bg-blue-600 text-white py-2 px-6 rounded-full font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                disabled={selectedCandidates.length === 0 || !subject || !message}
+                className={`${
+                  selectedCandidates.length > 0 && subject && message
+                    ? 'bg-blue-600 hover:bg-blue-700'
+                    : 'bg-blue-300 cursor-not-allowed'
+                } text-white py-2 px-6 rounded-full font-medium`}
               >
                 Notify
               </button>
