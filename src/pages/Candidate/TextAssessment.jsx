@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FiClock, FiCheckCircle } from 'react-icons/fi';
-import CongratulationsCard from './CongratulationsCard';
+import CongratulationsCard from '../../components/CongratulationsCard';
 
-const applicationId = '6585D06C-5F39-4B3E-81B0-6E3A8ECFC2E8';
+const applicationId = '0E7FCBE2-3CF9-4178-A94D-F02543E68FEB';
 
 const TextAssessment = () => {
   const [questions, setQuestions] = useState([]);
