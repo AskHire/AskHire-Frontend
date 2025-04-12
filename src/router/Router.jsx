@@ -27,12 +27,14 @@ import ManageCandidate from "../pages/Admin/ManageCandidate";
 import SystemNotification from "../pages/Admin/SystemNotification";
 import LongList2 from "../pages/Manager/LongList2";
 import LongListInterviewScheduler from "../pages/Manager/LongListInterviewSheduler";
+import Prescreen from "../pages/Candidate/Prescreen";
+import TextAssessment from "../pages/Candidate/TextAssessment";
+import VoiceAssessment from "../pages/Candidate/VoiceAssessment";
+import AboutUs from "../pages/about us/AboutUs";
 import InterviewScheduler from "../pages/Manager/InterviewSheduler";
-import Prescreen from "../components/Prescreen";
-import TextAssessment from "../components/TextAssessment";
-import VoiceAssessment from "../components/VoiceAssessment";
-import Interview from "../components/Interview";
-import AboutUs from "../components/AboutUs";
+import Candidate from "../layout/Candidate";
+import Interview from "../pages/Candidate/Interview";
+
 
 
 
@@ -56,31 +58,7 @@ const router = createBrowserRouter([
       {
         path: "aboutus",
         element:<AboutUs/>,
-      },
-      {
-        path: "dashboard",
-        element: <Dashboard />,
-      },
-      {
-        path: "job",
-        element: <Job />,
-      },
-      {
-        path: "interview",
-        element: <Interview/>
-      },
-      {
-        path: "prescreen",
-        element:<Prescreen/>,
-      },
-      {
-        path: "TextAssessment",
-        element: <TextAssessment/>,
-      },
-      {
-        path: "VoiceAssessment",
-        element: <VoiceAssessment/>
-      },
+      }
     ],
   },
   {
@@ -141,7 +119,7 @@ const router = createBrowserRouter([
       },
       {
         path: "InterviewSheduler",
-        element: <InterviewScheduler />,
+        element: <InterviewScheduler/>,
        
       },
       {
@@ -191,7 +169,38 @@ const router = createBrowserRouter([
         element:<SystemNotification/>
       }
     ]
+  },
+  {
+    path:"/candidate",
+    element:<Candidate/>,
+    children:[
+      {
+        path: "",
+        element: <Dashboard/>
+      },
+      {
+        path: "jobs",
+        element: <Job/>
+      },
+      {
+        path: "interview",
+        element: <Interview/>
+      },
+      {
+        path: "prescreen",
+        element: <Prescreen/>,
+      },
+      {
+        path: "TextAssessment",
+        element: <TextAssessment/>,
+      },
+      {
+        path: "VoiceAssessment",
+        element: <VoiceAssessment/>
+      },
+    ]
   }
+
 ]);
 
 export default router;

@@ -9,7 +9,7 @@ const CongratulationsCard = ({ totalQuestions, correctAnswers, passMark, status 
 
   const handleButtonClick = () => {
     if (status === 'pass') {
-      navigate('/interview');  // Redirect to the interview page
+      navigate('/candidate/interview');  // Redirect to the interview page
     } else {
       navigate('/');  // Redirect to the home page
     }
