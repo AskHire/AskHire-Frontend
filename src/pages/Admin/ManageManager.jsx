@@ -72,7 +72,6 @@ export default function ManageManager() {
     <div className="flex-1 p-6">
       <AdminHeader />
       <h1 className="mt-8 text-3xl font-bold">Manager Management</h1>
-
       <div className="mt-4">
         <div className="flex items-center justify-end gap-3 mb-4">
           <div className="relative">
