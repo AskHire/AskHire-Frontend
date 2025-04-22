@@ -46,15 +46,16 @@ export default function ManageCandidate() {
       // Instead of refetching all candidates, update state directly
       setCandidates((prevCandidates) => prevCandidates.filter(candidate => candidate.userId !== UserId));
   
-      console.log("Candidate deleted successfully.");
-    } catch (error) {
+      console.log("Candidate deleted successfully.");}
+       
+      catch (error) {
       console.error("Error deleting candidate:", error);
   
       // More robust error message handling
       const errorMessage = error.response?.data?.title || error.response?.data?.message || error.message;
       alert(`Failed to delete candidate: ${errorMessage}`);
     }
-  };
+    };
   
 
   // Sort candidates
@@ -72,13 +73,13 @@ export default function ManageCandidate() {
     <div className="flex-1 p-6">
       <AdminHeader />
       <h1 className="mt-8 text-3xl font-bold">Candidate Management</h1>
-
       <div className="mt-4">
         <div className="flex items-center justify-end gap-3 mb-4">
           <div className="relative">
             <input type="text" placeholder="Search admins..." className="w-64 px-8 py-2 border rounded-xl"
               value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-            <IoIosSearch className="absolute w-5 h-5 text-gray-900 transform -translate-y-1/2 left-3 top-1/2" />
+              <IoIosSearch className="absolute w-5 h-5 text-gray-900 transform -translate-y-1/2 left-3 top-1/2" 
+            />
           </div>
 
           {/* Sort Dropdown */}
@@ -110,7 +111,7 @@ export default function ManageCandidate() {
                 <span className="col-span-1">{index + 1}</span>
                 <div className="col-span-2">
                     <img className="w-10 h-10 rounded-full" src={candidate.image || "https://via.placeholder.com/40"} alt={candidate.firstName} />
-                  </div>
+                </div>
                 <span className="col-span-3">{candidate.firstName} {candidate.lastName}</span>
                 <div className="col-span-5 text-right">
                   <button onClick={() => handleDeleteCandidate(candidate.userId)} className="p-2 text-red-600 hover:text-red-800">
