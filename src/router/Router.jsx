@@ -4,8 +4,6 @@ import Home from "../pages/home/Home";
 import Login from "../pages/Login/Login";
 import Signup from "../pages/signup/Signup";
 import Dashboard from "../pages/dashboard/Dashboard";
-import AboutUs from "../pages/about us/AboutUs";
-import Interview from "../pages/interview/Interview";
 import Job from "../pages/jobs/Job";
 import Manager from "../layout/Manager";
 import ManagerDashboard from "../pages/Manager/ManagerDashboard";
