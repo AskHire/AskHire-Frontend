@@ -49,21 +49,10 @@ const router = createBrowserRouter([
         element: <Signup />,
       },
       {
-        path: "about-us",
+        path: "aboutus",
         element: <AboutUs />,
       },
-      {
-        path: "dashboard",
-        element: <Dashboard />,
-      },
-      {
-        path: "job",
-        element: <Job />,
-      },
-      {
-        path: "interview",
-        element: <Interview />,
-      },
+     
     ],
   },
   {
@@ -168,8 +157,40 @@ const router = createBrowserRouter([
         path:"SystemNotification",
         element:<SystemNotification/>
       }
-    ]
-  }
+    ],
+  },
+
+    {
+      path:"/candidate",
+      element:<Candidate/>,
+      children:[
+        {
+          path: "",
+          element: <Dashboard/>
+        },
+        {
+          path: "jobs",
+          element: <Job/>
+        },
+        {
+          path: "interview",
+          element: <Interview/>
+        },
+        {
+          path: "prescreen",
+          element: <Prescreen/>,
+        },
+        {
+          path: "TextAssessment",
+          element: <TextAssessment/>,
+        },
+        {
+          path: "VoiceAssessment",
+          element: <VoiceAssessment/>
+        },
+      ]
+    }
+  
 ]);
 
 export default router;
