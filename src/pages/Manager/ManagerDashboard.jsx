@@ -1,50 +1,79 @@
-import React, { useState } from 'react';
 import Calendar from '../../components/Calendar';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { FiUsers, FiCalendar, FiBriefcase, FiFileText } from 'react-icons/fi'; // Import icons
 import ManagerTopbar from '../../components/ManagerTopbar';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const ManagerDashboard = () => {
-  const [currentMonth, setCurrentMonth] = useState('May 2023');
   const [selectedPeriod, setSelectedPeriod] = useState('Monthly');
+  const [totalJobs, setTotalJobs] = useState(null); 
+  const [totalUsers, setTotalUsers] = useState(null); 
+
+  useEffect(() => {
+    const fetchTotalJobs = async () => {
+      try {
+        const response = await axios.get('http://localhost:5190/api/JobRole/total-jobs');
+        setTotalJobs(response.data); 
+      } catch (error) {
+        console.error('Error fetching total jobs:', error);
+      }
+    };
+
+    fetchTotalJobs();
+  }, []);
+
+  useEffect(() => {
+    const fetchTotalUsers = async () => {
+      try {
+        const response = await axios.get('http://localhost:5190/api/adminusers/total-users');
+        setTotalUsers(response.data); 
+      } catch (error) {
+        console.error('Error fetching total users:', error);
+      }
+    };
+
+    fetchTotalUsers();
+  }, []);
+
 
   const statsData = [
-    { 
-      id: 1, 
-      title: 'Total Candidates', 
-      count: 451, 
-      change: '+7 this month', 
-      icon: <FiUsers className="text-4xl" />, // Use FiUsers icon
-      bgColor: 'bg-green-100', 
-      textColor: 'text-green-700' 
+    {
+      id: 1,
+      title: 'Total Candidates',
+      count: totalUsers !== null ? totalUsers : '...',
+      change: '+7 this month',
+      icon: <FiUsers className="text-4xl" />,
+      bgColor: 'bg-green-100',
+      textColor: 'text-green-700'
     },
-    { 
-      id: 2, 
-      title: 'Interviews Today', 
-      count: 5, 
-      change: '3% this day', 
-      icon: <FiCalendar className="text-4xl" />, // Use FiCalendar icon
-      bgColor: 'bg-blue-100', 
-      textColor: 'text-blue-700' 
+    {
+      id: 2,
+      title: 'Interviews Today',
+      count: 5,
+      change: '3% this day',
+      icon: <FiCalendar className="text-4xl" />,
+      bgColor: 'bg-blue-100',
+      textColor: 'text-blue-700'
     },
-    { 
-      id: 3, 
-      title: 'Total Jobs', 
-      count: 20, 
-      change: '10% this week', 
-      icon: <FiBriefcase className="text-4xl" />, // Use FiBriefcase icon
-      bgColor: 'bg-yellow-100', 
-      textColor: 'text-yellow-700' 
+    {
+      id: 3,
+      title: 'Total Job Vacancies',
+      count: totalJobs !== null ? totalJobs : '...',
+      change: '10% this week',
+      icon: <FiBriefcase className="text-4xl" />,
+      bgColor: 'bg-yellow-100',
+      textColor: 'text-yellow-700'
     },
-    { 
-      id: 4, 
-      title: 'Pending Reviews', 
-      count: 11, 
-      change: '8% this week', 
-      icon: <FiFileText className="text-4xl" />, // Use FiFileText icon
-      bgColor: 'bg-pink-100', 
-      textColor: 'text-pink-700' 
+    {
+      id: 4,
+      title: 'Pending Reviews',
+      count: 11,
+      change: '8% this week',
+      icon: <FiFileText className="text-4xl" />,
+      bgColor: 'bg-pink-100',
+      textColor: 'text-pink-700'
     }
   ];
 
@@ -68,16 +97,15 @@ const ManagerDashboard = () => {
     { name: 'Dec', value: 60 }
   ];
 
-  return (       //<div className="bg-gray-100 min-h-screen p-6">
-    <div className=" bg-gray-100 min-h-screen p-6">
-      <ManagerTopbar />
+  return (
+    <>
       <h1 className="text-3xl font-bold mb-6">Manager Dashboard</h1>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statsData.map((stat) => (
           <div key={stat.id} className={`p-4 rounded-lg shadow-md ${stat.bgColor}`}>
-            <div className={`${stat.textColor}`}>{stat.icon}</div> {/* Render the icon */}
+            <div className={`${stat.textColor}`}>{stat.icon}</div>
             <h2 className="text-2xl font-bold mt-2">{stat.count}</h2>
             <p className="text-gray-600">{stat.title}</p>
             <span className="text-sm text-gray-500">{stat.change}</span>
@@ -87,14 +115,11 @@ const ManagerDashboard = () => {
 
       {/* Calendar & Pie Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        {/* Calendar */}
+        {/* Calendar - Using updated Calendar component with integrated reminder functionality */}
         <div className="bg-white p-4 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-2">{currentMonth}</h2>
-          <div className="flex justify-between mb-4">
-            <button className="px-3 py-1 bg-gray-200 rounded" onClick={() => setCurrentMonth('April 2023')}>←</button>
-            <button className="px-3 py-1 bg-gray-200 rounded" onClick={() => setCurrentMonth('June 2023')}>→</button>
-          </div>
-          <Calendar month={currentMonth} />
+          <h2 className="text-xl font-semibold mb-4">Calendar and Reminders</h2>
+          <p className="text-sm text-gray-500 mb-4">Click on a date to add a reminder</p>
+          <Calendar />
         </div>
 
         {/* Pie Chart */}
@@ -126,7 +151,10 @@ const ManagerDashboard = () => {
             <h2 className="text-xl font-semibold">Candidates Overview</h2>
             <p className="text-gray-500 text-sm">{selectedPeriod}</p>
           </div>
-          <button className="bg-gray-200 px-3 py-1 rounded" onClick={() => setSelectedPeriod(selectedPeriod === 'Monthly' ? 'Quarterly' : 'Monthly')}>
+          <button
+            className="bg-gray-200 px-3 py-1 rounded"
+            onClick={() => setSelectedPeriod(selectedPeriod === 'Monthly' ? 'Quarterly' : 'Monthly')}
+          >
             {selectedPeriod} ▼
           </button>
         </div>
@@ -142,7 +170,7 @@ const ManagerDashboard = () => {
           </ResponsiveContainer>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
