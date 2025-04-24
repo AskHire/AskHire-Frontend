@@ -4,7 +4,7 @@ import { FiClock } from 'react-icons/fi';
 import CongratulationsCard from '../../components/CongratulationsCard';
 
 const VoiceAssessment = () => {
-  const applicationId = '0E7FCBE2-3CF9-4178-A94D-F02543E68FEB';
+  const applicationId = '73D61C62-DFD2-4485-8D45-34832F612B0E';
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -22,7 +22,7 @@ const VoiceAssessment = () => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await axios.get(`https://localhost:7256/api/PreScreenTest/Questions/${applicationId}`);
+        const res = await axios.get(`http://localhost:5190/api/PreScreenTest/Questions/${applicationId}`);
         setQuestions(res.data.questions);
         // Initialize answers array with the correct length
         setAnswers(new Array(res.data.questions.length).fill(null));
@@ -142,7 +142,7 @@ const VoiceAssessment = () => {
 
     try {
       const response = await axios.post(
-        `https://localhost:7256/api/test/check-answers/${applicationId}`,
+        `http://localhost:5190/api/AnswerCheck/mcq/${applicationId}`,
         submissionData
       );
       console.log('Submission response:', response.data);

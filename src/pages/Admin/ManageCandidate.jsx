@@ -15,7 +15,7 @@ export default function ManageCandidate() {
   useEffect(() => {
     const fetchCandidates = async () => {
       try {
-        const response = await fetch("https://localhost:7256/api/candidates"); // Ensure this matches backend URL
+        const response = await fetch("http://localhost:5190/api/candidates"); // Ensure this matches backend URL
         if (!response.ok) throw new Error("Failed to fetch candidates");
   
         const data = await response.json();
@@ -41,7 +41,7 @@ export default function ManageCandidate() {
     try {
       console.log("Deleting candidate with ID:", UserId);
   
-      await axios.delete(`https://localhost:7256/api/candidates/${UserId}`);
+      await axios.delete(`http://localhost:5190/api/candidates/${UserId}`);
   
       // Instead of refetching all candidates, update state directly
       setCandidates((prevCandidates) => prevCandidates.filter(candidate => candidate.userId !== UserId));
@@ -109,7 +109,7 @@ export default function ManageCandidate() {
               <div key={candidate.userId} className="grid items-center grid-cols-12 p-2 bg-white rounded-md shadow-sm">
                 <span className="col-span-1">{index + 1}</span>
                 <div className="col-span-2">
-                    <img className="w-10 h-10 rounded-full" src={candidate.image || "https://via.placeholder.com/40"} alt={candidate.firstName} />
+                    <img className="w-10 h-10 rounded-full" src={candidate.image || "http://via.placeholder.com/40"} alt={candidate.firstName} />
                   </div>
                 <span className="col-span-3">{candidate.firstName} {candidate.lastName}</span>
                 <div className="col-span-5 text-right">
