@@ -15,7 +15,7 @@ export default function ManageManager() {
   useEffect(() => {
     const fetchManagers = async () => {
       try {
-        const response = await fetch("https://localhost:7256/api/managers"); // Ensure this matches backend URL
+        const response = await fetch("http://localhost:5190/api/managers"); // Ensure this matches backend URL
         if (!response.ok) throw new Error("Failed to fetch managers");
   
         const data = await response.json();
@@ -41,7 +41,7 @@ export default function ManageManager() {
     try {
       console.log("Deleting manager with ID:", UserId);
   
-      await axios.delete(`https://localhost:7256/api/managers/${UserId}`);
+      await axios.delete(`http://localhost:5190/api/managers/${UserId}`);
   
       // Instead of fetching all managers again, update the state directly (React useState)
       setManagers((prevManagers) => prevManagers.filter(manager => manager.userId !== UserId));
@@ -72,7 +72,6 @@ export default function ManageManager() {
     <div className="flex-1 p-6">
       <AdminHeader />
       <h1 className="mt-8 text-3xl font-bold">Manager Management</h1>
-
       <div className="mt-4">
         <div className="flex items-center justify-end gap-3 mb-4">
           <div className="relative">
@@ -109,7 +108,7 @@ export default function ManageManager() {
               <div key={manager.userId} className="grid items-center grid-cols-12 p-2 bg-white rounded-md shadow-sm">
                 <span className="col-span-1">{index + 1}</span>
                 <div className="col-span-2">
-                    <img className="w-10 h-10 rounded-full" src={manager.image || "https://via.placeholder.com/40"} alt={manager.firstName} />
+                    <img className="w-10 h-10 rounded-full" src={manager.image || "http://via.placeholder.com/40"} alt={manager.firstName} />
                   </div>
                 <span className="col-span-3">{manager.firstName} {manager.lastName}</span>
                 <div className="col-span-5 text-right">
