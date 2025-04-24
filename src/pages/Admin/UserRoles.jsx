@@ -11,7 +11,7 @@ export default function UserRoles() {
   const [editingRoleUserId, setEditingRoleUserId] = useState(null);
 
   useEffect(() => {
-    fetch("https://localhost:7256/api/users")
+    fetch("http://localhost:5190/api/users")
       .then((response) => response.json())
       .then((data) => setUsers(data))
       .catch((error) => console.error("Error fetching users:", error));
@@ -82,7 +82,7 @@ export default function UserRoles() {
               <div key={user.userId} className="grid items-center justify-between grid-cols-12 p-3 mt-3 bg-white rounded-lg ">
                 <span className="col-span-1 font-medium">{index + 1}</span>
                   <div className="col-span-2">
-                    <img className="w-10 h-10 rounded-full" src={user.image || "https://via.placeholder.com/40"} alt={user.firstName} />
+                    <img className="w-10 h-10 rounded-full" src={user.image || "http://via.placeholder.com/40"} alt={user.firstName} />
                   </div>
                 <span className="col-span-5 font-medium">{user.firstName} {user.lastName}</span>
                 <div className="col-span-3">

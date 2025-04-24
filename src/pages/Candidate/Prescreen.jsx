@@ -6,12 +6,12 @@ const Prescreen = () => {
   const [testInfo, setTestInfo] = useState(null);
   const navigate = useNavigate();
 
-  const applicationId = "6585D06C-5F39-4B3E-81B0-6E3A8ECFC2E8"; 
+  const applicationId = "73D61C62-DFD2-4485-8D45-34832F612B0E"; 
 
   useEffect(() => {
     const fetchTestInfo = async () => {
       try {
-        const response = await fetch(`https://localhost:7256/api/PreScreenTest/${applicationId}`);
+        const response = await fetch(`http://localhost:5190/api/PreScreenTest/${applicationId}`);
         if (!response.ok) {
           throw new Error("Failed to fetch test info");
         }

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { FiClock, FiCheckCircle } from 'react-icons/fi';
 import CongratulationsCard from '../../components/CongratulationsCard';
 
-const applicationId = '0E7FCBE2-3CF9-4178-A94D-F02543E68FEB';
+const applicationId = '73D61C62-DFD2-4485-8D45-34832F612B0E';
 
 const TextAssessment = () => {
   const [questions, setQuestions] = useState([]);
@@ -16,7 +16,7 @@ const TextAssessment = () => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await axios.get(`https://localhost:7256/api/PreScreenTest/Questions/${applicationId}`);
+        const res = await axios.get(`http://localhost:5190/api/PreScreenTest/Questions/${applicationId}`);
         const loadedQuestions = res.data.questions.map((q) => ({
           questionId: q.questionId,
           question: q.questionName,
@@ -77,7 +77,7 @@ const TextAssessment = () => {
 
     try {
       const res = await axios.post(
-        `https://localhost:7256/api/Test/check-answers/${applicationId}`,
+        `http://localhost:5190/api/AnswerCheck/mcq/${applicationId}`,
         {
           questionCount: questions.length,
           answers: answerData,

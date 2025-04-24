@@ -6,12 +6,12 @@ const Interview = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const userId = '3FD8E0C2-C392-483E-97AF-DE5B8C62627A';
+  const userId = '39A9BE4D-062F-4BD5-8E51-F049F15C0F41';
 
   const fetchInterviewDetails = async () => {
     try {
       setRefreshing(true);
-      const response = await axios.get(`https://localhost:7256/api/Interview/byUser/${userId}`);
+      const response = await axios.get(`http://localhost:5190/api/Interview/byUser/${userId}`);
       setInterviews(response.data);
     } catch (error) {
       console.error('Failed to fetch interview data:', error);
