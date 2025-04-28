@@ -6,7 +6,7 @@ const Prescreen = () => {
   const [testInfo, setTestInfo] = useState(null);
   const navigate = useNavigate();
 
-  const applicationId = "73D61C62-DFD2-4485-8D45-34832F612B0E"; 
+  const applicationId = "D3A48EFD-AA80-4126-88DE-85CD916838A2"; 
 
   useEffect(() => {
     const fetchTestInfo = async () => {
