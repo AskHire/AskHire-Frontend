@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlay, FaMicrophone, FaClock, FaQuestionCircle, FaBriefcase } from 'react-icons/fa';
+import { FaPlay, FaMicrophone, FaClock, FaQuestionCircle} from 'react-icons/fa';
 
 const Prescreen = () => {
   const [testInfo, setTestInfo] = useState(null);
