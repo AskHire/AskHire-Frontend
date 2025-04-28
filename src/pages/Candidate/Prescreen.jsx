@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlay, FaMicrophone, FaClock, FaQuestionCircle, FaBriefcase } from 'react-icons/fa';
+import { FaPlay, FaMicrophone, FaClock, FaQuestionCircle } from 'react-icons/fa';
 
 const Prescreen = () => {
   const [testInfo, setTestInfo] = useState(null);
@@ -43,10 +43,6 @@ const Prescreen = () => {
           <FaQuestionCircle className="mr-2 text-green-600" />
           <span>Number of Questions: {testInfo?.questionCount ?? '...'} Questions</span>
         </div>
-        {/* <div className="bg-yellow-50 p-4 rounded-lg flex items-center">
-          <FaBriefcase className="mr-2 text-yellow-600" />
-          <span>Job Role: {testInfo?.vacancyName ?? '...'}</span>
-        </div> */}
       </div>
       <div className="flex justify-center space-x-4">
         <button
