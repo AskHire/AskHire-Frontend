@@ -20,13 +20,11 @@ import UserRoles from "../pages/Admin/UserRoles";
 import ManageManager from "../pages/Admin/ManageManager";
 import ManageCandidate from "../pages/Admin/ManageCandidate";
 import SystemNotification from "../pages/Admin/SystemNotification";
-
 import LongListInterviewScheduler from "../pages/Manager/LongListInterviewSheduler";
 import Prescreen from "../pages/Candidate/Prescreen";
 import TextAssessment from "../pages/Candidate/TextAssessment";
 import VoiceAssessment from "../pages/Candidate/VoiceAssessment";
 import AboutUs from "../pages/about us/AboutUs";
-
 import Candidate from "../layout/Candidate";
 import Interview from "../pages/Candidate/Interview";
 import ManageVacancy from "../pages/Manager/ManageVacancy";
@@ -191,11 +189,11 @@ path:"ManageUserRoles",
         element: <Prescreen/>,
       },
       {
-        path: "TextAssessment",
+        path: "TextAssessment/:applicationId",
         element: <TextAssessment/>,
       },
       {
-        path: "VoiceAssessment",
+        path: "VoiceAssessment/:applicationId",
         element: <VoiceAssessment/>
       },
     ]
