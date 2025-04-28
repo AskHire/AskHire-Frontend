@@ -27,7 +27,7 @@ const ManagerDashboard = () => {
   useEffect(() => {
     const fetchTotalUsers = async () => {
       try {
-        const response = await axios.get('http://localhost:5190/api/adminusers/total-users');
+        const response = await axios.get('http://localhost:5190/api/adminusers/total-candidates');
         setTotalUsers(response.data); 
       } catch (error) {
         console.error('Error fetching total users:', error);
@@ -98,7 +98,8 @@ const ManagerDashboard = () => {
   ];
 
   return (
-    <>
+    <div className="bg-gray-100 min-h-screen p-6">
+      <ManagerTopbar />
       <h1 className="text-3xl font-bold mb-6">Manager Dashboard</h1>
 
       {/* Stats Cards */}
@@ -170,7 +171,7 @@ const ManagerDashboard = () => {
           </ResponsiveContainer>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
