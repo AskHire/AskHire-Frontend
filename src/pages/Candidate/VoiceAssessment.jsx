@@ -166,19 +166,6 @@ const VoiceAssessment = () => {
     }
   };
 
-  // const handleOptionClick = (optionId) => {
-  //   // Create a new copy of the answers array
-  //   const updatedAnswers = [...answers];
-    
-  //   // Update the answer for the current question
-  //   updatedAnswers[currentIndex] = {
-  //     QuestionId: questions[currentIndex].questionId,
-  //     Answer: optionId
-  //   };
-    
-  //   setAnswers(updatedAnswers);
-  // };
-
   if (loading) return <div className="p-6">Loading questions...</div>;
 
   if (result && isSubmitted) {
