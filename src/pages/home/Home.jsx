@@ -1,8 +1,15 @@
 import React from 'react'
+import Banner from '../../components/banner'
+import ProcessOverview from '../../components/ProcessOverview'
 
 const Home = () => {
   return (
-    <div>Home</div>
+    <div>
+      <>
+        <Banner/>
+        <ProcessOverview/>
+      </>
+    </div>
   )
 }
 

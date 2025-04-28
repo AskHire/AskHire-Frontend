@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlay, FaMicrophone, FaClock, FaQuestionCircle} from 'react-icons/fa';
+import { FaPlay, FaMicrophone, FaClock, FaQuestionCircle } from 'react-icons/fa';
 
 const Prescreen = () => {
   const [testInfo, setTestInfo] = useState(null);
   const navigate = useNavigate();
 
-  const applicationId = "73D61C62-DFD2-4485-8D45-34832F612B0E"; 
+  const applicationId = "D3A48EFD-AA80-4126-88DE-85CD916838A2"; 
 
   useEffect(() => {
     const fetchTestInfo = async () => {
@@ -43,20 +43,16 @@ const Prescreen = () => {
           <FaQuestionCircle className="mr-2 text-green-600" />
           <span>Number of Questions: {testInfo?.questionCount ?? '...'} Questions</span>
         </div>
-        {/* <div className="bg-yellow-50 p-4 rounded-lg flex items-center">
-          <FaBriefcase className="mr-2 text-yellow-600" />
-          <span>Job Role: {testInfo?.vacancyName ?? '...'}</span>
-        </div> */}
       </div>
       <div className="flex justify-center space-x-4">
         <button
-          onClick={() => navigate(`/TextAssessment/${applicationId}`)}
+          onClick={() => navigate(`/candidate/TextAssessment/${applicationId}`)}
           className="bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center"
         >
           <FaPlay className="mr-2" /> Start Text Assessment
         </button>
         <button
-          onClick={() => navigate(`/VoiceAssessment/${applicationId}`)}
+          onClick={() => navigate(`/candidate/VoiceAssessment/${applicationId}`)}
           className="bg-green-600 text-white px-6 py-3 rounded-lg flex items-center"
         >
           <FaMicrophone className="mr-2" /> Start Voice Assessment
