@@ -1,18 +1,19 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Main from "../layout/Main";
-import Home from "../pages/home/Home";
-import Login from "../pages/Login/Login";
-import Signup from "../pages/signup/Signup";
-import Dashboard from "../pages/dashboard/Dashboard";
-import Job from "../pages/jobs/Job";
 import Manager from "../layout/Manager";
+import Admin from "../layout/Admin";
+import Candidate from "../layout/Candidate";
+import Home from "../pages/Common/Home";
+import Login from "../pages/Common/Login";
+import SignUp from "../pages/Common/Signup";
+import AboutUs from "../pages/Common/AboutUs";
+import Job from "../pages/Common/Job";
 import ManagerDashboard from "../pages/Manager/ManagerDashboard";
 import ManageQuestions from "../pages/Manager/ManageQuestions";
 import SetupVacancy from "../pages/Manager/SetupVacancy";
 import AutomatedInterviews from "../pages/Manager/AutomatedInterviews";
 import ManualInterviews from "../pages/Manager/ManualInterviews";
 import CreateQuestions from "../pages/Manager/CreateQuestions";
-import Admin from "../layout/Admin";
 import AdminDashboard from "../pages/Admin/AdminDashboard";
 import CreateJobs from "../pages/Admin/CreateJobs";
 import ManageAdmin from "../pages/Admin/ManageAdmin";
@@ -24,8 +25,6 @@ import LongListInterviewScheduler from "../pages/Manager/LongListInterviewShedul
 import Prescreen from "../pages/Candidate/Prescreen";
 import TextAssessment from "../pages/Candidate/TextAssessment";
 import VoiceAssessment from "../pages/Candidate/VoiceAssessment";
-import AboutUs from "../pages/about us/AboutUs";
-import Candidate from "../layout/Candidate";
 import Interview from "../pages/Candidate/Interview";
 import ManageVacancy from "../pages/Manager/ManageVacancy";
 import LongList from "../pages/Manager/LongList";
@@ -35,6 +34,8 @@ import NotifyCandidates from "../pages/Manager/NotifyCandidates";
 import InterviewScheduler from "../pages/Manager/InterviewScheduler";
 import JobShow from "../pages/Candidate/JobShow";
 import CVUpload from "../pages/Candidate/CVUpload";
+import CandidateDashboard from "../pages/Candidate/CandidateDashboard";
+
 
 
 
@@ -55,7 +56,7 @@ const router = createBrowserRouter([
       },
       {
         path: "signup",
-        element: <Signup />,
+        element: <SignUp />,
       },
       {
         path: "aboutus",
@@ -180,7 +181,7 @@ path:"ManageUserRoles",
     children:[
       {
         path: "",
-        element: <Dashboard/>
+        element: <CandidateDashboard/>
       },
       {
         path: "interview",
