@@ -34,6 +34,8 @@ import ViewDetails from "../pages/Manager/ViewDetails";
 import NotifyCandidates from "../pages/Manager/NotifyCandidates";
 import InterviewScheduler from "../pages/Manager/InterviewScheduler";
 import JobShow from "../pages/Candidate/JobShow";
+import CVUpload from "../pages/Candidate/CVUpload";
+
 
 
 
@@ -195,6 +197,10 @@ path:"ManageUserRoles",
       {
         path: "VoiceAssessment/:applicationId",
         element: <VoiceAssessment/>
+      },
+      {
+        path: "CVupload",
+        element: <CVUpload/>
       },
     ]
   }
