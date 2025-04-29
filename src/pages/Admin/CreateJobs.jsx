@@ -23,7 +23,7 @@ export default function CreateJobs() {
   // Fetch jobs from API
   const fetchJobs = async () => {
     try {
-      const response = await axios.get("https://localhost:7256/api/jobrole");
+      const response = await axios.get("http://localhost:5190/api/adminjobrole");
       console.log("API Response:", response.data); // Debugging: Check API response
 
       if (Array.isArray(response.data)) {
@@ -56,7 +56,7 @@ export default function CreateJobs() {
       return;}
 
     try {
-      await axios.post("https://localhost:7256/api/jobrole", newJob);
+      await axios.post("http://localhost:5190/api/adminjobrole", newJob);
       alert("Job Created Successfully!");
 
       setNewJob({
@@ -79,7 +79,7 @@ export default function CreateJobs() {
   const handleDeleteJob = async (JobId) => {
     try {
       console.log("Deleting job with ID:", JobId);
-      await axios.delete(`https://localhost:7256/api/jobrole/${JobId}`);
+      await axios.delete(`http://localhost:5190/api/adminjobrole/${JobId}`);
       fetchJobs(); // Refresh job list after deletion
     } catch (error) {
       console.error("Error deleting job:", error);
@@ -100,7 +100,7 @@ export default function CreateJobs() {
       if (!editingJob) return;
     
       try {
-        await axios.put(`https://localhost:7256/api/jobrole/${editingJob.JobId}`, editingJob);
+        await axios.put(`http://localhost:5190/api/adminjobrole/${editingJob.JobId}`, editingJob);
         alert("Job Updated Successfully!");
     
         setEditingJob(null); // Close edit card

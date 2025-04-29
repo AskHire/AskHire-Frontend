@@ -3,7 +3,7 @@ import AdminHeader from '../../components/AdminHeader';
 import { BiDotsVerticalRounded } from 'react-icons/bi';
 import axios from 'axios';
 
-const API_URL = 'https://localhost:7256/api/notifications'; // Adjust if needed
+const API_URL = 'http://localhost:5190/api/adminnotification'; // Adjust if needed
 
 export default function SystemNotification() {
   const [form, setForm] = useState({
@@ -52,7 +52,7 @@ export default function SystemNotification() {
     };
   
     try {
-      await axios.post('https://localhost:7256/api/notifications', payload);
+      await axios.post('http://localhost:5190/api/adminnotification', payload);
   
       alert("Notification sent successfully!");
   
