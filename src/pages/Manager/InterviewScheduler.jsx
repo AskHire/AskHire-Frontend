@@ -9,6 +9,7 @@ const InterviewScheduler = () => {
   const [candidate, setCandidate] = useState(null);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
+  const [duration, setDuration] = useState('01:00:00'); // Added duration state with default 1 hour
   const [interviewInstructions, setInterviewInstructions] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [interviewId, setInterviewId] = useState(null);
@@ -63,8 +64,16 @@ const InterviewScheduler = () => {
                     setTime(interviewData.time);
                   }
                   
-                  // Set instructions if available - using the new property name
-                  if (interviewData.interview_Instructions) {
+                  // Set duration if available (if not in the current model, will be ignored)
+                  if (interviewData.duration) {
+                    setDuration(interviewData.duration);
+                  }
+                  
+                  // Set instructions if available - using the property name from API
+                  if (interviewData.instructions) {
+                    setInterviewInstructions(interviewData.instructions);
+                  } else if (interviewData.interview_Instructions) {
+                    // Fallback for backward compatibility
                     setInterviewInstructions(interviewData.interview_Instructions);
                   }
                 }
@@ -107,7 +116,8 @@ const InterviewScheduler = () => {
         applicationId: applicationId,
         date: date,
         time: time,
-        interview_Instructions: interviewInstructions // Updated to match backend model property name
+        duration: duration, // Added duration field in time format (HH:MM:SS)
+        instructions: interviewInstructions // Based on the API documentation, this should be "instructions"
       };
       
       let url, method;
@@ -248,6 +258,24 @@ const InterviewScheduler = () => {
                   onChange={(e) => setTime(e.target.value)}
                   required
                 />
+              </div>
+              
+              {/* Duration field (new) */}
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-600 mb-1">Duration</label>
+                <select
+                  className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.value)}
+                  required
+                >
+                  <option value="00:15:00">15 minutes</option>
+                  <option value="00:30:00">30 minutes</option>
+                  <option value="00:45:00">45 minutes</option>
+                  <option value="01:00:00">1 hour</option>
+                  <option value="01:30:00">1 hour 30 minutes</option>
+                  <option value="02:00:00">2 hours</option>
+                </select>
               </div>
             </div>
 

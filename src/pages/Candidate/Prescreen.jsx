@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlay, FaMicrophone, FaClock, FaQuestionCircle, FaBriefcase } from 'react-icons/fa';
+import { FaPlay, FaMicrophone, FaClock, FaQuestionCircle } from 'react-icons/fa';
 
 const Prescreen = () => {
   const [testInfo, setTestInfo] = useState(null);
   const navigate = useNavigate();
 
-  const applicationId = "6585D06C-5F39-4B3E-81B0-6E3A8ECFC2E8"; 
+  const applicationId = "65B434F3-4E52-482E-B419-64EF23FF2C0C"; 
 
   useEffect(() => {
     const fetchTestInfo = async () => {
       try {
-        const response = await fetch(`https://localhost:7256/api/PreScreenTest/${applicationId}`);
+        const response = await fetch(`http://localhost:5190/api/PreScreenTest/${applicationId}`);
         if (!response.ok) {
           throw new Error("Failed to fetch test info");
         }
@@ -43,20 +43,16 @@ const Prescreen = () => {
           <FaQuestionCircle className="mr-2 text-green-600" />
           <span>Number of Questions: {testInfo?.questionCount ?? '...'} Questions</span>
         </div>
-        {/* <div className="bg-yellow-50 p-4 rounded-lg flex items-center">
-          <FaBriefcase className="mr-2 text-yellow-600" />
-          <span>Job Role: {testInfo?.vacancyName ?? '...'}</span>
-        </div> */}
       </div>
       <div className="flex justify-center space-x-4">
         <button
-          onClick={() => navigate(`/TextAssessment/${applicationId}`)}
+          onClick={() => navigate(`/candidate/TextAssessment/${applicationId}`)}
           className="bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center"
         >
           <FaPlay className="mr-2" /> Start Text Assessment
         </button>
         <button
-          onClick={() => navigate(`/VoiceAssessment/${applicationId}`)}
+          onClick={() => navigate(`/candidate/VoiceAssessment/${applicationId}`)}
           className="bg-green-600 text-white px-6 py-3 rounded-lg flex items-center"
         >
           <FaMicrophone className="mr-2" /> Start Voice Assessment

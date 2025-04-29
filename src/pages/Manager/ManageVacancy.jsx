@@ -2,6 +2,8 @@ import ManagerTopbar from '../../components/ManagerTopbar';
 import React, { useEffect, useState } from "react";
 import { ChevronDown, Search, Edit, Trash2, X } from "lucide-react";
 
+
+
 const ManageVacancy = () => {
   const [vacancies, setVacancies] = useState([]);
   const [loading, setLoading] = useState(true);

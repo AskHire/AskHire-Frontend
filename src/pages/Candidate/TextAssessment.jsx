@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FiClock, FiCheckCircle } from 'react-icons/fi';
 import CongratulationsCard from '../../components/CongratulationsCard';
+import { useParams } from 'react-router-dom';
 
-const applicationId = '0E7FCBE2-3CF9-4178-A94D-F02543E68FEB';
+//const applicationId = 'D3A48EFD-AA80-4126-88DE-85CD916838A2';
 
 const TextAssessment = () => {
+  const { applicationId } = useParams();
   const [questions, setQuestions] = useState([]);
   const [duration, setDuration] = useState(600);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -16,7 +18,7 @@ const TextAssessment = () => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await axios.get(`https://localhost:7256/api/PreScreenTest/Questions/${applicationId}`);
+        const res = await axios.get(`http://localhost:5190/api/PreScreenTest/Questions/${applicationId}`);
         const loadedQuestions = res.data.questions.map((q) => ({
           questionId: q.questionId,
           question: q.questionName,
@@ -77,7 +79,7 @@ const TextAssessment = () => {
 
     try {
       const res = await axios.post(
-        `https://localhost:7256/api/Test/check-answers/${applicationId}`,
+        `http://localhost:5190/api/AnswerCheck/mcq/${applicationId}`,
         {
           questionCount: questions.length,
           answers: answerData,
