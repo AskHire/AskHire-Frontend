@@ -121,8 +121,10 @@ const ManageVacancy = () => {
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
-    <div className="bg-gray-100 min-h-screen p-6">
-      <ManagerTopbar />
+    <div className="flex-1 pt-1 pb-4 pr-6 pl-6">
+      <div className="pb-4">
+        <ManagerTopbar />
+      </div>
       <h1 className="text-3xl font-bold mb-6">Manage Vacancy</h1>
 
       <div className="bg-white p-6 rounded-lg shadow-md">
