@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function Banner() {
   return (
-    <div className="w-full bg-blue-600 py-16 px-6 flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="w-full bg-blue-600 py-32 px-6 flex flex-col items-center justify-center relative overflow-hidden">
       {/* Background elements */}
       <div className="absolute top-0 left-0 w-full h-full">
         <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-blue-500 rounded-full opacity-30"></div>
