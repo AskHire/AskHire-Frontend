@@ -2,9 +2,11 @@ import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { FiClock } from 'react-icons/fi';
 import CongratulationsCard from '../../components/CongratulationsCard';
+import { useParams } from 'react-router-dom';
 
 const VoiceAssessment = () => {
-  const applicationId = 'D3A48EFD-AA80-4126-88DE-85CD916838A2';
+  //const applicationId = 'D3A48EFD-AA80-4126-88DE-85CD916838A2';
+  const { applicationId } = useParams();
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
