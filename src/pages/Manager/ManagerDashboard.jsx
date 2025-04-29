@@ -202,8 +202,8 @@ const ManagerDashboard = () => {
     const fetchDashboardData = async () => {
       try {
         const [jobsResponse, usersResponse] = await Promise.all([
-          axios.get('http://localhost:5190/api/JobRole/total-jobs'),
-          axios.get('http://localhost:5190/api/adminusers/total-candidates')
+          axios.get('http://localhost:5190/api/manager-dashboard/total-jobs'),
+          axios.get('http://localhost:5190/api/manager-dashboard/total-candidates')
         ]);
         
         setDashboardData(prev => ({
