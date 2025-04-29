@@ -12,7 +12,7 @@ const ManagerTopbar = () => {
         
         
         {/* Search and icons section - right side */}
-        <div className="flex-1 h-16 bg-gray-100 flex items-center justify-between px-4">
+        <div className="flex-1 h-16  flex items-center justify-between px-4">
           {/* Search bar */}
           <div className="w-full max-w-xl relative mx-auto">
             <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
