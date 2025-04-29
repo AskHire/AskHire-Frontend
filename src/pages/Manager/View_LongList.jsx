@@ -57,7 +57,7 @@ const View_LongList = () => {
     const fetchVacancies = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("https://localhost:7256/api/JobRole");
+        const response = await fetch("http://localhost:5190/api/JobRole");
         if (!response.ok) throw new Error("Failed to fetch job roles");
         
         const data = await response.json();
@@ -132,11 +132,11 @@ const View_LongList = () => {
         
         let url;
         if (viewAll) {
-          url = "https://localhost:7256/api/Candidates";
+          url = "http://localhost:5190/api/Candidates";
         } else {
           // Make sure the selectedVacancy is properly encoded
           const encoded = encodeURIComponent(selectedVacancy.trim());
-          url = `https://localhost:7256/api/Candidates/vacancy/${encoded}`;
+          url = `http://localhost:5190/api/Candidates/vacancy/${encoded}`;
         }
         
         // Add cache-busting parameter to URL
@@ -149,18 +149,40 @@ const View_LongList = () => {
           throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
         }
         
-        const data = await response.json();
+        let data = await response.json();
         
-        // Set the candidates data
-        setCandidatesData(data);
-        
-        // Then fetch interview data for each candidate
-        for (const candidate of data) {
-          if (candidate.applicationId) {
-            await fetchInterviewForCandidate(candidate.applicationId);
+        // First, deduplicate candidates by applicationId
+        const uniqueApplicationIds = new Set();
+        data = data.filter(candidate => {
+          if (uniqueApplicationIds.has(candidate.applicationId)) {
+            return false;
           }
-        }
+          uniqueApplicationIds.add(candidate.applicationId);
+          return true;
+        });
         
+        // Now fetch interview data for each unique candidate
+        const candidatesWithInterviews = await Promise.all(
+          data.map(async (candidate) => {
+            if (candidate.applicationId) {
+              try {
+                const interviewData = await fetchInterviewForCandidate(candidate.applicationId);
+                if (interviewData) {
+                  return {
+                    ...candidate,
+                    interview: interviewData
+                  };
+                }
+              } catch (err) {
+                console.error(`Error fetching interview for candidate ${candidate.applicationId}:`, err);
+              }
+            }
+            return candidate;
+          })
+        );
+        
+        // Update state with deduplicated candidates with interview data
+        setCandidatesData(candidatesWithInterviews);
         setIsLoading(false);
       } catch (err) {
         console.error("Error in fetchCandidates:", err);
@@ -171,27 +193,17 @@ const View_LongList = () => {
     };
     
     fetchCandidates();
-  }, [selectedVacancy, viewAll, refreshTrigger]); // Added refreshTrigger to dependencies
+  }, [selectedVacancy, viewAll, refreshTrigger]);
   
   // Fetch interview details for a specific candidate
   const fetchInterviewForCandidate = async (applicationId) => {
     try {
       // Use cache-busting parameter to avoid browser caching
       const timestamp = new Date().getTime();
-      const response = await fetch(`https://localhost:7256/api/Interview/application/${applicationId}?_=${timestamp}`);
+      const response = await fetch(`http://localhost:5190/api/ManagerInterview/application/${applicationId}?_=${timestamp}`);
       
       if (response.ok) {
         const interviewData = await response.json();
-        
-        // Update the candidate in the state with the interview data
-        setCandidatesData(prevData => 
-          prevData.map(c => 
-            c.applicationId === applicationId 
-              ? {...c, interview: interviewData} 
-              : c
-          )
-        );
-        
         return interviewData;
       }
     } catch (error) {

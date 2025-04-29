@@ -9,7 +9,7 @@ const InterviewScheduler = () => {
   const [candidate, setCandidate] = useState(null);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
-  const [instructions, setInstructions] = useState('');
+  const [interviewInstructions, setInterviewInstructions] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [interviewId, setInterviewId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,7 +30,7 @@ const InterviewScheduler = () => {
         setIsLoading(true);
         // Add cache busting parameter to prevent caching
         const timestamp = new Date().getTime();
-        const response = await fetch(`https://localhost:7256/api/Candidates/${applicationId}?_=${timestamp}`);
+        const response = await fetch(`http://localhost:5190/api/Candidates/${applicationId}?_=${timestamp}`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch candidate: ${response.status}`);
@@ -44,7 +44,7 @@ const InterviewScheduler = () => {
           // Now fetch interview directly to ensure we have the latest data
           if (isEditing) {
             try {
-              const interviewResponse = await fetch(`https://localhost:7256/api/Interview/application/${applicationId}?_=${timestamp}`);
+              const interviewResponse = await fetch(`http://localhost:5190/api/ManagerInterview/application/${applicationId}?_=${timestamp}`);
               if (interviewResponse.ok) {
                 const interviewData = await interviewResponse.json();
                 console.log("Fetched interview data:", interviewData);
@@ -63,9 +63,9 @@ const InterviewScheduler = () => {
                     setTime(interviewData.time);
                   }
                   
-                  // Set instructions if available
-                  if (interviewData.instructions) {
-                    setInstructions(interviewData.instructions);
+                  // Set instructions if available - using the new property name
+                  if (interviewData.interview_Instructions) {
+                    setInterviewInstructions(interviewData.interview_Instructions);
                   }
                 }
               } else {
@@ -107,7 +107,7 @@ const InterviewScheduler = () => {
         applicationId: applicationId,
         date: date,
         time: time,
-        instructions: instructions
+        interview_Instructions: interviewInstructions // Updated to match backend model property name
       };
       
       let url, method;
@@ -115,12 +115,12 @@ const InterviewScheduler = () => {
       // If editing and we have an interview ID, use PUT to update existing record
       if (isEditing && interviewId) {
         interviewData.interviewId = interviewId;
-        url = `https://localhost:7256/api/Interview/${interviewId}`;
+        url = `http://localhost:5190/api/ManagerInterview/${interviewId}`;
         method = "PUT";
         console.log("Updating interview with ID:", interviewId);
       } else {
         // For new interview, use POST
-        url = "https://localhost:7256/api/Interview";
+        url = "http://localhost:5190/api/ManagerInterview";
         method = "POST";
         console.log("Creating new interview");
       }
@@ -211,9 +211,6 @@ const InterviewScheduler = () => {
             </h2>
           </div>
 
-        
-          
-
           {/* Form */}
           <form onSubmit={handleSubmit}>
             {/* Candidate Name Display */}
@@ -254,14 +251,14 @@ const InterviewScheduler = () => {
               </div>
             </div>
 
-            {/* Instructions field */}
+            {/* Instructions field - updated label for clarity */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-600 mb-1">Instructions</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Interview Instructions</label>
               <textarea
                 className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 min-h-32"
                 placeholder="Enter instructions for interview..."
-                value={instructions}
-                onChange={(e) => setInstructions(e.target.value)}
+                value={interviewInstructions}
+                onChange={(e) => setInterviewInstructions(e.target.value)}
                 required
               ></textarea>
             </div>

@@ -25,7 +25,7 @@ const LongList = () => {
     const fetchJobRoles = async () => {
       try {
         console.log("Fetching job roles for LongList page");
-        const response = await fetch("https://localhost:7256/api/JobRole");
+        const response = await fetch("http://localhost:5190/api/JobRole");
         if (!response.ok) throw new Error("Failed to fetch job roles");
         
         const data = await response.json();
