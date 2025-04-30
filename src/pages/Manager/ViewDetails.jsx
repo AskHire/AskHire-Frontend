@@ -13,7 +13,7 @@ const ViewDetails = () => {
     const fetchCandidateDetails = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`http://localhost:5190/api/Candidates/${id}`);
+        const response = await fetch(`http://localhost:5190/api/ManagerCandidates/${id}`);
         if (!response.ok) {
           throw new Error(`API request failed with status ${response.status}`);
         }
@@ -41,7 +41,7 @@ const ViewDetails = () => {
         return;
       }
 
-      const response = await fetch(`http://localhost:5190/api/Candidates/download-cv/${id}`, {
+      const response = await fetch(`http://localhost:5190/api/ManagerCandidates/download-cv/${id}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/pdf',

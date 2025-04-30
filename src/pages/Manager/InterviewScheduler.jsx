@@ -31,7 +31,7 @@ const InterviewScheduler = () => {
         setIsLoading(true);
         // Add cache busting parameter to prevent caching
         const timestamp = new Date().getTime();
-        const response = await fetch(`http://localhost:5190/api/Candidates/${applicationId}?_=${timestamp}`);
+        const response = await fetch(`http://localhost:5190/api/ManagerCandidates/${applicationId}?_=${timestamp}`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch candidate: ${response.status}`);
