@@ -15,11 +15,13 @@ export default function ManageAdmin() {
   useEffect(() => {
     const fetchAdmins = async () => {
       try {
+
         const response = await axios.get("http://localhost:5190/api/AdminUser"); // 🚫 No token
         const allUsers = response.data;
 
         const adminOnly = allUsers.filter(user => user.role === "Admin");
         setAdmins(adminOnly);
+
       } catch (error) {
         console.error("Error fetching admins:", error);
       }
@@ -33,10 +35,12 @@ export default function ManageAdmin() {
     if (!window.confirm("Are you sure you want to delete this admin?")) return;
 
     try {
+
       await axios.delete(`http://localhost:5190/api/AdminUser/${adminId}`); // 🚫 No token
 
       setAdmins((prevAdmins) => prevAdmins.filter(admin => admin.id !== adminId));
       alert("Admin deleted successfully.");
+
     } catch (error) {
       console.error("Error deleting admin:", error);
 
@@ -74,6 +78,7 @@ export default function ManageAdmin() {
           />
           <IoIosSearch className="absolute w-5 h-5 text-gray-900 transform -translate-y-1/2 left-3 top-1/2" />
         </div>
+
 
         {/* Sort Dropdown */}
         <div className="relative" ref={dropdownRef}>

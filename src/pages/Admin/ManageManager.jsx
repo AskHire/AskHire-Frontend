@@ -20,6 +20,7 @@ export default function ManageManager() {
 
         const managerOnly = allUsers.filter(user => user.role === "Manager");
         setManagers(managerOnly); // ✅ Corrected (was mistakenly written setAdmins)
+
       } catch (error) {
         console.error("Error fetching managers:", error);
       }
@@ -33,9 +34,11 @@ export default function ManageManager() {
     if (!window.confirm("Are you sure you want to delete this manager?")) return;
 
     try {
+
       await axios.delete(`http://localhost:5190/api/AdminUser/${managerId}`); // No token
       setManagers((prevManagers) => prevManagers.filter(manager => manager.id !== managerId));
       alert("Manager deleted successfully.");
+
     } catch (error) {
       console.error("Error deleting manager:", error);
 
@@ -107,6 +110,7 @@ export default function ManageManager() {
           <span className="col-span-4 text-right">Delete</span>
         </div>
 
+
         {filteredManagers.length > 0 ? (
           filteredManagers.map((manager, index) => (
             <div key={manager.id} className="grid items-center grid-cols-12 p-2 mb-2 bg-white rounded-md shadow-sm">
@@ -117,6 +121,7 @@ export default function ManageManager() {
                   src={manager.image || "https://via.placeholder.com/40"}
                   alt={manager.firstName}
                 />
+
               </div>
               <span className="col-span-5">{manager.firstName} {manager.lastName}</span>
               <div className="col-span-4 text-right">

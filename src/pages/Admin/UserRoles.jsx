@@ -14,11 +14,13 @@ export default function UserRoles() {
   const token = localStorage.getItem("accessToken"); // or wherever you store it
 
   useEffect(() => {
+
     fetch("http://localhost:5190/api/AdminUser", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
+
       .then((response) => response.json())
       .then((data) => setUsers(data))
       .catch((error) => console.error("Error fetching users:", error));
@@ -111,6 +113,7 @@ export default function UserRoles() {
               >
                 <span className="col-span-1 font-medium">{index + 1}</span>
 
+
                 <div className="col-span-2">
                   <img
                     className="w-10 h-10 rounded-full"
@@ -124,6 +127,7 @@ export default function UserRoles() {
                 </span>
 
                 {/* Role Management */}
+
                 <div className="col-span-3">
                   {editingUserId === user.id ? (
                     <div className="flex items-center gap-2">

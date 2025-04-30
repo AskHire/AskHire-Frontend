@@ -76,11 +76,6 @@ const CreateQuestions = () => {
     }
   };
 
-  const handleAddOption = () => {
-    const newId = Math.max(...options.map(option => option.id)) + 1;
-    setOptions([...options, { id: newId, text: "" }]);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -124,8 +119,10 @@ const CreateQuestions = () => {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen p-6">
-      <ManagerTopbar />
+    <div className="flex-1 pt-1 pb-4 pr-6 pl-6">
+      <div className="pb-4">
+        <ManagerTopbar />
+      </div>
       <h1 className="text-3xl font-bold mb-6">Create Questions</h1>
       
       {/* Job Role Selector */}
@@ -225,15 +222,6 @@ const CreateQuestions = () => {
                   </div>
                 ))}
               </div>
-              
-              {/* Add Option Button */}
-              <button
-                type="button"
-                onClick={handleAddOption}
-                className="mt-3 text-blue-500 flex items-center"
-              >
-                <span className="text-xl mr-1">+</span> Add Option
-              </button>
             </div>
             
             {/* Correct Answer (This could be a dropdown or radio buttons in a real implementation) */}
