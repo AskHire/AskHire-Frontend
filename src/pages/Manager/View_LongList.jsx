@@ -132,11 +132,12 @@ const View_LongList = () => {
         
         let url;
         if (viewAll) {
-          url = "http://localhost:5190/api/Candidates";
+          // Use the endpoint that returns all LongList status candidates
+          url = "http://localhost:5190/api/ManagerCandidates";
         } else {
-          // Make sure the selectedVacancy is properly encoded
+          // Use the endpoint for candidates by vacancy, which should filter for LongList status
           const encoded = encodeURIComponent(selectedVacancy.trim());
-          url = `http://localhost:5190/api/Candidates/vacancy/${encoded}`;
+          url = `http://localhost:5190/api/ManagerCandidates/vacancy/${encoded}`;
         }
         
         // Add cache-busting parameter to URL
@@ -150,6 +151,13 @@ const View_LongList = () => {
         }
         
         let data = await response.json();
+        
+        // Filter candidates to only include those with LongList status
+        // This is a safety check in case the API doesn't filter correctly
+        data = data.filter(candidate => {
+          const status = candidate.status || candidate.Status || "";
+          return status.toLowerCase() === "longlist";
+        });
         
         // First, deduplicate candidates by applicationId
         const uniqueApplicationIds = new Set();
@@ -327,7 +335,7 @@ const View_LongList = () => {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Software Engineer"
+                placeholder="Search for vacancy..."
                 className="w-full py-3 pl-10 pr-4 text-gray-700 focus:outline-none"
               />
               <div className="pr-3">
@@ -361,14 +369,14 @@ const View_LongList = () => {
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-xl font-bold">
-              {selectedVacancy || "All Candidates"}
+              {selectedVacancy ? `${selectedVacancy} Long-List` : "All Long-List Candidates"}
             </h3>
             {selectedVacancy && (
               <button 
                 onClick={handleViewAll}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
               >
-                View All
+                View All Long-List
               </button>
             )}
           </div>
@@ -377,7 +385,7 @@ const View_LongList = () => {
           {isLoading && (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Loading candidates...</p>
+              <p className="mt-2 text-gray-600">Loading long-list candidates...</p>
             </div>
           )}
 
@@ -393,7 +401,7 @@ const View_LongList = () => {
             <>
               {candidatesData.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  No candidates found for this vacancy.
+                  No long-list candidates found for this vacancy.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
