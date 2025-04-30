@@ -64,6 +64,7 @@ const AdminSidebar = () => {
       <div
         className={`fixed md:static z-40 flex flex-col bg-white border-r border-gray-200 shadow-lg md:shadow-none transition-all duration-300 w-56
         ${mobileOpen ? "translate-x-0" : "md:translate-x-0 -translate-x-full"}`}
+
       >
         {/* Sidebar Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">

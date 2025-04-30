@@ -15,47 +15,41 @@ export default function ManageCandidate() {
   useEffect(() => {
     const fetchCandidates = async () => {
       try {
-        const response = await fetch("http://localhost:5190/api/candidates"); // Ensure this matches backend URL
-        if (!response.ok) throw new Error("Failed to fetch candidates");
-  
-        const data = await response.json();
-        console.log("Candidates fetched:", data); // Debugging: Check if data is returned
-        setCandidates(data);
+
+        const response = await axios.get("http://localhost:5190/api/AdminUser"); // 🚫 No token
+        const allUsers = response.data;
+
+        const candidateOnly = allUsers.filter(user => user.role === "Candidate");
+        setCandidates(candidateOnly);
+
       } catch (error) {
         console.error("Error fetching candidates:", error);
       }
     };
-  
+
     fetchCandidates();
   }, []);
   
 
   
   // Handle candidate deletion
-  const handleDeleteCandidate = async (UserId) => {
-    if (!UserId) {
-      alert("Invalid User ID!");
-      return;
-    }
-  
+  const handleDeleteCandidate = async (candidateId) => {
+    if (!window.confirm("Are you sure you want to delete this candidate?")) return;
+
     try {
-      console.log("Deleting candidate with ID:", UserId);
-  
-      await axios.delete(`http://localhost:5190/api/candidates/${UserId}`);
-  
-      // Instead of refetching all candidates, update state directly
-      setCandidates((prevCandidates) => prevCandidates.filter(candidate => candidate.userId !== UserId));
-  
-      console.log("Candidate deleted successfully.");}
-       
-      catch (error) {
+
+      await axios.delete(`http://localhost:5190/api/AdminUser/${candidateId}`); // 🚫 No token
+
+      setCandidates((prevCandidates) => prevCandidates.filter(candidate => candidate.id !== candidateId));
+      alert("Candidate deleted successfully.");
+    } catch (error) {
+
       console.error("Error deleting candidate:", error);
-  
-      // More robust error message handling
+
       const errorMessage = error.response?.data?.title || error.response?.data?.message || error.message;
       alert(`Failed to delete candidate: ${errorMessage}`);
     }
-    };
+  };
   
 
   // Sort candidates
@@ -107,7 +101,7 @@ export default function ManageCandidate() {
 
           <ul className="space-y-2">
             {filteredCandidates.map((candidate, index) => (
-              <div key={candidate.userId} className="grid items-center grid-cols-12 p-2 bg-white rounded-md shadow-sm">
+              <div key={candidate.id} className="grid items-center grid-cols-12 p-2 bg-white rounded-md shadow-sm">
                 <span className="col-span-1">{index + 1}</span>
                 <div className="col-span-2">
                     <img className="w-10 h-10 rounded-full" src={candidate.image || "https://via.placeholder.com/40"} alt={candidate.firstName} />
@@ -115,7 +109,7 @@ export default function ManageCandidate() {
 
                 <span className="col-span-3">{candidate.firstName} {candidate.lastName}</span>
                 <div className="col-span-5 text-right">
-                  <button onClick={() => handleDeleteCandidate(candidate.userId)} className="p-2 text-red-600 hover:text-red-800">
+                  <button onClick={() => handleDeleteCandidate(candidate.id)} className="p-2 text-red-600 hover:text-red-800">
                     <BiTrash className="w-5 h-5" />
                   </button>
                 </div>
