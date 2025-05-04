@@ -191,13 +191,15 @@ const LongList = () => {
                     <div className="flex justify-between items-center mb-3">
                       <span className="text-sm font-medium text-gray-700">#{index + 1}</span>
                       <button 
-                        className="bg-red-500 text-white p-2 rounded-full shadow-md h-8 w-8 flex items-center justify-center"
+                        className="p-2 bg-red-100 text-red-600 rounded-full"
                         onClick={() => handleDelete(vacancy.id)}
                       >
-                        🗑️
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </div>
-                    <h4 className="text-md font-medium text-gray-900 mb-3">{vacancy.title}</h4>
+                    <h4 className="text-md font-bold text-gray-900 mb-3">{vacancy.title}</h4>
                     <div className="space-y-2">
                       <button 
                         onClick={() => handleViewLongList(vacancy.title)}
@@ -219,56 +221,53 @@ const LongList = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full border-separate border-spacing-y-2">
-                <thead>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">#</th>
-                    <th className="px-3 sm:px-4 py-3 sm:py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Vacancy Name</th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">View Long-List</th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                      Schedule Interview
-                    </th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Delete</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">#</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vacancy Name</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View Long-List</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule Interview</th>
+                    <th scope="col" className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center w-16">Delete</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="bg-white divide-y divide-gray-200">
                   {filteredVacancies.length > 0 ? (
                     filteredVacancies.map((vacancy, index) => (
-                      <tr key={vacancy.id} className="my-2">
-                        <td colSpan="5" className="p-0">
-                          <div className="bg-white shadow-md border border-gray-300 rounded-lg grid grid-cols-12 items-center p-4 gap-2">
-                            <span className="col-span-1 text-sm font-medium text-gray-700">{index + 1}</span>
-                            <span className="col-span-3 text-sm font-medium text-gray-900">{vacancy.title}</span>
-                            <div className="col-span-3">
-                              <button
-                                onClick={() => handleViewLongList(vacancy.title)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-full shadow-md w-full"
-                              >
-                                View Long-List
-                              </button>
-                            </div>
-                            <div className="col-span-4">
-                              <Link to={`/manager/LongListInterviewSheduler?vacancy=${encodeURIComponent(vacancy.title)}`}>
-                                <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-full shadow-md w-full">
-                                  Schedule Long-List Interviews
-                                </button>
-                              </Link>
-                            </div>
-                            <div className="col-span-1 flex justify-center">
-                              <button 
-                                className="bg-red-500 text-white p-2 rounded-full shadow-md h-8 w-8 flex items-center justify-center"
-                                onClick={() => handleDelete(vacancy.id)}
-                              >
-                                🗑️
-                              </button>
-                            </div>
-                          </div>
+                      <tr key={vacancy.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{index + 1}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{vacancy.title}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button
+                            onClick={() => handleViewLongList(vacancy.title)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-full shadow-md"
+                          >
+                            View Long-List
+                          </button>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Link to={`/manager/LongListInterviewSheduler?vacancy=${encodeURIComponent(vacancy.title)}`}>
+                            <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-full shadow-md">
+                              Schedule Long-List Interviews
+                            </button>
+                          </Link>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <button
+                            onClick={() => handleDelete(vacancy.id)}
+                            className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors mx-auto"
+                            aria-label="Delete"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className="text-center py-4 text-gray-500">No matching vacancies found</td>
+                      <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">No matching vacancies found</td>
                     </tr>
                   )}
                 </tbody>
