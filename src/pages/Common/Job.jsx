@@ -18,7 +18,7 @@ const JobPage = () => {
     const fetchJobs = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5190/api/Vacancy/JobWiseVacancies');
+        const response = await fetch('http://localhost:5190/api/CandidateVacancy/JobWiseVacancies');
         
         if (!response.ok) {
           throw new Error(`API request failed with status ${response.status}`);
