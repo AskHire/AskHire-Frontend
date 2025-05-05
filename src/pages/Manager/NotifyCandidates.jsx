@@ -3,166 +3,86 @@ import axios from 'axios';
 import ManagerTopbar from '../../components/ManagerTopbar';
 
 const NotifyCandidates = () => {
-  const [selectedTab, setSelectedTab] = useState('qualified');
+  const [selectedTab, setSelectedTab] = useState('Longlist'); // Default tab is Longlist
   const [selectedCandidates, setSelectedCandidates] = useState([]);
-  const [candidatesByStatus, setCandidatesByStatus] = useState({ qualified: [], rejected: [], pending: [] });
+  const [candidatesByStatus, setCandidatesByStatus] = useState({ Longlist: [], Rejected: [], Pending: [] });
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [type, setType] = useState('Normal');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [preScreenDetails, setPreScreenDetails] = useState({});
+  const [expandedCandidate, setExpandedCandidate] = useState(null);
+  const [statistics, setStatistics] = useState({ Longlist: 0, Rejected: 0, Pending: 0, Total: 0 });
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   
   // Define CV qualification threshold
   const CV_QUALIFICATION_THRESHOLD = 70; // Minimum CV mark to be qualified
   
-  // Function to determine candidate status based on marks and vacancy threshold
-  const determineStatus = (candidate) => {
-    const cvMark = candidate.cV_Mark || 0;
-    // Use the Pre_Screen_PassMark directly from the application
-    const preScreenMark = candidate.pre_Screen_PassMark || 0;
-    const requiredCvMark = candidate.vacancy?.cVPassMark || CV_QUALIFICATION_THRESHOLD;
-    const requiredPreScreenMark = candidate.vacancy?.preScreenPassMark || 0;
-    
-    // Check if the candidate meets both thresholds for qualification
-    if (cvMark >= requiredCvMark && (preScreenMark >= requiredPreScreenMark || requiredPreScreenMark === 0)) {
-      return 'qualified';
-    } 
-    // Check if the candidate has been evaluated (has marks) but doesn't meet thresholds
-    else if (cvMark > 0 || preScreenMark > 0) {
-      return 'rejected';
-    } 
-    // If the candidate hasn't been fully evaluated yet
-    else {
-      return 'pending';
-    }
-  };
-
-  // Function to update candidate status in the backend
-  const updateCandidateStatus = async (applicationId, newStatus) => {
+  // Fetch statistics from the API
+  const fetchStatistics = useCallback(async () => {
     try {
-      await axios.get(`http://localhost:5190/api/Candidates/status/${newStatus}`, {
-        params: { applicationId }
+      const response = await axios.get('http://localhost:5190/api/ManagerCandidates/statistics');
+      console.log('Statistics data:', response.data);
+      
+      // Convert API response keys to match our frontend naming convention
+      setStatistics({
+        Longlist: response.data.longlist || 0,
+        Rejected: response.data.rejected || 0,
+        Pending: response.data.pending || 0,
+        Total: response.data.total || 0
       });
-      console.log(`Updated candidate ${applicationId} status to ${newStatus}`);
-      return true;
+      
+      return response.data;
     } catch (error) {
-      console.error(`Failed to update candidate ${applicationId} status:`, error);
-      return false;
+      console.error('Failed to fetch statistics:', error);
+      return { longlist: 0, rejected: 0, pending: 0, total: 0 };
     }
-  };
+  }, []);
 
-  // Function to fetch prescreening test details for a candidate
-  const fetchPreScreeningDetails = async (applicationId) => {
+  // Fetch candidates by status using the API endpoint
+  const fetchCandidatesByStatus = useCallback(async (status) => {
     try {
-      const response = await axios.get(`http://localhost:5190/api/PreScreenTest/${applicationId}`);
-      if (response.data) {
-        // Store the prescreen details in our state map with applicationId as key
-        setPreScreenDetails(prev => ({
-          ...prev,
-          [applicationId]: response.data
-        }));
-        // Return the actual mark from the response
-        return response.data.mark || 0;
-      }
-      return 0;
+      const normalizedStatus = status.toLowerCase();
+      const response = await axios.get(`http://localhost:5190/api/ManagerCandidates/status/${normalizedStatus}`);
+      console.log(`Fetched ${status} candidates:`, response.data);
+      return response.data || [];
     } catch (error) {
-      console.error(`Failed to fetch prescreening details for candidate ${applicationId}:`, error);
-      return 0;
+      console.error(`Failed to fetch candidates with status ${status}:`, error);
+      return [];
     }
-  };
+  }, []);
 
-  // Fetch candidates and categorize them
+  // Fetch all candidates and categorize them by status
   const fetchCandidates = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // First, fetch all candidates
-      const response = await axios.get('http://localhost:5190/api/Candidates');
-      let allCandidates = response.data || [];
+      // First fetch statistics to get the counts
+      await fetchStatistics();
       
-      // For each candidate, fetch their prescreening details
-      const candidatesWithMarks = allCandidates.map(candidate => {
-        // No need to fetch prescreening details separately, use the data from application
-        return {
-          ...candidate,
-          // Ensure we use the correct property name as per the Application entity
-          pre_Screen_PassMark: candidate.pre_Screen_PassMark || 0
-        };
+      // Use the backend API to fetch candidates by status
+      const longlistCandidates = await fetchCandidatesByStatus('longlist');
+      const rejectedCandidates = await fetchCandidatesByStatus('rejected');
+      const pendingCandidates = await fetchCandidatesByStatus('pending');
+      
+      // Set the categorized candidates
+      setCandidatesByStatus({
+        Longlist: longlistCandidates,
+        Rejected: rejectedCandidates,
+        Pending: pendingCandidates
       });
-      
-      // Categorize candidates based on CV and prescreening marks
-      const categorizedCandidates = {
-        qualified: [],
-        rejected: [],
-        pending: []
-      };
-      
-      // Process each candidate
-      for (const candidate of candidatesWithMarks) {
-        const status = determineStatus(candidate);
-        
-        // Use the existing status if available, or fall back to calculated status
-        const currentStatus = candidate.status || status;
-        
-        // Add to appropriate category based on current status
-        if (categorizedCandidates[currentStatus]) {
-          categorizedCandidates[currentStatus].push(candidate);
-        } else {
-          // If status is something unexpected, use the calculated status instead
-          categorizedCandidates[status].push(candidate);
-        }
-      }
-      
-      setCandidatesByStatus(categorizedCandidates);
-      console.log('Categorized candidates:', categorizedCandidates);
     } catch (error) {
       console.error('Failed to fetch candidates:', error);
       setError('Failed to fetch candidates. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  // Fetch candidate statistics
-  const fetchCandidateStatistics = useCallback(async () => {
-    try {
-      const response = await axios.get('http://localhost:5190/api/Candidates/statistics');
-      console.log('Candidate statistics:', response.data);
-      // You can use the statistics data if needed
-    } catch (error) {
-      console.error('Failed to fetch candidate statistics:', error);
-    }
-  }, []);
-
-  // Separate function to handle status updates after categorization
-  const updateCandidateStatuses = useCallback(async () => {
-    try {
-      // Process each category
-      for (const status in candidatesByStatus) {
-        for (const candidate of candidatesByStatus[status]) {
-          const calculatedStatus = determineStatus(candidate);
-          
-          // Only update if current status differs from calculated status
-          if (candidate.status !== calculatedStatus) {
-            await updateCandidateStatus(candidate.applicationId, calculatedStatus);
-          }
-        }
-      }
-      // Refresh candidates after updates
-      fetchCandidates();
-      // Also refresh statistics
-      fetchCandidateStatistics();
-    } catch (error) {
-      console.error('Failed to update candidate statuses:', error);
-    }
-  }, [candidatesByStatus, fetchCandidates, fetchCandidateStatistics]);
+  }, [fetchCandidatesByStatus, fetchStatistics]);
 
   // Initial fetch on component mount
   useEffect(() => {
     fetchCandidates();
-    fetchCandidateStatistics();
-  }, [fetchCandidates, fetchCandidateStatistics]);
+  }, [fetchCandidates]);
 
   // Set up auto-refresh polling (every 30 seconds)
   useEffect(() => {
@@ -180,10 +100,39 @@ const NotifyCandidates = () => {
       prev.includes(applicationId) ? prev.filter(id => id !== applicationId) : [...prev, applicationId]
     );
   };
+  
+  // Handle select all candidates in current tab
+  const handleSelectAll = () => {
+    const currentTabCandidates = candidatesByStatus[selectedTab] || [];
+    
+    // If all candidates are already selected, unselect all
+    const allSelected = currentTabCandidates.every(candidate => 
+      selectedCandidates.includes(candidate.applicationId)
+    );
+    
+    if (allSelected) {
+      // Remove all current tab candidates from selection
+      setSelectedCandidates(prev => 
+        prev.filter(id => !currentTabCandidates.some(c => c.applicationId === id))
+      );
+    } else {
+      // Add all current tab candidates to selection
+      const newSelectedIds = currentTabCandidates
+        .map(candidate => candidate.applicationId)
+        .filter(id => !selectedCandidates.includes(id));
+      
+      setSelectedCandidates(prev => [...prev, ...newSelectedIds]);
+    }
+  };
 
   const handleNotify = async () => {
     if (!subject || !message || selectedCandidates.length === 0) {
-      alert('Please fill all fields and select at least one candidate.');
+      setNotification({
+        show: true,
+        message: 'Please fill all fields and select at least one candidate.',
+        type: 'error'
+      });
+      setTimeout(() => setNotification({ show: false, message: '', type: '' }), 5000);
       return;
     }
 
@@ -196,17 +145,23 @@ const NotifyCandidates = () => {
         message,
         type,
         time: new Date().toISOString(),
-        candidateIds: selectedCandidates // Include the candidateIds directly in the notification object
+        candidateIds: selectedCandidates
       };
 
       console.log('Sending notification with data:', notificationData);
       
       // Send the notification with the proper structure
-      const response = await axios.post('http://localhost:5190/api/Notification', notificationData);
+      const response = await axios.post('http://localhost:5190/api/ManagerNotification', notificationData);
       
       console.log('Notification created successfully:', response.data);
       
-      alert('Notification sent successfully!');
+      // Show success message in the page
+      setNotification({
+        show: true,
+        message: 'Notification sent successfully!',
+        type: 'success'
+      });
+      setTimeout(() => setNotification({ show: false, message: '', type: '' }), 5000);
 
       // Reset form
       setSubject('');
@@ -217,47 +172,30 @@ const NotifyCandidates = () => {
       fetchCandidates();
     } catch (error) {
       console.error('Notification error:', error);
-      alert(`Failed to send notification: ${error.response?.data?.message || error.message}`);
+      setNotification({
+        show: true,
+        message: `Failed to send notification: ${error.response?.data?.message || error.message}`,
+        type: 'error'
+      });
+      setTimeout(() => setNotification({ show: false, message: '', type: '' }), 5000);
     } finally {
       setLoading(false);
     }
   };
 
-  // Calculate counts from the actual data we have
-  const counts = {
-    qualified: Array.isArray(candidatesByStatus.qualified) ? candidatesByStatus.qualified.length : 0,
-    rejected: Array.isArray(candidatesByStatus.rejected) ? candidatesByStatus.rejected.length : 0,
-    pending: Array.isArray(candidatesByStatus.pending) ? candidatesByStatus.pending.length : 0
-  };
-
   const tabs = [
-    { id: 'qualified', label: 'Qualified', icon: '✓', count: counts.qualified },
-    { id: 'rejected', label: 'Rejected', icon: '✕', count: counts.rejected },
-    { id: 'pending', label: 'Pending', icon: '⌛', count: counts.pending }
+    { id: 'Longlist', label: 'Qualified', icon: '✓', count: statistics.Longlist },
+    { id: 'Rejected', label: 'Rejected', icon: '✕', count: statistics.Rejected },
+    { id: 'Pending', label: 'Pending', icon: '⌛', count: statistics.Pending }
   ];
 
   const candidates = candidatesByStatus[selectedTab] || [];
 
-  // Add a manual refresh button and loading indicator
-  const handleManualRefresh = () => {
-    fetchCandidates();
-    fetchCandidateStatistics();
-  };
+  // No more manual refresh button
 
-  // Add a function to manually update all candidate statuses
-  const handleUpdateStatuses = () => {
-    updateCandidateStatuses();
-  };
-
-  // Function to show pre-screening details in a modal or expanded view
-  const [expandedCandidate, setExpandedCandidate] = useState(null);
-
+  // Toggle candidate details view
   const toggleCandidateDetails = (applicationId) => {
-    if (expandedCandidate === applicationId) {
-      setExpandedCandidate(null);
-    } else {
-      setExpandedCandidate(applicationId);
-    }
+    setExpandedCandidate(expandedCandidate === applicationId ? null : applicationId);
   };
 
   return (
@@ -267,23 +205,6 @@ const NotifyCandidates = () => {
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-gray-800">Notify Candidates</h1>
-            <div className="flex space-x-2">
-              <button 
-                onClick={handleUpdateStatuses}
-                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-              >
-                Update Statuses
-              </button>
-              <button 
-                onClick={handleManualRefresh}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                <svg className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                </svg>
-                Refresh
-              </button>
-            </div>
           </div>
 
           {error && (
@@ -291,11 +212,36 @@ const NotifyCandidates = () => {
               {error}
             </div>
           )}
+          
+          {/* In-page notification */}
+          {notification.show && (
+            <div className={`${
+              notification.type === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 
+              'bg-red-100 border-red-400 text-red-700'
+            } border px-4 py-3 rounded mb-4 flex justify-between items-center`}>
+              <span>{notification.message}</span>
+              <button onClick={() => setNotification({ show: false, message: '', type: '' })} className="text-gray-500 hover:text-gray-700">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+          )}
 
           <div className="bg-white border border-blue-200 rounded-lg shadow-sm p-5 mb-6">
             <div className="flex justify-between items-center mb-4">
               <div className="text-gray-700">Select candidates to send notifications</div>
-              <div className="text-gray-500 text-sm">{selectedCandidates.length} selected</div>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={handleSelectAll}
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                >
+                  {candidatesByStatus[selectedTab]?.every(c => 
+                    selectedCandidates.includes(c.applicationId)
+                  ) ? 'Unselect All' : 'Select All'}
+                </button>
+                <div className="text-gray-500 text-sm">{selectedCandidates.length} selected</div>
+              </div>
             </div>
 
             {/* Tabs */}
@@ -324,14 +270,28 @@ const NotifyCandidates = () => {
                 <p className="text-center py-4 text-gray-500">No candidates found</p>
               ) : (
                 candidates.map(candidate => {
-                  // Get prescreening mark directly from the application data
-                  const preScreenMark = candidate.pre_Screen_PassMark || 0;
+                  // Get CV mark - handle different property names
+                  const cvMark = candidate.cvMark || candidate.cV_Mark || 0;
+                  // Get prescreening mark
+                  const preScreenMark = candidate.pre_Screen_PassMark || candidate.preScreenPassMark || 0;
+                  // Get threshold values
+                  const cvThreshold = candidate.vacancy?.cVPassMark || CV_QUALIFICATION_THRESHOLD;
+                  const preScreenThreshold = candidate.vacancy?.preScreenPassMark || 0;
+                  
+                  // Get user information with fallbacks
+                  const firstName = candidate.user?.firstName || 'Unknown';
+                  const lastName = candidate.user?.lastName || '';
+                  const fullName = `${firstName} ${lastName}`.trim();
+                  
+                  // Get vacancy name with fallbacks
+                  const vacancyName = 
+                    candidate.vacancy?.vacancyName || 
+                    candidate.vacancy?.jobRole?.jobTitle || 
+                    'No position';
                   
                   return (
                     <div key={candidate.applicationId} className="border border-gray-200 rounded-lg hover:border-blue-300 transition">
-                      <div
-                        className="p-4 flex items-center justify-between"
-                      >
+                      <div className="p-4 flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <input
                             type="checkbox"
@@ -340,21 +300,17 @@ const NotifyCandidates = () => {
                             onChange={() => handleCandidateSelect(candidate.applicationId)}
                           />
                           <div>
-                            <h3 className="font-medium text-gray-800">
-                              {candidate.user?.firstName} {candidate.user?.lastName}
-                            </h3>
-                            <p className="text-gray-500 text-sm">
-                              {candidate.vacancy?.vacancyName || candidate.vacancy?.jobRole?.jobTitle || 'No position'}
-                            </p>
+                            <h3 className="font-medium text-gray-800">{fullName}</h3>
+                            <p className="text-gray-500 text-sm">{vacancyName}</p>
                             <div className="flex space-x-4 mt-1">
                               <span className="text-xs text-gray-500">
-                                CV Score: <span className={`font-medium ${candidate.cV_Mark >= (candidate.vacancy?.cVPassMark || CV_QUALIFICATION_THRESHOLD) ? 'text-green-600' : 'text-red-600'}`}>
-                                  {candidate.cV_Mark || 0}% / {candidate.vacancy?.cVPassMark || CV_QUALIFICATION_THRESHOLD}%
+                                CV Score: <span className={`font-medium ${cvMark >= cvThreshold ? 'text-green-600' : 'text-red-600'}`}>
+                                  {cvMark}% / {cvThreshold}%
                                 </span>
                               </span>
                               <span className="text-xs text-gray-500">
-                                Prescreening: <span className={`font-medium ${preScreenMark >= (candidate.vacancy?.preScreenPassMark || 0) ? 'text-green-600' : 'text-red-600'}`}>
-                                  {preScreenMark}% / {candidate.vacancy?.preScreenPassMark || 0}%
+                                Prescreening: <span className={`font-medium ${preScreenMark >= preScreenThreshold ? 'text-green-600' : 'text-red-600'}`}>
+                                  {preScreenMark}% / {preScreenThreshold}%
                                 </span>
                               </span>
                               <button 
@@ -367,54 +323,52 @@ const NotifyCandidates = () => {
                           </div>
                         </div>
                         <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          selectedTab === 'qualified' ? 'bg-green-100 text-green-800' :
-                          selectedTab === 'rejected' ? 'bg-red-100 text-red-800' :
+                          selectedTab === 'Longlist' ? 'bg-green-100 text-green-800' :
+                          selectedTab === 'Rejected' ? 'bg-red-100 text-red-800' :
                           'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {selectedTab === 'qualified' ? 'Qualified' :
-                           selectedTab === 'rejected' ? 'Rejected' : 'Pending'}
+                          {selectedTab === 'Longlist' ? 'Qualified' : selectedTab}
                         </div>
                       </div>
                       
-                      {/* Expanded Candidate Details (without test questions) */}
+                      {/* Expanded Candidate Details */}
                       {expandedCandidate === candidate.applicationId && (
                         <div className="border-t border-gray-100 p-4 bg-gray-50">
                           <h4 className="font-medium text-gray-700 mb-2">Candidate Details</h4>
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <p className="text-sm text-gray-500">Vacancy:</p>
-                              <p className="font-medium">{candidate.vacancy?.vacancyName || 'N/A'}</p>
+                              <p className="font-medium">{vacancyName}</p>
                             </div>
                             <div>
                               <p className="text-sm text-gray-500">Status:</p>
-                              <p className="font-medium">{candidate.status || 'N/A'}</p>
+                              <p className="font-medium">
+                                {candidate.status === 'Longlist' ? 'Qualified' : candidate.status || 'N/A'}
+                              </p>
                             </div>
                             <div>
                               <p className="text-sm text-gray-500">Email:</p>
                               <p className="font-medium">{candidate.user?.email || 'N/A'}</p>
                             </div>
-                            <div>
-                              <p className="text-sm text-gray-500">Application Date:</p>
-                              <p className="font-medium">{new Date(candidate.applicationDate || Date.now()).toLocaleDateString()}</p>
-                            </div>
+
                             <div>
                               <p className="text-sm text-gray-500">CV Score:</p>
                               <p className="font-medium">
-                                <span className={candidate.cV_Mark >= (candidate.vacancy?.cVPassMark || CV_QUALIFICATION_THRESHOLD) ? 'text-green-600' : 'text-red-600'}>
-                                  {candidate.cV_Mark || 0}%
+                                <span className={cvMark >= cvThreshold ? 'text-green-600' : 'text-red-600'}>
+                                  {cvMark}%
                                 </span>
                                 {' '}/{' '}
-                                {candidate.vacancy?.cVPassMark || CV_QUALIFICATION_THRESHOLD}% required
+                                {cvThreshold}% required
                               </p>
                             </div>
                             <div>
                               <p className="text-sm text-gray-500">Pre-screening Score:</p>
                               <p className="font-medium">
-                                <span className={preScreenMark >= (candidate.vacancy?.preScreenPassMark || 0) ? 'text-green-600' : 'text-red-600'}>
+                                <span className={preScreenMark >= preScreenThreshold ? 'text-green-600' : 'text-red-600'}>
                                   {preScreenMark}%
                                 </span>
                                 {' '}/{' '}
-                                {candidate.vacancy?.preScreenPassMark || 0}% required
+                                {preScreenThreshold}% required
                               </p>
                             </div>
                           </div>
