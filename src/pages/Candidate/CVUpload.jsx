@@ -1,154 +1,154 @@
-import React, { useState, useRef } from 'react';
-import { Upload, X, FileText, Check, AlertCircle } from 'lucide-react';
-//import { Alert, AlertDescription } from '@/components/alert';
+import React, { useState, useRef } from "react";
+import axios from "axios";
 
 const CVUpload = () => {
   const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [message, setMessage] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
-  const handleFileDrop = (e) => {
-    e.preventDefault();
-    const droppedFile = e.dataTransfer.files[0];
-    validateAndSetFile(droppedFile);
+  const userId = "F00E071C-FFCB-4D6C-92DB-6444E5C5EFF7";
+  const vacancyId = "E745B9BF-DFA7-465E-AACC-45A3E123A199";
+
+  const handleFileSelect = (selectedFile) => {
+    if (selectedFile) {
+      setFile(selectedFile);
+      const url = URL.createObjectURL(selectedFile);
+      setPreviewUrl(url);
+      setMessage("");
+      setUploadProgress(0);
+    }
   };
 
-  const handleFileSelect = (e) => {
-    const selectedFile = e.target.files[0];
-    validateAndSetFile(selectedFile);
+  const handleFileChange = (e) => {
+    handleFileSelect(e.target.files[0]);
   };
 
-  const validateAndSetFile = (file) => {
-    setError(null);
-    
-    if (!file) return;
-    
-    if (!file.type.includes('pdf')) {
-      setError('Please upload a PDF file only');
-      return;
+  const handleRemove = () => {
+    setFile(null);
+    setPreviewUrl("");
+    setUploadProgress(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
-    
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File size should be less than 5MB');
-      return;
-    }
-
-    setFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => setPreview(reader.result);
-    reader.readAsDataURL(file);
   };
 
   const handleUpload = async () => {
-    setIsUploading(true);
-    
-    // Simulate upload progress
-    for (let i = 0; i <= 100; i += 10) {
-      await new Promise(resolve => setTimeout(resolve, 200));
-      setUploadProgress(i);
+    if (!file) {
+      setMessage("Please select a file first.");
+      return;
     }
-    
-    setIsUploading(false);
-    setUploadProgress(0);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      await axios.post(
+        `http://localhost:5190/api/CandidateFile/upload?userId=${userId}&vacancyId=${vacancyId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          onUploadProgress: (progressEvent) => {
+            const percent = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setUploadProgress(percent);
+          },
+        }
+      );
+      setMessage("CV uploaded successfully!");
+      handleRemove();
+    } catch (error) {
+      console.error(error);
+      setMessage("Error uploading CV.");
+      setUploadProgress(0);
+    }
   };
 
-  const removeFile = () => {
-    setFile(null);
-    setPreview(null);
-    setError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const droppedFile = e.dataTransfer.files[0];
+    handleFileSelect(droppedFile);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-lg p-8">
-        <h2 className="text-2xl font-bold mb-6">Upload Your CV</h2>
+    <div
+      className="max-w-5xl mx-auto my-4 mt-10 p-6 min-h-96 border rounded-2xl shadow-md bg-white space-y-6"
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+    >
+      <h2 className="text-3xl font-bold text-gray-800 text-center">Upload Your CV</h2>
 
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
+      {/* Show drag-and-drop box only if no preview is shown */}
+      {!previewUrl && (
         <div
-          onDrop={handleFileDrop}
-          onDragOver={(e) => e.preventDefault()}
-          className={`
-            border-2 border-dashed rounded-lg p-8 text-center
-            ${file ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:border-blue-500'}
-          `}
+          className="border-2 border-dashed border-gray-300 p-20 text-center rounded-lg bg-gray-50 hover:bg-gray-100 transition cursor-pointer"
+          onClick={() => fileInputRef.current?.click()}
         >
-          {!file ? (
-            <div>
-              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-gray-600 mb-2">Drag and drop your CV here or</p>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileSelect}
-                accept=".pdf"
-                className="hidden"
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="text-blue-500 hover:text-blue-600 font-medium"
-              >
-                browse files
-              </button>
-              <p className="text-sm text-gray-500 mt-2">PDF files only, max 5MB</p>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <FileText className="h-8 w-8 text-green-500 mr-3" />
-                <div className="text-left">
-                  <p className="font-medium">{file.name}</p>
-                  <p className="text-sm text-gray-500">
-                    {(file.size / (1024 * 1024)).toFixed(2)} MB
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={removeFile}
-                className="p-2 hover:bg-gray-100 rounded-full"
-              >
-                <X className="h-5 w-5 text-gray-500" />
-              </button>
-            </div>
-          )}
+          <p className="text-blue-700 font-semibold">
+            Drag and drop your CV here, or click to browse
+          </p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf"
+            onChange={handleFileChange}
+            className="hidden"
+          />
         </div>
+      )}
 
-        {file && !isUploading && (
+      {/* File Preview */}
+      {previewUrl && (
+        <div className="mt-4">
+          <p className="text-gray-700 font-medium mb-2">Preview:</p>
+          <iframe
+            src={previewUrl}
+            title="CV Preview"
+            className="w-full h-[80vh] border rounded-md"
+          ></iframe>
+
           <button
-            onClick={handleUpload}
-            className="mt-6 w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 flex items-center justify-center"
+            onClick={handleRemove}
+            className="mt-4 w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition duration-300"
           >
-            <Upload className="mr-2 h-5 w-5" />
-            Upload CV
+            Remove File
           </button>
-        )}
+        </div>
+      )}
 
-        {isUploading && (
-          <div className="mt-6">
-            <div className="flex justify-between text-sm text-gray-600 mb-2">
-              <span>Uploading...</span>
-              <span>{uploadProgress}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Upload Button */}
+      <button
+        onClick={handleUpload}
+        className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300"
+      >
+        Submit CV
+      </button>
+
+      {/* Upload Progress Bar */}
+      {uploadProgress > 0 && (
+        <div className="mt-4 w-full bg-gray-200 rounded-full h-4">
+          <div
+            className="bg-blue-500 h-4 rounded-full transition-all duration-300 ease-in-out"
+            style={{ width: `${uploadProgress}%` }}
+          ></div>
+          <p className="text-center text-sm text-gray-700 mt-1">{uploadProgress}%</p>
+        </div>
+      )}
+
+      {/* Message */}
+      {message && (
+        <div className="mt-4 text-center text-green-600 font-medium">{message}</div>
+      )}
     </div>
   );
 };
