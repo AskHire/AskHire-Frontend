@@ -40,7 +40,7 @@ const CandidateDashboard = () => {
   };
 
   const getProgressSteps = (status) => {
-    const steps = ['Applied', 'Pre-Screening', 'Longlist', 'Interview'];
+    const steps = ['Applied', 'Pre-Screening', 'Interview']; // Removed 'Longlist'
     return steps.map((step) => ({
       label: step,
       completed: steps.indexOf(step) <= steps.indexOf(status)
@@ -76,7 +76,7 @@ const CandidateDashboard = () => {
           </div>
         </div>
 
-        {['Applied', 'Pre-Screening', 'Longlist', 'Interview'].map((status) => (
+        {['Applied', 'Pre-Screening', 'Interview'].map((status) => ( // Removed 'Longlist'
           <div key={status}>
             {groupedApplications[status] && (
               <>
@@ -92,7 +92,6 @@ const CandidateDashboard = () => {
                         px-3 py-1 rounded-full text-xs font-medium
                         ${status === 'Applied' ? 'bg-green-100 text-green-800' :
                           status === 'Pre-Screening' ? 'bg-yellow-100 text-yellow-800' :
-                          status === 'Longlist' ? 'bg-purple-100 text-purple-800' :
                           'bg-blue-100 text-blue-800'}
                       `}>
                         {status}
