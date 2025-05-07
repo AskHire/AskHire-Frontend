@@ -18,7 +18,7 @@ const TextAssessment = () => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await axios.get(`http://localhost:5190/api/PreScreenTest/Questions/${applicationId}`);
+        const res = await axios.get(`http://localhost:5190/api/CandidatePreScreenTest/Questions/${applicationId}`);
         const loadedQuestions = res.data.questions.map((q) => ({
           questionId: q.questionId,
           question: q.questionName,
@@ -79,7 +79,7 @@ const TextAssessment = () => {
 
     try {
       const res = await axios.post(
-        `http://localhost:5190/api/AnswerCheck/mcq/${applicationId}`,
+        `http://localhost:5190/api/CandidateAnswerCheck/mcq/${applicationId}`,
         {
           questionCount: questions.length,
           answers: answerData,

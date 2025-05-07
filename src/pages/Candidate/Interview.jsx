@@ -11,7 +11,7 @@ const Interview = () => {
   const fetchInterviewDetails = async () => {
     try {
       setRefreshing(true);
-      const response = await axios.get(`http://localhost:5190/api/Interview/byUser/${userId}`);
+      const response = await axios.get(`http://localhost:5190/api/CandidateInterview/byUser/${userId}`);
       setInterviews(response.data);
     } catch (error) {
       console.error('Failed to fetch interview data:', error);

@@ -11,7 +11,7 @@ const Prescreen = () => {
   useEffect(() => {
     const fetchTestInfo = async () => {
       try {
-        const response = await fetch(`http://localhost:5190/api/PreScreenTest/${applicationId}`);
+        const response = await fetch(`http://localhost:5190/api/CandidatePreScreenTest/${applicationId}`);
         if (!response.ok) {
           throw new Error("Failed to fetch test info");
         }

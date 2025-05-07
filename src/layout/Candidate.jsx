@@ -7,7 +7,7 @@ const Candidate = () => {
   return (
     <div className="flex flex-col min-h-screen bg-blue-50">
       <Navbar />
-      <main className="flex-1 overflow-auto p-0">
+      <main className="flex-1 overflow-auto p-2">
         <Outlet />
       </main>
       <Footer />

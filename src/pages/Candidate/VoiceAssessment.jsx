@@ -5,7 +5,6 @@ import CongratulationsCard from '../../components/CongratulationsCard';
 import { useParams } from 'react-router-dom';
 
 const VoiceAssessment = () => {
-  //const applicationId = 'D3A48EFD-AA80-4126-88DE-85CD916838A2';
   const { applicationId } = useParams();
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState([]);
@@ -24,7 +23,7 @@ const VoiceAssessment = () => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await axios.get(`http://localhost:5190/api/PreScreenTest/Questions/${applicationId}`);
+        const res = await axios.get(`http://localhost:5190/api/CandidatePreScreenTest/Questions/${applicationId}`);
         setQuestions(res.data.questions);
         // Initialize answers array with the correct length
         setAnswers(new Array(res.data.questions.length).fill(null));
@@ -144,7 +143,7 @@ const VoiceAssessment = () => {
 
     try {
       const response = await axios.post(
-        `http://localhost:5190/api/AnswerCheck/mcq/${applicationId}`,
+        `http://localhost:5190/api/CandidateAnswerCheck/mcq/${applicationId}`,
         submissionData
       );
       console.log('Submission response:', response.data);
