@@ -4,6 +4,7 @@ import ManagerTopbar from '../../components/ManagerTopbar';
 
 const CreateQuestions = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isAnswerDropdownOpen, setIsAnswerDropdownOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
   const [selectedJobId, setSelectedJobId] = useState('');
   const [jobRoles, setJobRoles] = useState([]);
@@ -20,7 +21,7 @@ const CreateQuestions = () => {
   const [formData, setFormData] = useState({
     jobId: "",
     questionName: "",
-    answer: "",
+    answer: "", // This will now store the option name (e.g., "option2") instead of the number
   });
 
   // Fetch job roles when component mounts
@@ -52,11 +53,22 @@ const CreateQuestions = () => {
     setIsOpen(!isOpen);
   };
   
+  const toggleAnswerDropdown = () => {
+    setIsAnswerDropdownOpen(!isAnswerDropdownOpen);
+  };
+  
   const selectRole = (role, id) => {
     setSelectedRole(role);
     setSelectedJobId(id);
     setFormData(prev => ({ ...prev, jobId: id }));
     setIsOpen(false);
+  };
+
+  const selectAnswer = (answerNumber) => {
+    // Convert the answer number to the option format (e.g., 2 -> "option2")
+    const optionKey = `Option${answerNumber}`;
+    setFormData(prev => ({ ...prev, answer: optionKey }));
+    setIsAnswerDropdownOpen(false);
   };
 
   const handleChange = (e) => {
@@ -70,23 +82,20 @@ const CreateQuestions = () => {
     ));
   };
 
-  const handleRemoveOption = (id) => {
-    if (options.length > 1) {
-      setOptions(options.filter(option => option.id !== id));
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Transform options to the format expected by the API
     const optionsForSubmission = {};
-    options.forEach((option, index) => {
-      optionsForSubmission[`option${index + 1}`] = option.text;
+    options.forEach((Option, index) => {
+      optionsForSubmission[`Option${index + 1}`] = Option.text;
     });
     
     const dataToSubmit = {
-      ...formData,
+      jobId: formData.jobId,
+      questionName: formData.questionName,
+      // The answer is already in the format "option#"
+      answer: formData.answer,
       ...optionsForSubmission
     };
     
@@ -105,7 +114,8 @@ const CreateQuestions = () => {
       setOptions([
         { id: 1, text: "" },
         { id: 2, text: "" },
-        { id: 3, text: "" }
+        { id: 3, text: "" },
+        { id: 4, text: "" }
       ]);
       
     } catch (err) {
@@ -116,6 +126,12 @@ const CreateQuestions = () => {
       }
       console.error("Error:", err);
     }
+  };
+
+  // Helper function to get the number from option format
+  const getAnswerNumber = (optionFormat) => {
+    if (!optionFormat) return '';
+    return optionFormat.replace('Option', '');
   };
 
   return (
@@ -135,16 +151,12 @@ const CreateQuestions = () => {
             onClick={toggleDropdown}
           >
             <div className="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-              </svg>
+              🔍
               <span className="text-gray-700">
                 {loading ? 'Loading...' : selectedRole || 'Select a job role'}
               </span>
             </div>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
+            ▼
           </div>
           
           {isOpen && !loading && (
@@ -196,7 +208,7 @@ const CreateQuestions = () => {
               />
             </div>
             
-            {/* Answer Options */}
+            {/* Answer Options - Always 4 options */}
             <div>
               <label className="block text-gray-700 font-medium mb-2">
                 Answer Options
@@ -212,32 +224,43 @@ const CreateQuestions = () => {
                       className="flex-grow p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
                     />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveOption(option.id)}
-                      className="px-4 py-2 bg-red-100 text-red-500 rounded-lg hover:bg-red-200"
-                    >
-                      Remove
-                    </button>
                   </div>
                 ))}
               </div>
             </div>
             
-            {/* Correct Answer (This could be a dropdown or radio buttons in a real implementation) */}
+            {/* Correct Answer Dropdown */}
             <div>
               <label htmlFor="answer" className="block text-gray-700 font-medium mb-2">
                 Correct Answer
               </label>
-              <input
-                id="answer"
-                name="answer"
-                value={formData.answer}
-                onChange={handleChange}
-                placeholder="Specify the correct answer"
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
+              <div className="relative w-full">
+                <div
+                  className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onClick={toggleAnswerDropdown}
+                >
+                  <span className="text-gray-700">
+                    {formData.answer ? `Answer ${getAnswerNumber(formData.answer)}` : 'Select correct answer'}
+                  </span>
+                  ▼
+                </div>
+                
+                {isAnswerDropdownOpen && (
+                  <div className="absolute w-full mt-1 bg-white rounded-lg shadow-lg border z-10">
+                    <ul className="py-1">
+                      {[1, 2, 3, 4].map((num) => (
+                        <li
+                          key={num}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => selectAnswer(num.toString())}
+                        >
+                          Answer {num}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </div>
             
             <button
