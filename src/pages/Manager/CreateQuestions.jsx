@@ -240,7 +240,7 @@ const CreateQuestions = () => {
                   onClick={toggleAnswerDropdown}
                 >
                   <span className="text-gray-700">
-                    {formData.answer ? `Answer ${getAnswerNumber(formData.answer)}` : 'Select correct answer'}
+                    {formData.answer ? `Option ${getAnswerNumber(formData.answer)}` : 'Select correct answer'}
                   </span>
                   ▼
                 </div>
@@ -254,7 +254,7 @@ const CreateQuestions = () => {
                           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                           onClick={() => selectAnswer(num.toString())}
                         >
-                          Answer {num}
+                          Option {num}
                         </li>
                       ))}
                     </ul>
