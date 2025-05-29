@@ -15,7 +15,7 @@ export default function Banner() {
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">Find Your Perfect Career Opportunity</h1>
         <p className="text-lg text-blue-50 mb-8">Discover jobs that match your skills and aspirations</p>
         <button className="bg-white text-blue-600 font-medium py-2 px-6 rounded-full hover:bg-blue-50 transition-colors">
-          Get Started
+          <a href="/login">Get Started</a>
         </button>
       </div>
     </div>
