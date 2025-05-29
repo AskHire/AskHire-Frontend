@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import {  useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, } from 'lucide-react';
 
 const JobShow = () => {
-    const { id } = useParams();
     const location = useLocation();
     const navigate = useNavigate();
     const jobData = location.state || {};
@@ -43,7 +42,7 @@ const JobShow = () => {
     }
 
     return (
-        <div className="max-w-3xl mx-auto p-6">
+        <div className="max-w-5xl mx-auto p-6">
             {/* Header with back button */}
             <button
                 onClick={goBack}
@@ -113,7 +112,7 @@ const JobShow = () => {
                 <div>
                     <button
                         className="mt-auto bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md text-center w-full" >
-                        Apply Now
+                        <a href="/candidate/CVupload">Apply Now</a>
                     </button>
                 </div>
             </div>

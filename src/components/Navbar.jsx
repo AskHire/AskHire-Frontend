@@ -30,10 +30,10 @@ const Navbar = () => {
         {/* Auth Buttons */}
         <div className="flex items-center space-x-3">
           <button className="px-4 py-1.5 text-sm font-medium text-white bg-gray-800 rounded-full hover:bg-gray-900">
-            SignUp
+            <a href="/signup">SignUp</a>
           </button>
           <button className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-full hover:bg-blue-700">
-            Login
+            <a href="/login">Login</a>
           </button>
         </div>
       </div>

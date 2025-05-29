@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   CheckCircle,
-  RefreshCw,
-  Filter,
   BarChart2
 } from 'lucide-react';
 
 const CandidateDashboard = () => {
   const [applications, setApplications] = useState([]);
-  const [activeTab, setActiveTab] = useState('applications');
+  const [activeTab] = useState('applications');
 
   const userId = 'DB36F830-1A06-4FCB-884C-710FD32BA095'; // Replace with dynamic if needed
 
@@ -60,20 +58,6 @@ const CandidateDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">My Applications</h1>
-          <div className="flex space-x-2">
-            <button
-              className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg flex items-center"
-              onClick={fetchApplications}
-            >
-              <Filter className="mr-2" /> Filter
-            </button>
-            <button
-              className="bg-green-50 text-green-600 px-4 py-2 rounded-lg flex items-center"
-              onClick={fetchApplications}
-            >
-              <RefreshCw className="mr-2" /> Refresh
-            </button>
-          </div>
         </div>
 
         {['Applied', 'Pre-Screening', 'Interview'].map((status) => ( // Removed 'Longlist'
@@ -120,14 +104,11 @@ const CandidateDashboard = () => {
                     <div className="flex justify-between items-center">
                       <p className="text-gray-500">Deadline: {new Date(app.endDate).toLocaleDateString()}</p>
                       <div className="space-x-2">
-                        <button className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg">
-                          View Details
-                        </button>
                         <button
                           className="bg-red-50 text-red-600 px-4 py-2 rounded-lg"
                           onClick={() => handleWithdraw(app.applicationId)}
                         >
-                          Withdraw
+                          Remove
                         </button>
                       </div>
                     </div>
