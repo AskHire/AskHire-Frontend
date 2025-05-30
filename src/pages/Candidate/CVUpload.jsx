@@ -1,15 +1,16 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useContext } from "react";
 import axios from "axios";
+import { useParams } from "react-router-dom";
+import { useAuth } from '../../context/AuthContext'; // Adjust path as needed
 
 const CVUpload = () => {
+  const { id } = useParams(); // Retrieve vacancyId from URL
+  const { currentUser } = useAuth(); // Get current user from auth context
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [message, setMessage] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef(null);
-
-  const userId = "F00E071C-FFCB-4D6C-92DB-6444E5C5EFF7";
-  const vacancyId = "E745B9BF-DFA7-465E-AACC-45A3E123A199";
 
   const handleFileSelect = (selectedFile) => {
     if (selectedFile) {
@@ -40,12 +41,17 @@ const CVUpload = () => {
       return;
     }
 
+    if (!currentUser?.id) {
+      setMessage("Please log in to upload your CV.");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("file", file);
 
     try {
       await axios.post(
-        `http://localhost:5190/api/CandidateFile/upload?userId=${userId}&vacancyId=${vacancyId}`,
+        `http://localhost:5190/api/CandidateFile/upload?userId=${currentUser.id}&vacancyId=${id}`,
         formData,
         {
           headers: {
@@ -63,7 +69,7 @@ const CVUpload = () => {
       handleRemove();
     } catch (error) {
       console.error(error);
-      setMessage("Error uploading CV.");
+      setMessage(error.response?.data?.message || "Error uploading CV.");
       setUploadProgress(0);
     }
   };
@@ -129,9 +135,14 @@ const CVUpload = () => {
       {/* Upload Button */}
       <button
         onClick={handleUpload}
-        className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300"
+        disabled={!currentUser?.id}
+        className={`w-full py-2 px-4 rounded-lg transition duration-300 ${
+          currentUser?.id 
+            ? 'bg-blue-500 text-white hover:bg-blue-600'
+            : 'bg-gray-400 text-gray-700 cursor-not-allowed'
+        }`}
       >
-        Submit CV
+        {currentUser?.id ? 'Submit CV' : 'Please log in to upload'}
       </button>
 
       {/* Upload Progress Bar */}
@@ -147,7 +158,11 @@ const CVUpload = () => {
 
       {/* Message */}
       {message && (
-        <div className="mt-4 text-center text-green-600 font-medium">{message}</div>
+        <div className={`mt-4 text-center font-medium ${
+          message.includes('success') ? 'text-green-600' : 'text-red-500'
+        }`}>
+          {message}
+        </div>
       )}
     </div>
   );

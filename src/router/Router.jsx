@@ -37,14 +37,20 @@ import CVUpload from "../pages/Candidate/CVUpload";
 import CandidateDashboard from "../pages/Candidate/CandidateDashboard";
 
 
-
+import { AuthProvider } from "../context/AuthContext";
+import PrivateRoute from "../context/PrivateRoute";
+import Unauthorized from "../pages/Common/Unauthorized";
 
 
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Main />,
+    element:
+      <AuthProvider>
+        <Main />
+      </AuthProvider>,
+
     children: [
       {
         path: "/",
@@ -60,21 +66,27 @@ const router = createBrowserRouter([
       },
       {
         path: "aboutus",
-        element:<AboutUs/>,
+        element: <AboutUs />,
       },
       {
         path: "jobs",
-        element: <Job/>
+        element: <Job />
       },
       {
         path: "/job/:id",
         element: <JobShow />,
-      }
+      },
+
     ],
   },
   {
     path: "/manager",
-    element: <Manager />,
+    element:
+      <AuthProvider>
+        <PrivateRoute roleRequired="Manager">
+          <Manager />
+        </PrivateRoute>
+      </AuthProvider>,
     children: [
       {
         path: "",
@@ -98,20 +110,20 @@ const router = createBrowserRouter([
       },
       {
         path: "ManageVacancy",
-        element: <ManageVacancy/>,
+        element: <ManageVacancy />,
       },
       {
         path: "LongList",
         element: <LongList />,
-       
-      },    
+
+      },
       {
         path: "View_LongList",
-        element: <View_LongList/>,
+        element: <View_LongList />,
       },
       {
         path: "ViewDetails/:id",
-        element: <ViewDetails/>,
+        element: <ViewDetails />,
       },
       {
         path: "NotifyCandidates",
@@ -120,12 +132,12 @@ const router = createBrowserRouter([
       {
         path: "LongListInterviewSheduler",
         element: <LongListInterviewScheduler />,
-       
+
       },
       {
         path: "InterviewScheduler/:applicationId",
-        element: <InterviewScheduler/>,
-       
+        element: <InterviewScheduler />,
+
       },
       {
         path: "AutomatedInterviews",
@@ -138,72 +150,89 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path:"/admin",
-    element:<Admin/>,
-    children:[
+    path: "/admin",
+    element:
+      <AuthProvider>
+        <PrivateRoute roleRequired="Admin">
+          <Admin />
+        </PrivateRoute>
+      </AuthProvider>,
+    children: [
       {
-        path:"",
-        element:<AdminDashboard/>
+        path: "",
+        element: <AdminDashboard />
       },
       {
-        path:"dashboard",
-        element:<AdminDashboard/>
+        path: "dashboard",
+        element: <AdminDashboard />
       },
       {
-        path:"CreateJobs",
-        element:<CreateJobs/>
+        path: "CreateJobs",
+        element: <CreateJobs />
       },
       {
-path:"ManageUserRoles",
-        element:<UserRoles/>
+        path: "ManageUserRoles",
+        element: <UserRoles />
       },
       {
-        path:"ManageAdmin",
-        element:<ManageAdmin/>
+        path: "ManageAdmin",
+        element: <ManageAdmin />
       },
       {
-        path:"ManageManager",
-        element:<ManageManager/>
+        path: "ManageManager",
+        element: <ManageManager />
       },
       {
-        path:"ManageCandidate",
-        element:<ManageCandidate/>
+        path: "ManageCandidate",
+        element: <ManageCandidate />
       },
       {
-        path:"SystemNotification",
-        element:<SystemNotification/>
+        path: "SystemNotification",
+        element: <SystemNotification />
       }
     ]
   },
   {
-    path:"/candidate",
-    element:<Candidate/>,
-    children:[
+    path: "/candidate",
+    element:
+      <AuthProvider>
+        <PrivateRoute roleRequired="Candidate">
+          <Candidate />
+        </PrivateRoute>
+      </AuthProvider>,
+    children: [
       {
         path: "",
-        element: <CandidateDashboard/>
+        element: <CandidateDashboard />
       },
       {
         path: "interview",
-        element: <Interview/>
+        element: <Interview />
       },
       {
         path: "prescreen",
-        element: <Prescreen/>,
+        element: <Prescreen />,
       },
       {
         path: "TextAssessment/:applicationId",
-        element: <TextAssessment/>,
+        element: <TextAssessment />,
       },
       {
         path: "VoiceAssessment/:applicationId",
-        element: <VoiceAssessment/>
+        element: <VoiceAssessment />
       },
       {
-        path: "CVupload",
-        element: <CVUpload/>
+        path: "CVupload/:id",
+        element: <CVUpload />
       },
     ]
+  },
+  {
+    path: "/unauthorized",
+    element:
+      <AuthProvider>
+        <Unauthorized />
+      </AuthProvider>,
   }
 
 ]);
