@@ -57,14 +57,6 @@ const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "login",
-        element: <Login />,
-      },
-      {
-        path: "signup",
-        element: <SignUp />,
-      },
-      {
         path: "aboutus",
         element: <AboutUs />,
       },
@@ -233,7 +225,21 @@ const router = createBrowserRouter([
       <AuthProvider>
         <Unauthorized />
       </AuthProvider>,
-  }
+  },
+  {
+    path: "login",
+    element: 
+    <AuthProvider>
+      <Login />
+    </AuthProvider>,
+  },
+  {
+    path: "signup",
+    element:
+    <AuthProvider>
+      <SignUp />
+    </AuthProvider>,
+  },
 
 ]);
 
