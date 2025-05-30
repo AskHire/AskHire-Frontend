@@ -1,28 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import {
   CheckCircle,
-  RefreshCw,
-  Filter,
   BarChart2
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext'; // Update path as needed
 
 const CandidateDashboard = () => {
   const [applications, setApplications] = useState([]);
-  const [activeTab, setActiveTab] = useState('applications');
-
-  const userId = 'DB36F830-1A06-4FCB-884C-710FD32BA095'; // Replace with dynamic if needed
+  const [activeTab] = useState('applications');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { currentUser } = useAuth();
 
   useEffect(() => {
-    fetchApplications();
-  }, []);
+    if (currentUser?.id) {
+      fetchApplications();
+    }
+  }, [currentUser]);
 
   const fetchApplications = async () => {
     try {
-      const response = await axios.get(`http://localhost:5190/api/CandidateDashboard/${userId}`);
+      setLoading(true);
+      setError(null);
+      const response = await axios.get(
+        `http://localhost:5190/api/CandidateDashboard/${currentUser.id}`
+      );
       setApplications(response.data);
     } catch (error) {
       console.error("Error fetching candidate dashboard:", error);
+      setError("Failed to load applications. Please try again later.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -40,7 +49,7 @@ const CandidateDashboard = () => {
   };
 
   const getProgressSteps = (status) => {
-    const steps = ['Applied', 'Pre-Screening', 'Interview']; // Removed 'Longlist'
+    const steps = ['Applied', 'Pre-Screening', 'Interview'];
     return steps.map((step) => ({
       label: step,
       completed: steps.indexOf(step) <= steps.indexOf(status)
@@ -55,28 +64,42 @@ const CandidateDashboard = () => {
     return acc;
   }, {});
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your applications...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-6 rounded-lg shadow-md max-w-md text-center">
+          <h2 className="text-xl font-semibold text-red-600 mb-2">Error Loading Applications</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={fetchApplications}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">My Applications</h1>
-          <div className="flex space-x-2">
-            <button
-              className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg flex items-center"
-              onClick={fetchApplications}
-            >
-              <Filter className="mr-2" /> Filter
-            </button>
-            <button
-              className="bg-green-50 text-green-600 px-4 py-2 rounded-lg flex items-center"
-              onClick={fetchApplications}
-            >
-              <RefreshCw className="mr-2" /> Refresh
-            </button>
-          </div>
         </div>
 
-        {['Applied', 'Pre-Screening', 'Interview'].map((status) => ( // Removed 'Longlist'
+        {['Applied', 'Pre-Screening', 'Interview'].map((status) => (
           <div key={status}>
             {groupedApplications[status] && (
               <>
@@ -120,11 +143,8 @@ const CandidateDashboard = () => {
                     <div className="flex justify-between items-center">
                       <p className="text-gray-500">Deadline: {new Date(app.endDate).toLocaleDateString()}</p>
                       <div className="space-x-2">
-                        <button className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg">
-                          View Details
-                        </button>
                         <button
-                          className="bg-red-50 text-red-600 px-4 py-2 rounded-lg"
+                          className="bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100"
                           onClick={() => handleWithdraw(app.applicationId)}
                         >
                           Withdraw
@@ -138,15 +158,21 @@ const CandidateDashboard = () => {
           </div>
         ))}
 
+        {applications.length === 0 && !loading && (
+          <div className="bg-white shadow-md rounded-lg p-6 text-center">
+            <h2 className="text-xl font-semibold text-gray-700 mb-2">No Applications Found</h2>
+            <p className="text-gray-600">You haven't applied to any positions yet.</p>
+          </div>
+        )}
+
         {activeTab === 'recommendations' && (
           <div>
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-3xl font-bold text-gray-800">Job Recommendations</h1>
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center">
+              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-700">
                 <BarChart2 className="mr-2" /> Personalize Recommendations
               </button>
             </div>
-            {/* Add recommendation UI here if needed */}
           </div>
         )}
       </div>

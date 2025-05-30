@@ -1,6 +1,15 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext'; // Adjust the path as needed
 
 export default function Banner() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  const handleGetStarted = () => {
+    navigate(isAuthenticated ? '/jobs' : '/login');
+  };
+
   return (
     <div className="w-full bg-blue-600 py-32 px-6 flex flex-col items-center justify-center relative overflow-hidden">
       {/* Background elements */}
@@ -14,7 +23,10 @@ export default function Banner() {
       <div className="z-10 text-center">
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">Find Your Perfect Career Opportunity</h1>
         <p className="text-lg text-blue-50 mb-8">Discover jobs that match your skills and aspirations</p>
-        <button className="bg-white text-blue-600 font-medium py-2 px-6 rounded-full hover:bg-blue-50 transition-colors">
+        <button
+          onClick={handleGetStarted}
+          className="bg-white text-blue-600 font-medium py-2 px-6 rounded-full hover:bg-blue-50 transition-colors"
+        >
           Get Started
         </button>
       </div>

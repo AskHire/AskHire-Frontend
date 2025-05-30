@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   AiOutlineDashboard,
   AiOutlineFileText,
@@ -12,14 +12,26 @@ import {
   AiOutlineLogout
 } from "react-icons/ai";
 import { FiBriefcase, FiList } from "react-icons/fi";
+import { useAuth } from "../context/AuthContext";
 
 const SidebarManager = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout, currentUser } = useAuth();
 
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   const menuItems = [
     { icon: <AiOutlineDashboard size={18} />, label: "Dashboard", path: "/manager/dashboard" },
@@ -34,7 +46,6 @@ const SidebarManager = () => {
   const footerItems = [
     { icon: <AiOutlineQuestionCircle size={18} />, label: "Support & Help", path: "/manager/Support" },
     { icon: <AiOutlineSetting size={18} />, label: "Settings", path: "/manager/Settings", hasBorder: false },
-    { icon: <AiOutlineLogout size={18} />, label: "Log Out", path: "/logout", hasBorder: true }
   ];
 
   return (
@@ -63,7 +74,7 @@ const SidebarManager = () => {
       >
         <div className="p-3 border-b border-gray-200 flex justify-between items-center">
           <div>
-          <h1 className="text-blue-800 font-bold text-lg">Ask<span className="text-black">Hire</span></h1>
+            <h1 className="text-blue-800 font-bold text-lg">Ask<span className="text-black">Hire</span></h1>
           </div>
 
           {mobileOpen && (
@@ -75,7 +86,6 @@ const SidebarManager = () => {
             </button>
           )}
         </div>
-
         <nav className="overflow-y-auto py-2 space-y-0.5 flex-grow">
           {menuItems.map((item) => (
             <NavItem
@@ -99,6 +109,15 @@ const SidebarManager = () => {
               hasBorder={item.hasBorder}
             />
           ))}
+          <button
+            onClick={handleLogout}
+            className="flex items-center px-3 py-2 w-full text-left transition-colors duration-150 text-gray-700 hover:bg-gray-100 border-t border-gray-200"
+          >
+            <div className="flex items-center justify-center">
+              <AiOutlineLogout size={18} />
+            </div>
+            <span className="ml-2 text-xs font-medium whitespace-nowrap">Log Out</span>
+          </button>
         </div>
       </div>
     </>

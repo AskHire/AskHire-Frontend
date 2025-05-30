@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Banner from '../../components/banner';
 import ProcessOverview from '../../components/ProcessOverview';
 import JobSlider from '../../components/JobSlider';
@@ -72,23 +72,30 @@ const Home = () => {
 
         {!loading && !error && (
           <>
+
+
+            <JobSlider
+              title="Latest Jobs"
+              jobs={latestJobs}
+              viewAllLink="/jobs"
+            />
+
             <JobSlider
               title="Demanded Jobs"
               jobs={mostAppliedJobs}
               viewAllLink="/jobs"
             />
 
-            <JobSlider
-              title="Featured Jobs"
-              jobs={latestJobs}
-              viewAllLink="/jobs"
-            />
+
           </>
         )}
 
         <ProcessOverview />
       </div>
+
+
     </div>
+
   );
 };
 

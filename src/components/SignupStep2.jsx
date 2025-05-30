@@ -42,7 +42,7 @@ const SignupStep2 = ({ formData, setFormData, prevStep, onSubmit }) => {
     </div>
 
     <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-      Sign in
+      <a href="/login">Sign in</a>
     </button>
   </form>
   )
