@@ -12,18 +12,23 @@ const JobPage = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const jobsPerPage = 9;
 
-  // Load jobs from API
   useEffect(() => {
     const fetchJobs = async () => {
       try {
         setLoading(true);
-        const res = await fetch('http://localhost:5190/api/CandidateVacancy/JobWiseVacancies');
+        const res = await fetch(
+          `http://localhost:5190/api/CandidateVacancy/JobWiseVacancies?pageNumber=${currentPage}&search=${encodeURIComponent(
+            searchTerm
+          )}&sortOrder=${sortOrder}`
+        );
         if (!res.ok) throw new Error(`Status ${res.status}`);
 
         const data = await res.json();
-        const transformed = data.map(job => ({
+
+        const transformed = data.items.map((job) => ({
           id: job.vacancyId,
           title: job.vacancyName,
           location: job.workLocation,
@@ -34,6 +39,7 @@ const JobPage = () => {
         }));
 
         setJobs(transformed);
+        setTotalPages(data.totalPages);
       } catch (err) {
         console.error(err);
         setError('Failed to fetch jobs.');
@@ -43,30 +49,17 @@ const JobPage = () => {
     };
 
     fetchJobs();
-  }, []);
-
-  // Filter by search term
-  const filteredJobs = jobs.filter(job =>
-    job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Sort jobs
-  const sortedJobs = [...filteredJobs].sort((a, b) => {
-    if (sortOrder === 'a-z') return a.title.localeCompare(b.title);
-    if (sortOrder === 'z-a') return b.title.localeCompare(a.title);
-    return 0;
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(sortedJobs.length / jobsPerPage);
-  const currentJobs = sortedJobs.slice((currentPage - 1) * jobsPerPage, currentPage * jobsPerPage);
+  }, [currentPage, searchTerm, sortOrder]); // 👈 added sortOrder here
 
   const handleSort = (order) => {
     setSortOrder(order);
     setShowFilters(false);
-    setCurrentPage(1);
+    setCurrentPage(1); // 👈 Reset to page 1 on sort
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // 👈 Reset to page 1 on search
   };
 
   return (
@@ -78,10 +71,7 @@ const JobPage = () => {
           type="text"
           placeholder="Search jobs..."
           value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setCurrentPage(1);
-          }}
+          onChange={handleSearchChange}
           className="w-full outline-none"
         />
       </div>
@@ -101,10 +91,25 @@ const JobPage = () => {
 
           {showFilters && (
             <ul className="absolute right-0 mt-2 bg-white shadow rounded-md border w-40 z-10">
-              <li onClick={() => handleSort('a-z')} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Sort A-Z</li>
-              <li onClick={() => handleSort('z-a')} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Sort Z-A</li>
+              <li
+                onClick={() => handleSort('a-z')}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              >
+                Sort A-Z
+              </li>
+              <li
+                onClick={() => handleSort('z-a')}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              >
+                Sort Z-A
+              </li>
               {sortOrder !== 'none' && (
-                <li onClick={() => handleSort('none')} className="px-4 py-2 text-gray-500 hover:bg-gray-100 cursor-pointer">Clear</li>
+                <li
+                  onClick={() => handleSort('none')}
+                  className="px-4 py-2 text-gray-500 hover:bg-gray-100 cursor-pointer"
+                >
+                  Clear
+                </li>
               )}
             </ul>
           )}
@@ -118,27 +123,31 @@ const JobPage = () => {
       {error && <p className="text-center text-red-500">{error}</p>}
 
       {/* Job Cards */}
-      {!loading && currentJobs.length > 0 && (
+      {!loading && jobs.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {currentJobs.map(job => (
+          {jobs.map((job) => (
             <JobCard key={job.id} {...job} />
           ))}
         </div>
       )}
 
       {/* No Jobs */}
-      {!loading && currentJobs.length === 0 && (
+      {!loading && jobs.length === 0 && (
         <p className="text-center text-gray-500">No jobs found.</p>
       )}
 
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center mt-8">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
-              className={`mx-1 px-3 py-1 rounded-full ${currentPage === page ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+              className={`mx-1 px-3 py-1 rounded-full ${
+                currentPage === page
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 text-gray-700'
+              }`}
             >
               {page}
             </button>
