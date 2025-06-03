@@ -1,16 +1,17 @@
-import React, { useState, useRef, useContext } from "react";
+import React, { useState, useRef } from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom";
-import { useAuth } from '../../context/AuthContext'; // Adjust path as needed
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from '../../context/AuthContext';
 
 const CVUpload = () => {
-  const { id } = useParams(); // Retrieve vacancyId from URL
-  const { currentUser } = useAuth(); // Get current user from auth context
+  const { id } = useParams(); // vacancyId
+  const { currentUser } = useAuth();
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [message, setMessage] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
 
   const handleFileSelect = (selectedFile) => {
     if (selectedFile) {
@@ -50,7 +51,7 @@ const CVUpload = () => {
     formData.append("file", file);
 
     try {
-      await axios.post(
+      const response = await axios.post(
         `http://localhost:5190/api/CandidateFile/upload?userId=${currentUser.id}&vacancyId=${id}`,
         formData,
         {
@@ -65,8 +66,13 @@ const CVUpload = () => {
           },
         }
       );
-      setMessage("CV uploaded successfully!");
-      handleRemove();
+
+      const { applicationId, message } = response.data;
+      setMessage(message || "CV uploaded successfully!");
+
+      // Navigate to CongratulationsCard2 with applicationId
+      navigate(`/candidate/congratulations/${applicationId}`);
+
     } catch (error) {
       console.error(error);
       setMessage(error.response?.data?.message || "Error uploading CV.");
@@ -94,7 +100,6 @@ const CVUpload = () => {
     >
       <h2 className="text-3xl font-bold text-gray-800 text-center">Upload Your CV</h2>
 
-      {/* Show drag-and-drop box only if no preview is shown */}
       {!previewUrl && (
         <div
           className="border-2 border-dashed border-gray-300 p-20 text-center rounded-lg bg-gray-50 hover:bg-gray-100 transition cursor-pointer"
@@ -113,7 +118,6 @@ const CVUpload = () => {
         </div>
       )}
 
-      {/* File Preview */}
       {previewUrl && (
         <div className="mt-4">
           <p className="text-gray-700 font-medium mb-2">Preview:</p>
@@ -132,7 +136,6 @@ const CVUpload = () => {
         </div>
       )}
 
-      {/* Upload Button */}
       <button
         onClick={handleUpload}
         disabled={!currentUser?.id}
@@ -145,7 +148,6 @@ const CVUpload = () => {
         {currentUser?.id ? 'Submit CV' : 'Please log in to upload'}
       </button>
 
-      {/* Upload Progress Bar */}
       {uploadProgress > 0 && (
         <div className="mt-4 w-full bg-gray-200 rounded-full h-4">
           <div
@@ -156,7 +158,6 @@ const CVUpload = () => {
         </div>
       )}
 
-      {/* Message */}
       {message && (
         <div className={`mt-4 text-center font-medium ${
           message.includes('success') ? 'text-green-600' : 'text-red-500'

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 
@@ -6,21 +6,35 @@ const Interview = () => {
   const [interviews, setInterviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
+  const [message, setMessage] = useState(null); // for API messages like "No interview yet."
   const { currentUser } = useAuth();
 
   const fetchInterviewDetails = async () => {
     try {
       if (!currentUser?.id) return;
-      
+
+      setLoading(true);
+      setMessage(null);
+
       const response = await axios.get(
         `http://localhost:5190/api/CandidateInterview/byUser/${currentUser.id}`
       );
-      setInterviews(response.data || []);
-      setError(null);
+
+      // If API returns a string message instead of an array, show it
+      if (typeof response.data === 'string') {
+        setInterviews([]);
+        setMessage(response.data);
+      } else if (Array.isArray(response.data)) {
+        setInterviews(response.data);
+        setMessage(null);
+      } else {
+        // Unexpected response format
+        setInterviews([]);
+        setMessage('No interview data available.');
+      }
     } catch (error) {
       console.error('Failed to fetch interview data:', error);
-      setError('Failed to load interviews. Please try again.');
+      // Show generic message only on network/error
       setInterviews([]);
     } finally {
       setLoading(false);
@@ -30,22 +44,26 @@ const Interview = () => {
 
   useEffect(() => {
     fetchInterviewDetails();
-  }, [currentUser?.id]); // Only re-run if user ID changes
+  }, [currentUser?.id]);
 
   if (loading) {
     return <p className="text-center my-10 text-gray-600">Loading interview details...</p>;
   }
 
-  if (error) {
+  if (message) {
     return (
       <div className="text-center my-10">
-        <p className="text-red-500 mb-4">{error}</p>
-        <button
-          onClick={fetchInterviewDetails}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md"
-        >
-          Retry
-        </button>
+        <p className={message === 'Failed to load interviews. Please try again.' ? 'text-red-500 mb-4' : 'text-gray-700 mb-4'}>
+          {message}
+        </p>
+        {message === 'Failed to load interviews. Please try again.' && (
+          <button
+            onClick={fetchInterviewDetails}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md"
+          >
+            Retry
+          </button>
+        )}
       </div>
     );
   }
@@ -69,7 +87,7 @@ const Interview = () => {
 
       {interviews.map((interview) => (
         <div
-          key={interview.interviewId} // Use actual unique ID from data
+          key={interview.interviewId}
           className="border border-gray-200 rounded-lg p-4 relative shadow-lg my-6"
         >
           <div className="flex justify-between items-start mb-1">
