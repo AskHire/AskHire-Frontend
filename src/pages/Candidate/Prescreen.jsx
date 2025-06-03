@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FaPlay, FaMicrophone, FaClock, FaQuestionCircle } from 'react-icons/fa';
 
 const Prescreen = () => {
   const [testInfo, setTestInfo] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const applicationId = "F4185AF2-D202-445D-8814-7B8FD62C9A26"; 
+  const applicationId = location.state?.applicationId;
 
   useEffect(() => {
+    if (!applicationId) return;
+
     const fetchTestInfo = async () => {
       try {
         const response = await fetch(`http://localhost:5190/api/CandidatePreScreenTest/${applicationId}`);
@@ -60,6 +63,10 @@ const Prescreen = () => {
       </div>
     </div>
   );
+
+  if (!applicationId) {
+    return <div className="text-center text-red-500 mt-12">No application ID found. Please upload your CV again.</div>;
+  }
 
   return (
     <div className="min-h-fit flex items-center justify-center p-9">
