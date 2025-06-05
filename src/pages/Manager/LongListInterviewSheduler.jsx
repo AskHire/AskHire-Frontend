@@ -160,6 +160,18 @@ const LongListInterviewScheduler = () => {
     }
   }, [startTime, endTime, interviewDuration]);
 
+  // Helper to get min time for time input
+  const getMinTime = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (date === todayStr) {
+      const now = new Date();
+      now.setSeconds(0, 0);
+      now.setMinutes(now.getMinutes() + 1); // round up to next minute
+      return now.toTimeString().slice(0, 5); // "HH:MM"
+    }
+    return "00:00";
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -176,6 +188,14 @@ const LongListInterviewScheduler = () => {
     
     if (!interviewInstructions) {
       setError('Please provide interview instructions');
+      return;
+    }
+
+    // Safety check: prevent scheduling in the past
+    const selectedDateTime = new Date(`${date}T${startTime}`);
+    const now = new Date();
+    if (selectedDateTime < now) {
+      setError('Cannot schedule an interview in the past. Please select a valid date and time.');
       return;
     }
     
@@ -338,7 +358,7 @@ const LongListInterviewScheduler = () => {
   );
 
   return (
-    <div className="bg-gray-100 flex-auto min-h-screen">
+    <div className="bg-blue-50 flex-auto min-h-screen">
       <ManagerTopbar />
 
       <main className="max-w-7xl mx-auto px-4 py-6">
@@ -434,6 +454,7 @@ const LongListInterviewScheduler = () => {
                   type="date"
                   className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                   value={date}
+                  min={new Date().toISOString().split('T')[0]} // restrict to today and future
                   onChange={(e) => setDate(e.target.value)}
                   required
                 />
@@ -448,6 +469,7 @@ const LongListInterviewScheduler = () => {
                     type="time"
                     className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                     value={startTime}
+                    min={getMinTime()} // restrict to after current time if today
                     onChange={(e) => setStartTime(e.target.value)}
                     required
                   />
@@ -460,6 +482,7 @@ const LongListInterviewScheduler = () => {
                     type="time"
                     className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                     value={endTime}
+                    min={getMinTime()} // restrict to after current time if today
                     onChange={(e) => setEndTime(e.target.value)}
                     required
                   />

@@ -16,6 +16,7 @@ const InterviewScheduler = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [timeWarning, setTimeWarning] = useState('');
 
   // Check if we're editing an existing interview
   useEffect(() => {
@@ -98,6 +99,36 @@ const InterviewScheduler = () => {
     fetchCandidateAndInterview();
   }, [applicationId, isEditing]);
 
+  // Helper to get min time for time input
+  const getMinTime = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (date === todayStr) {
+      const now = new Date();
+      now.setSeconds(0, 0);
+      now.setMinutes(now.getMinutes() + 1); // round up to next minute
+      return now.toTimeString().slice(0, 5); // "HH:MM"
+    }
+    return "00:00";
+  };
+
+  // Handle time change with validation
+  const handleTimeChange = (e) => {
+    const selectedTime = e.target.value;
+    if (date === new Date().toISOString().split('T')[0]) {
+      const minTime = getMinTime();
+      if (selectedTime < minTime) {
+        setTimeWarning(`Please select a time after ${minTime}`);
+        setTime('');
+        return;
+      } else {
+        setTimeWarning('');
+      }
+    } else {
+      setTimeWarning('');
+    }
+    setTime(selectedTime);
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -106,6 +137,15 @@ const InterviewScheduler = () => {
 
     if (!candidate || !candidate.user) {
       setError('Candidate data is missing. Please try again.');
+      setIsSaving(false);
+      return;
+    }
+
+    // Safety check: prevent scheduling in the past
+    const selectedDateTime = new Date(`${date}T${time}`);
+    const now = new Date();
+    if (selectedDateTime < now) {
+      setError('Cannot schedule an interview in the past. Please select a valid date and time.');
       setIsSaving(false);
       return;
     }
@@ -126,7 +166,7 @@ const InterviewScheduler = () => {
       if (isEditing && interviewId) {
         interviewData.interviewId = interviewId;
         url = `http://localhost:5190/api/ManagerInterview/${interviewId}`;
-        method = "PUT";
+        method = "PUT";6
         console.log("Updating interview with ID:", interviewId);
       } else {
         // For new interview, use POST
@@ -184,7 +224,7 @@ const InterviewScheduler = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-gray-100 flex-auto min-h-screen">
+      <div className="bg-blue-50 flex-auto min-h-screen">
         <ManagerTopbar />
         <main className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex justify-center items-center mt-12">
@@ -196,7 +236,7 @@ const InterviewScheduler = () => {
   }
 
   return (
-    <div className="bg-gray-100 flex-auto min-h-screen">
+    <div className="bg-blue-50 flex-auto min-h-screen">
       <ManagerTopbar />
 
       <main className="max-w-7xl mx-auto px-4 py-6">
@@ -243,6 +283,7 @@ const InterviewScheduler = () => {
                   type="date"
                   className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                   value={date}
+                  min={new Date().toISOString().split('T')[0]} // restrict to today and future
                   onChange={(e) => setDate(e.target.value)}
                   required
                 />
@@ -255,9 +296,13 @@ const InterviewScheduler = () => {
                   type="time"
                   className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                   value={time}
-                  onChange={(e) => setTime(e.target.value)}
+                  min={getMinTime()} // restrict to after current time if today
+                  onChange={handleTimeChange}
                   required
                 />
+                {timeWarning && (
+                  <div className="text-red-500 text-xs mt-1">{timeWarning}</div>
+                )}
               </div>
               
               {/* Duration field (new) */}
