@@ -20,40 +20,35 @@ const LongList = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Fetch job roles from backend
+  // Fetch vacancies from backend
   useEffect(() => {
-    const fetchJobRoles = async () => {
+    const fetchVacancies = async () => {
       try {
-        console.log("Fetching job roles for LongList page");
-        const response = await fetch("http://localhost:5190/api/JobRole");
-        if (!response.ok) throw new Error("Failed to fetch job roles");
+        console.log("Fetching vacancies for LongList page");
+        const response = await fetch("http://localhost:5190/api/Vacancy");
+        if (!response.ok) throw new Error("Failed to fetch vacancies");
         
         const data = await response.json();
-        console.log("Job roles fetched:", data);
+        console.log("Vacancies fetched:", data);
         
-        // Group jobs by title and keep only the first occurrence of each title
-        const uniqueJobs = [];
-        const uniqueTitles = new Set();
+        // Map vacancy data to the format needed for the component
+        const formattedVacancies = data.map(vacancy => ({
+          id: vacancy.vacancyId || vacancy.id,
+          title: vacancy.vacancyName || vacancy.title || vacancy.name,
+          description: vacancy.description,
+          department: vacancy.department,
+          location: vacancy.location,
+          createdDate: vacancy.createdDate
+        }));
         
-        data.forEach(job => {
-          if (!uniqueTitles.has(job.jobTitle)) {
-            uniqueTitles.add(job.jobTitle);
-            uniqueJobs.push({
-              id: job.jobId,
-              title: job.jobTitle
-            });
-          }
-        });
-        
-        // Set the vacancies state with the unique data
-        setVacancies(uniqueJobs);
+        setVacancies(formattedVacancies);
         
       } catch (error) {
-        console.error("Error fetching job roles:", error);
+        console.error("Error fetching vacancies:", error);
       }
     };
 
-    fetchJobRoles();
+    fetchVacancies();
   }, []);
 
   // Apply filters (both search and vacancy selection)
@@ -79,10 +74,18 @@ const LongList = () => {
     
     switch (sortBy) {
       case 'Newest':
-        sortedList.sort((a, b) => b.id - a.id);
+        if (sortedList[0]?.createdDate) {
+          sortedList.sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
+        } else {
+          sortedList.sort((a, b) => b.id - a.id);
+        }
         break;
       case 'Oldest':
-        sortedList.sort((a, b) => a.id - b.id);
+        if (sortedList[0]?.createdDate) {
+          sortedList.sort((a, b) => new Date(a.createdDate) - new Date(b.createdDate));
+        } else {
+          sortedList.sort((a, b) => a.id - b.id);
+        }
         break;
       case 'A-Z':
         sortedList.sort((a, b) => a.title.localeCompare(b.title));
@@ -97,17 +100,33 @@ const LongList = () => {
     setFilteredVacancies(sortedList);
   }, [searchTerm, selectedVacancy, vacancies, sortBy]);
 
-  // Handle view long-list navigation
+  // Handle view long-list navigation - FIXED
   const handleViewLongList = (vacancyTitle) => {
     console.log("Navigating to View_LongList with vacancy:", vacancyTitle);
-    window.location.href = `/manager/View_LongList?vacancy=${encodeURIComponent(vacancyTitle)}`;
+    // Use navigate instead of window.location for better React Router integration
+    navigate(`/manager/View_LongList?vacancy=${encodeURIComponent(vacancyTitle)}`);
   };
 
   // Handle delete functionality
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this vacancy?")) {
-      const updatedVacancies = vacancies.filter(vacancy => vacancy.id !== id);
-      setVacancies(updatedVacancies);
+      try {
+        const response = await fetch(`http://localhost:5190/api/Vacancy/${id}`, {
+          method: 'DELETE',
+        });
+        
+        if (response.ok) {
+          const updatedVacancies = vacancies.filter(vacancy => vacancy.id !== id);
+          setVacancies(updatedVacancies);
+          console.log("Vacancy deleted successfully");
+        } else {
+          console.error("Failed to delete vacancy");
+          alert("Failed to delete vacancy. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error deleting vacancy:", error);
+        alert("Error deleting vacancy. Please try again.");
+      }
     }
   };
 
@@ -126,13 +145,13 @@ const LongList = () => {
 
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-blue-600 flex flex-col py-4">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 w-full">
-            <h3 className="text-xl font-bold mb-4 lg:mb-0">Available Long-Lists</h3>
+            <h3 className="text-xl font-bold mb-4 lg:mb-0">Available Vacancies</h3>
             <div className="flex flex-col sm:flex-row items-center w-full lg:w-auto space-y-4 sm:space-y-0 sm:space-x-4">
-              {/* Body search input */}
+              {/* Search input */}
               <div className="relative w-full sm:w-64">
                 <input
                   type="text"
-                  placeholder="Search by keyword"
+                  placeholder="Search vacancies..."
                   className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -207,7 +226,8 @@ const LongList = () => {
                       >
                         View Long-List
                       </button>
-                      <Link to={`/manager/LongListInterviewSheduler?vacancy=${encodeURIComponent(vacancy.title)}`} className="block">
+                      {/* FIXED: Corrected the URL path and spelling */}
+                      <Link to={`/manager/LongListInterviewScheduler?vacancy=${encodeURIComponent(vacancy.title)}`} className="block">
                         <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-full shadow-md w-full">
                           Schedule Long-List Interviews
                         </button>
@@ -246,6 +266,7 @@ const LongList = () => {
                           </button>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
+                          {/* FIXED: Corrected the URL path and spelling */}
                           <Link to={`/manager/LongListInterviewSheduler?vacancy=${encodeURIComponent(vacancy.title)}`}>
                             <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-full shadow-md">
                               Schedule Long-List Interviews

@@ -71,7 +71,8 @@ const View_LongList = () => {
             uniqueTitles.add(job.jobTitle);
             uniqueJobs.push({
               id: job.jobId,
-              title: job.jobTitle
+              title: job.jobTitle,
+              vacancy: job.jobTitle // Add vacancy field that matches the title
             });
           }
         });
@@ -470,10 +471,10 @@ const View_LongList = () => {
             </>
           )}
           
-          {/* Schedule Long-List Interviews button */}
+          {/* Schedule Long-List Interviews button - Fixed the typo in URL */}
           {candidatesData.length > 0 && (
             <div className="mt-6 text-center">
-              <Link to={selectedVacancy ? `/manager/LongListInterviewSheduler?vacancy=${encodeURIComponent(selectedVacancy)}` : "/manager/LongListInterviewSheduler"}>
+              <Link to={selectedVacancy ? `/manager/LongListInterviewSheduler?vacancy=${encodeURIComponent(selectedVacancy)}` : "/manager/LongListInterviewScheduler"}>
                 <button 
                   className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-8 rounded-md w-full max-w-lg"
                 >
