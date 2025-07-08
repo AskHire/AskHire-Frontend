@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Filter, ChevronDown } from 'lucide-react';
-import JobCard from '../../components/JobCard';
+import JobCard from '../../components/CandidateComponants/JobCard';
+import Pagination from '../../components/CandidateComponants/PaginationJob';
 
 const JobPage = () => {
   const [jobs, setJobs] = useState([]);
@@ -13,7 +14,6 @@ const JobPage = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const jobsPerPage = 9;
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -49,30 +49,35 @@ const JobPage = () => {
     };
 
     fetchJobs();
-  }, [currentPage, searchTerm, sortOrder]); // 👈 added sortOrder here
+  }, [currentPage, searchTerm, sortOrder]);
 
   const handleSort = (order) => {
     setSortOrder(order);
     setShowFilters(false);
-    setCurrentPage(1); // 👈 Reset to page 1 on sort
+    setCurrentPage(1);
   };
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1); // 👈 Reset to page 1 on search
+    setCurrentPage(1);
+  };
+
+  // Handler for the pagination component
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 min-h-screen">
+    <div className="max-w-6xl mx-auto p-4 min-h-screen">
       {/* Search */}
-      <div className="flex items-center bg-white p-3 rounded-full shadow mb-6">
+      <div className="max-w-4xl mx-auto flex items-center bg-white p-3 rounded-full shadow m-4">
         <Search className="text-gray-400 mr-2" />
         <input
           type="text"
           placeholder="Search jobs..."
           value={searchTerm}
           onChange={handleSearchChange}
-          className="w-full outline-none"
+          className="w-full outline-none bg-transparent" // Added bg-transparent
         />
       </div>
 
@@ -137,23 +142,11 @@ const JobPage = () => {
       )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-8">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              className={`mx-1 px-3 py-1 rounded-full ${
-                currentPage === page
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-700'
-              }`}
-            >
-              {page}
-            </button>
-          ))}
-        </div>
-      )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 };
