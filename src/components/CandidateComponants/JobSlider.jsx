@@ -184,13 +184,13 @@ const JobCard = ({ job, onApply }) => (
         
         {/* Job Details */}
         <div className="flex justify-between text-sm text-gray-500 mb-3">
-          <span>{job.location || "Remote"}</span>
-          <span>{job.type || "Full-Time"}</span>
+          <span>{job.location }</span>
+          <span>{job.type }</span>
         </div>
         
         {/* Job Description */}
         <p className="text-sm text-gray-600 mb-4 flex-grow">
-          {job.description || "Seeking innovative developers to build cutting-edge solutions."}
+          {job.description}
         </p>
         
         {/* Apply Button */}
