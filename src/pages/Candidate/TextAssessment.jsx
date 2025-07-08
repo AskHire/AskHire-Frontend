@@ -197,12 +197,12 @@
 
 // export default TextAssessment;
 
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FiClock, FiCheckCircle } from 'react-icons/fi';
 import { useParams } from 'react-router-dom';
 import CongratulationsCard from '../../components/CongratulationsCard';
+import { useNavigate } from 'react-router-dom';
 
 const TextAssessment = () => {
   const { applicationId } = useParams();
@@ -212,12 +212,30 @@ const TextAssessment = () => {
   const [timeRemaining, setTimeRemaining] = useState(600);
   const [testCompleted, setTestCompleted] = useState(false);
   const [resultData, setResultData] = useState(null);
+  const [alreadyAttempted, setAlreadyAttempted] = useState(false);
 
-  // Fetch questions and rehydrate state
+  const navigate = useNavigate();
+
+  const handleContinue = () => {
+    navigate('/candidate/interview');
+  };
+
+  const handleBackHome = () => {
+    navigate('/');
+  };
+
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
         const res = await axios.get(`http://localhost:5190/api/CandidatePreScreenTest/Questions/${applicationId}`);
+        
+        // Check if user already attempted
+        if (res.data.status === "Longlist" || res.data.status === "Rejected") {
+          setAlreadyAttempted(true);
+          setResultData(res.data);
+          return;
+        }
+
         const loadedQuestions = res.data.questions.map((q) => ({
           questionId: q.questionId,
           question: q.questionName,
@@ -271,7 +289,6 @@ const TextAssessment = () => {
     fetchQuestions();
   }, [applicationId]);
 
-  // Countdown timer
   useEffect(() => {
     if (timeRemaining > 0 && !testCompleted) {
       const timer = setTimeout(() => setTimeRemaining(prev => prev - 1), 1000);
@@ -281,14 +298,12 @@ const TextAssessment = () => {
     }
   }, [timeRemaining, testCompleted]);
 
-  // Save selected answers to localStorage
   useEffect(() => {
     if (questions.length > 0) {
       localStorage.setItem(`testQuestions-${applicationId}`, JSON.stringify(questions));
     }
   }, [questions, applicationId]);
 
-  // Save current question index to localStorage
   useEffect(() => {
     localStorage.setItem(`currentIndex-${applicationId}`, currentQuestionIndex.toString());
   }, [currentQuestionIndex, applicationId]);
@@ -342,6 +357,33 @@ const TextAssessment = () => {
     const s = seconds % 60;
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
+
+  if (alreadyAttempted) {
+  return (
+    <div className="h-[500px]  flex items-center justify-center">
+    <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-6 text-center mx-auto border-2 border-blue-300">
+        <p className="text-red-500 font-normal mb-6">
+          You have already completed the pre-screening test. You can't retake it.
+        </p>
+    
+      <div className="space-y-3 mt-6">
+        <button
+          className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center"
+          onClick={handleContinue}
+        >
+          Continue to Interviews
+        </button>
+        <button
+          className="w-full bg-gray-300 text-gray-800 py-3 px-4 rounded-lg font-medium flex items-center justify-center"
+          onClick={handleBackHome}
+        >
+          Back to Home
+        </button>
+      </div>
+    </div>
+    </div>
+  );
+};
 
   if (questions.length === 0) return <div className="p-6">Loading questions...</div>;
 
@@ -423,4 +465,3 @@ const TextAssessment = () => {
 };
 
 export default TextAssessment;
-
