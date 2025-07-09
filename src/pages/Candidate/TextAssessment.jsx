@@ -201,8 +201,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FiClock, FiCheckCircle } from 'react-icons/fi';
 import { useParams } from 'react-router-dom';
-import CongratulationsCard from '../../components/CongratulationsCard';
-import { useNavigate } from 'react-router-dom';
+import CongratulationsCard from '../../components/CandidateComponants/CongratulationsCard'; 
 
 const TextAssessment = () => {
   const { applicationId } = useParams();
@@ -232,7 +231,6 @@ const TextAssessment = () => {
         // Check if user already attempted
         if (res.data.status === "Longlist" || res.data.status === "Rejected") {
           setAlreadyAttempted(true);
-          setResultData(res.data);
           return;
         }
 
