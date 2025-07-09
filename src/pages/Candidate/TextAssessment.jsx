@@ -204,7 +204,7 @@ import { useParams } from 'react-router-dom';
 import CongratulationsCard from '../../components/CandidateComponants/CongratulationsCard'; 
 
 const TextAssessment = () => {
-  const { applicationId } = useParams();
+  const { applicationId,useNavigate } = useParams();
   const [questions, setQuestions] = useState([]);
   const [duration, setDuration] = useState(600);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -213,8 +213,7 @@ const TextAssessment = () => {
   const [resultData, setResultData] = useState(null);
   const [alreadyAttempted, setAlreadyAttempted] = useState(false);
 
-  const navigate = useNavigate();
-
+ 
   const handleContinue = () => {
     navigate('/candidate/interview');
   };
