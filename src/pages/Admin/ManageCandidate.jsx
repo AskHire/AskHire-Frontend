@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import AdminHeader from "../../components/AdminHeader";
+import AdminHeader from "../../components/Admin/AdminHeader";
 import { BiTrash, BiChevronDown } from "react-icons/bi";
 import { IoIosSearch } from "react-icons/io";
 import axios from "axios";
@@ -102,6 +102,7 @@ export default function ManageCandidate() {
                 <div className="col-span-2">
                     <img className="w-10 h-10 rounded-full" src={candidate.image || "https://via.placeholder.com/40"} alt={candidate.firstName} />
                 </div>
+
                 <span className="col-span-3">{candidate.firstName} {candidate.lastName}</span>
                 <div className="col-span-5 text-right">
                   <button onClick={() => handleDeleteCandidate(candidate.id)} className="p-2 text-red-600 hover:text-red-800">

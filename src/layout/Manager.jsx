@@ -2,10 +2,12 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 import Footer from "../components/Footer";
 import SidebarManager from "../components/SideBarManager";
+// import ManagerTopbar from '../components/ManagerTopbar';
 
 const Manager = () => {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-blue-50">
+       {/* <ManagerTopbar /> */}
       {/* Main content wrapper */}
       <div className="flex flex-1">
         {/* Sidebar will be rendered by the customized SidebarManager */}

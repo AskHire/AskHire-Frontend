@@ -1,25 +1,19 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Main from "../layout/Main";
-import Home from "../pages/home/Home";
-import Login from "../pages/Login/Login";
-import Signup from "../pages/signup/Signup";
-import Dashboard from "../pages/dashboard/Dashboard";
-import AboutUs from "../pages/about us/AboutUs";
-import Interview from "../pages/interview/Interview";
-import Job from "../pages/jobs/Job";
 import Manager from "../layout/Manager";
+import Admin from "../layout/Admin";
+import Candidate from "../layout/Candidate";
+import Home from "../pages/Common/Home";
+import Login from "../pages/Common/Login";
+import SignUp from "../pages/Common/Signup";
+import AboutUs from "../pages/Common/AboutUs";
+import Job from "../pages/Common/Job";
 import ManagerDashboard from "../pages/Manager/ManagerDashboard";
 import ManageQuestions from "../pages/Manager/ManageQuestions";
 import SetupVacancy from "../pages/Manager/SetupVacancy";
-import ManageVacancy from "../pages/Manager/ManageVacancy";
-import LongList from "../pages/Manager/LongList";
-import ViewLongList from "../pages/Manager/ViewLongList";
-import ViewDetails from "../pages/Manager/ViewDetails";
-import NotifyCandidates from "../pages/Manager/NotifyCandidates";
 import AutomatedInterviews from "../pages/Manager/AutomatedInterviews";
 import ManualInterviews from "../pages/Manager/ManualInterviews";
 import CreateQuestions from "../pages/Manager/CreateQuestions";
-import Admin from "../layout/Admin";
 import AdminDashboard from "../pages/Admin/AdminDashboard";
 import CreateJobs from "../pages/Admin/CreateJobs";
 import ManageAdmin from "../pages/Admin/ManageAdmin";
@@ -27,9 +21,24 @@ import UserRoles from "../pages/Admin/UserRoles";
 import ManageManager from "../pages/Admin/ManageManager";
 import ManageCandidate from "../pages/Admin/ManageCandidate";
 import SystemNotification from "../pages/Admin/SystemNotification";
-import LongList2 from "../pages/Manager/LongList2";
 import LongListInterviewScheduler from "../pages/Manager/LongListInterviewSheduler";
-import InterviewScheduler from "../pages/Manager/InterviewSheduler";
+import Prescreen from "../pages/Candidate/Prescreen";
+import TextAssessment from "../pages/Candidate/TextAssessment";
+import VoiceAssessment from "../pages/Candidate/VoiceAssessment";
+import Interview from "../pages/Candidate/Interview";
+import ManageVacancy from "../pages/Manager/ManageVacancy";
+import LongList from "../pages/Manager/LongList";
+import View_LongList from "../pages/Manager/View_LongList";
+import ViewDetails from "../pages/Manager/ViewDetails";
+import NotifyCandidates from "../pages/Manager/NotifyCandidates";
+import InterviewScheduler from "../pages/Manager/InterviewScheduler";
+import JobShow from "../pages/Candidate/JobShow";
+import CVUpload from "../pages/Candidate/CVUpload";
+import CandidateDashboard from "../pages/Candidate/CandidateDashboard";
+
+
+
+
 
 
 const router = createBrowserRouter([
@@ -47,24 +56,20 @@ const router = createBrowserRouter([
       },
       {
         path: "signup",
-        element: <Signup />,
+        element: <SignUp />,
       },
       {
-        path: "about-us",
-        element: <AboutUs />,
+        path: "aboutus",
+        element:<AboutUs/>,
       },
       {
-        path: "dashboard",
-        element: <Dashboard />,
+        path: "jobs",
+        element: <Job/>
       },
       {
-        path: "job",
-        element: <Job />,
-      },
-      {
-        path: "interview",
-        element: <Interview />,
-      },
+        path: "/job/:id",
+        element: <JobShow />,
+      }
     ],
   },
   {
@@ -93,26 +98,20 @@ const router = createBrowserRouter([
       },
       {
         path: "ManageVacancy",
-        element: <ManageVacancy />,
+        element: <ManageVacancy/>,
       },
       {
         path: "LongList",
         element: <LongList />,
        
+      },    
+      {
+        path: "View_LongList",
+        element: <View_LongList/>,
       },
       {
-        path: "LongList2",
-        element: <LongList2 />,
-       
-      },
-    
-      {
-        path: "ViewLongList",
-        element: <ViewLongList />,
-      },
-      {
-        path: "ViewDetails",
-        element: <ViewDetails />,
+        path: "ViewDetails/:id",
+        element: <ViewDetails/>,
       },
       {
         path: "NotifyCandidates",
@@ -124,8 +123,8 @@ const router = createBrowserRouter([
        
       },
       {
-        path: "InterviewSheduler",
-        element: <InterviewScheduler />,
+        path: "InterviewScheduler/:applicationId",
+        element: <InterviewScheduler/>,
        
       },
       {
@@ -155,7 +154,7 @@ const router = createBrowserRouter([
         element:<CreateJobs/>
       },
       {
-        path:"ManageUserRoles",
+path:"ManageUserRoles",
         element:<UserRoles/>
       },
       {
@@ -175,7 +174,38 @@ const router = createBrowserRouter([
         element:<SystemNotification/>
       }
     ]
+  },
+  {
+    path:"/candidate",
+    element:<Candidate/>,
+    children:[
+      {
+        path: "",
+        element: <CandidateDashboard/>
+      },
+      {
+        path: "interview",
+        element: <Interview/>
+      },
+      {
+        path: "prescreen",
+        element: <Prescreen/>,
+      },
+      {
+        path: "TextAssessment/:applicationId",
+        element: <TextAssessment/>,
+      },
+      {
+        path: "VoiceAssessment/:applicationId",
+        element: <VoiceAssessment/>
+      },
+      {
+        path: "CVupload",
+        element: <CVUpload/>
+      },
+    ]
   }
+
 ]);
 
 export default router;

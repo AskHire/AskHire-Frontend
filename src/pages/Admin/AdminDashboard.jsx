@@ -3,23 +3,23 @@ import { FaUsers, FaBriefcase } from "react-icons/fa";
 import { FaUserTie } from "react-icons/fa6";
 import { RiFileUserFill } from "react-icons/ri";
 import axios from "axios";
-import BarChart from "../../components/AdminDb/BarChart";
-import Interviews from "../../components/AdminDb/Interviews";
-import PieChart from "../../components/AdminDb/PieChart";
-import AdminHeader from "../../components/AdminHeader";
+import BarChart from "../../components/Admin/AdminDb/BarChart";
+import Interviews from "../../components/Admin/AdminDb/Interviews";
+import PieChart from "../../components/Admin/AdminDb/PieChart";
+import AdminHeader from "../../components/Admin/AdminHeader";
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalCandidates: 0,
     totalManagers: 0,
-    totalAdmins: 0,
     totalJobs: 0
   });
 
   useEffect(() => {
     const fetchDashboardStats = async () => {
-      try {
+      try 
+      {
         const response = await axios.get("http://localhost:5190/api/AdminDashboard"); // Update URL
         setStats(response.data);
       } catch (error) {
@@ -59,7 +59,7 @@ export default function Dashboard() {
           title="Total Jobs"
           value={stats.totalJobs}
           growth={<span className="text-black">+11% this month</span>}
-        />
+        /> 
       </div>
 
       {/* Charts */}

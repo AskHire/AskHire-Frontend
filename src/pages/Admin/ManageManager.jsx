@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import AdminHeader from "../../components/AdminHeader";
+import AdminHeader from "../../components/Admin/AdminHeader";
 import { BiTrash, BiChevronDown } from "react-icons/bi";
 import { IoIosSearch } from "react-icons/io";
 import axios from "axios";
@@ -15,11 +15,11 @@ export default function ManageManager() {
   useEffect(() => {
     const fetchManagers = async () => {
       try {
-        const response = await axios.get("http://localhost:5190/api/AdminUser"); // No token
+        const response = await axios.get("http://localhost:5190/api/AdminUser"); 
         const allUsers = response.data;
 
         const managerOnly = allUsers.filter(user => user.role === "Manager");
-        setManagers(managerOnly); // ✅ Corrected (was mistakenly written setAdmins)
+        setManagers(managerOnly); 
       } catch (error) {
         console.error("Error fetching managers:", error);
       }
@@ -107,6 +107,7 @@ export default function ManageManager() {
           <span className="col-span-4 text-right">Delete</span>
         </div>
 
+
         {filteredManagers.length > 0 ? (
           filteredManagers.map((manager, index) => (
             <div key={manager.id} className="grid items-center grid-cols-12 p-2 mb-2 bg-white rounded-md shadow-sm">
@@ -117,6 +118,7 @@ export default function ManageManager() {
                   src={manager.image || "https://via.placeholder.com/40"}
                   alt={manager.firstName}
                 />
+
               </div>
               <span className="col-span-5">{manager.firstName} {manager.lastName}</span>
               <div className="col-span-4 text-right">

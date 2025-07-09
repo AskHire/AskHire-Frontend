@@ -1,7 +1,7 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import Footer from "../components/Footer";
-import AdminSidebar from "../components/AdminSidebar";
+import AdminSidebar from "../components/Admin/AdminSidebar";
 
 
 const Admin = () => {
