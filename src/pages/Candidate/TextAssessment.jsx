@@ -232,7 +232,6 @@ const TextAssessment = () => {
         // Check if user already attempted
         if (res.data.status === "Longlist" || res.data.status === "Rejected") {
           setAlreadyAttempted(true);
-          setResultData(res.data);
           return;
         }
 
