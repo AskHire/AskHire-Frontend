@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   AiOutlineDashboard,
   AiOutlineFileText,
@@ -12,14 +12,26 @@ import {
   AiOutlineLogout
 } from "react-icons/ai";
 import { FiBriefcase, FiList } from "react-icons/fi";
+import { useAuth } from "../context/AuthContext";
 
 const AdminSidebar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout, currentUser } = useAuth();
 
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   const menuItems = [
     { icon: <AiOutlineDashboard size={18} />, label: "Dashboard", path: "/admin/dashboard" },
@@ -32,16 +44,12 @@ const AdminSidebar = () => {
   ];
 
   const footerItems = [
-
     { icon: <AiOutlineQuestionCircle size={20} />, label: "Support & Help", path: "/admin/Support" },
-    { icon: <AiOutlineSetting size={20} />, label: "Settings", path: "/admin/Settings" },
-    { icon: <AiOutlineLogout size={20} />, label: "Log Out", path: "/logout" }
-
+    { icon: <AiOutlineSetting size={20} />, label: "Settings", path: "/admin/Settings" }
   ];
 
   return (
     <>
-
       {/* Mobile Menu Button */}
       <button
         onClick={() => setMobileOpen(true)}
@@ -54,8 +62,6 @@ const AdminSidebar = () => {
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden"
-
-     
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -76,15 +82,12 @@ const AdminSidebar = () => {
               className="p-2 rounded-full md:hidden hover:bg-gray-100"
             >
               <AiOutlineClose size={20} />
-
             </button>
           )}
         </div>
 
-
         {/* Menu Items */}
         <nav className="flex-grow py-2 space-y-1 overflow-y-auto">
-
           {menuItems.map((item) => (
             <NavItem
               key={item.label}
@@ -96,10 +99,8 @@ const AdminSidebar = () => {
           ))}
         </nav>
 
-
         {/* Footer Menu Items */}
         <div className="py-2 mt-auto space-y-1 border-t border-gray-200">
-
           {footerItems.map((item) => (
             <NavItem
               key={item.label}
@@ -109,6 +110,13 @@ const AdminSidebar = () => {
               active={location.pathname === item.path}
             />
           ))}
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-4 py-3 text-left text-gray-700 transition-colors duration-150 rounded-md hover:bg-gray-100"
+          >
+            <AiOutlineLogout size={20} />
+            <span className="ml-3 text-sm font-medium">Log Out</span>
+          </button>
         </div>
       </div>
     </>
@@ -119,14 +127,12 @@ const NavItem = ({ icon, label, path, active }) => {
   return (
     <Link
       to={path}
-
       className={`flex items-center px-4 py-3 w-full text-left transition-colors duration-150 rounded-md ${
         active ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"
       }`}
     >
       {icon}
       <span className="ml-3 text-sm font-medium">{label}</span>
-
     </Link>
   );
 };

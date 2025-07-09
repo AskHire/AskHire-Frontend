@@ -17,18 +17,9 @@ const JobCard = ({ id, title, location, type, description, endDate, instructions
   const daysRemaining = calculateDaysRemaining(endDate);
   
   const handleApply = () => {
-    navigate(`/job/${id}`, { 
-      state: { 
-        id, 
-        title, 
-        location, 
-        type, 
-        description, 
-        endDate, 
-        instructions 
-      } 
-    });
+    navigate(`/job/${id}`);
   };
+  
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 flex flex-col h-full">

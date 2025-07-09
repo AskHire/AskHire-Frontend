@@ -234,14 +234,6 @@ const View_LongList = () => {
     navigate(`/manager/View_LongList?vacancy=${encodeURIComponent(vacancy.title)}`, { replace: true });
   };
 
-  // Handle View All button click
-  const handleViewAll = () => {
-    setViewAll(true);
-    setSelectedVacancy("");
-    setCandidatesData([]); // Clear current candidates
-    navigate("/manager/View_LongList?view=all", { replace: true });
-  };
-
   // Format date and time for display in the format shown in the image
   const formatDateTime = (dateStr, timeStr) => {
     if (!dateStr) return 'N/A';
@@ -280,10 +272,19 @@ const View_LongList = () => {
     setRefreshTrigger(prev => prev + 1);
   };
 
-  // Schedule bulk interviews
+  // Schedule bulk interviews - CORRECTED HANDLER
   const handleScheduleBulkInterviews = () => {
-    // Implement bulk interview scheduling functionality
-    alert("Bulk interview scheduling is not implemented yet");
+    // Check if a vacancy is selected
+    if (selectedVacancy) {
+      // Navigate to the LongListInterviewScheduler page with the selected vacancy
+      navigate(`/manager/LongListInterviewScheduler?vacancy=${encodeURIComponent(selectedVacancy)}`);
+    } else if (viewAll) {
+      // If viewing all candidates, show an error or prompt to select a specific vacancy
+      setError("Please select a specific vacancy before scheduling bulk interviews");
+    } else {
+      // This case should not happen if the UI logic is consistent
+      setError("No vacancy selected. Please select a vacancy to schedule interviews.");
+    }
   };
 
   return (
@@ -371,14 +372,6 @@ const View_LongList = () => {
             <h3 className="text-xl font-bold">
               {selectedVacancy ? `${selectedVacancy} Long-List` : "All Long-List Candidates"}
             </h3>
-            {selectedVacancy && (
-              <button 
-                onClick={handleViewAll}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-              >
-                View All Long-List
-              </button>
-            )}
           </div>
 
           {/* Loading indicator */}
@@ -480,12 +473,13 @@ const View_LongList = () => {
           {/* Schedule Long-List Interviews button */}
           {candidatesData.length > 0 && (
             <div className="mt-6 text-center">
-              <button 
-                onClick={handleScheduleBulkInterviews}
-                className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-8 rounded-md w-full max-w-lg"
-              >
-                Schedule Long-List Interviews
-              </button>
+              <Link to={selectedVacancy ? `/manager/LongListInterviewSheduler?vacancy=${encodeURIComponent(selectedVacancy)}` : "/manager/LongListInterviewSheduler"}>
+                <button 
+                  className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-8 rounded-md w-full max-w-lg"
+                >
+                  Schedule Long-List Interviews
+                </button>
+              </Link>
             </div>
           )}
         </div>

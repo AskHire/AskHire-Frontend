@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FaPlay, FaMicrophone, FaClock, FaQuestionCircle } from 'react-icons/fa';
 
 const Prescreen = () => {
   const [testInfo, setTestInfo] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const applicationId = "65B434F3-4E52-482E-B419-64EF23FF2C0C"; 
+  const applicationId = location.state?.applicationId;
 
   useEffect(() => {
+    if (!applicationId) return;
+
     const fetchTestInfo = async () => {
       try {
-        const response = await fetch(`http://localhost:5190/api/PreScreenTest/${applicationId}`);
+        const response = await fetch(`http://localhost:5190/api/CandidatePreScreenTest/${applicationId}`);
         if (!response.ok) {
           throw new Error("Failed to fetch test info");
         }
@@ -60,6 +63,10 @@ const Prescreen = () => {
       </div>
     </div>
   );
+
+  if (!applicationId) {
+    return <div className="text-center text-red-500 mt-12">No application ID found. Please upload your CV again.</div>;
+  }
 
   return (
     <div className="min-h-fit flex items-center justify-center p-9">

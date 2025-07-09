@@ -1,42 +1,50 @@
-import React, { useEffect, useState } from 'react';
-import Banner from '../../components/banner';
+import { useEffect, useState } from 'react';
+import Banner from '../../components/CandidateComponants/Banner';
 import ProcessOverview from '../../components/ProcessOverview';
-import JobSlider from '../../components/JobSlider';
+import JobSlider from '../../components/CandidateComponants/JobSlider';
 
 const Home = () => {
-  const [jobListings, setJobListings] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [mostAppliedJobs, setMostAppliedJobs] = useState([]);
+  const [latestJobs, setLatestJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch job data from API
+  const transformData = (data) =>
+    data.map((job) => ({
+      id: job.vacancyId,
+      title: job.vacancyName,
+      location: job.workLocation,
+      type: job.workType,
+      description: job.description,
+      endDate: job.endDate,
+      instructions: job.instructions,
+    }));
+
   useEffect(() => {
     const fetchJobs = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5190/api/Vacancy/JobWiseVacancies');
 
-        if (!response.ok) {
-          throw new Error(`API request failed with status ${response.status}`);
+        const [mostAppliedRes, latestRes] = await Promise.all([
+          fetch('http://localhost:5190/api/CandidateVacancy/MostApplied'),
+          fetch('http://localhost:5190/api/CandidateVacancy/Latest'),
+        ]);
+
+        if (!mostAppliedRes.ok || !latestRes.ok) {
+          throw new Error('Failed to fetch job listings.');
         }
 
-        const data = await response.json();
+        const [mostAppliedData, latestData] = await Promise.all([
+          mostAppliedRes.json(),
+          latestRes.json(),
+        ]);
 
-        // Transform API data to match our component structure
-        const transformedData = data.map(job => ({
-          id: job.vacancyId,
-          title: job.vacancyName,
-          location: job.workLocation,
-          type: job.workType,
-          description: job.description,
-          endDate: job.endDate,
-          instructions: job.instructions
-        }));
-
-        setJobListings(transformedData);
+        setMostAppliedJobs(transformData(mostAppliedData));
+        setLatestJobs(transformData(latestData));
         setError(null);
       } catch (err) {
+        console.error(err);
         setError('Failed to load job listings. Please try again later.');
-        console.error('Error fetching job data:', err);
       } finally {
         setLoading(false);
       }
@@ -45,24 +53,11 @@ const Home = () => {
     fetchJobs();
   }, []);
 
-
-  // Get jobs to display - use API data if available, otherwise use sample data
-  const getDisplayJobs = () => {
-    if (jobListings && jobListings.length > 0) {
-      return jobListings;
-    }
-    return;
-  };
-
   return (
     <div className="max-w-full mx-auto">
+      <Banner />
 
-      <div>
-        <Banner />
-      </div>
-
-
-      <div className='max-w-6xl mx-auto px-4'>
+      <div className="max-w-6xl mx-auto px-4">
         {loading && (
           <div className="text-center py-8">
             <p>Loading job listings...</p>
@@ -75,24 +70,32 @@ const Home = () => {
           </div>
         )}
 
-        <JobSlider
-          title="Featured Jobs"
-          jobs={getDisplayJobs()}
-          viewAllLink="/jobs"
-        />
+        {!loading && !error && (
+          <>
 
-        <JobSlider
-          title="Featured Jobs"
-          jobs={getDisplayJobs()}
-          viewAllLink="/jobs"
-        />
 
+            <JobSlider
+              title="Latest Jobs"
+              jobs={latestJobs}
+              viewAllLink="/jobs"
+            />
+
+            <JobSlider
+              title="Demanded Jobs"
+              jobs={mostAppliedJobs}
+              viewAllLink="/jobs"
+            />
+
+
+          </>
+        )}
 
         <ProcessOverview />
       </div>
 
 
     </div>
+
   );
 };
 
