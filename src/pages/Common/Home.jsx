@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import Banner from '../../components/banner';
+import Banner from '../../components/CandidateComponants/Banner';
 import ProcessOverview from '../../components/ProcessOverview';
-import JobSlider from '../../components/JobSlider';
+import JobSlider from '../../components/CandidateComponants/JobSlider';
 
 const Home = () => {
   const [mostAppliedJobs, setMostAppliedJobs] = useState([]);
