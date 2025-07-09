@@ -39,7 +39,7 @@ import CandidateDashboard from "../pages/Candidate/CandidateDashboard";
 import { AuthProvider } from "../context/AuthContext";
 import PrivateRoute from "../context/PrivateRoute";
 import Unauthorized from "../pages/Common/Unauthorized";
-import CongratulationsCard2 from "../components/CongratulationCard2";
+import CongratulationsCard2 from "../components/CandidateComponants/CongratulationCard2";
 
 const router = createBrowserRouter([
   {

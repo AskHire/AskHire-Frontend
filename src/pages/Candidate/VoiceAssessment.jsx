@@ -310,7 +310,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { FiClock } from 'react-icons/fi';
-import CongratulationsCard from '../../components/CongratulationsCard';
+import CongratulationsCard from '../../components/CandidateComponants/CongratulationsCard';
 import { useParams } from 'react-router-dom';
 
 const STORAGE_KEY_END_TIME = 'voiceAssessmentEndTime';

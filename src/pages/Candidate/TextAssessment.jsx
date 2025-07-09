@@ -201,8 +201,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FiClock, FiCheckCircle } from 'react-icons/fi';
 import { useParams } from 'react-router-dom';
-import CongratulationsCard from '../../components/CongratulationsCard';
-import { useNavigate } from 'react-router-dom';
+import CongratulationsCard from '../../components/CandidateComponants/CongratulationsCard'; // Keep path relative to your project
 
 const TextAssessment = () => {
   const { applicationId } = useParams();
