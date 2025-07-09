@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Filter, ChevronDown } from 'lucide-react';
+import { Search } from 'lucide-react';
 import JobCard from '../../components/CandidateComponants/JobCard';
 import Pagination from '../../components/CandidateComponants/PaginationJob';
 
@@ -9,9 +9,9 @@ const JobPage = () => {
   const [error, setError] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState('none');
-  const [showFilters, setShowFilters] = useState(false);
-
+  // A single state to handle all filter types for simplicity
+  const [activeFilter, setActiveFilter] = useState('latest'); 
+  
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -19,11 +19,25 @@ const JobPage = () => {
     const fetchJobs = async () => {
       try {
         setLoading(true);
+
+        // Use URLSearchParams to build the query string cleanly
+        const params = new URLSearchParams({
+          pageNumber: currentPage,
+          search: searchTerm,
+        });
+
+        if (activeFilter === 'demanded') {
+          params.append('isDemanded', true);
+        } else if (activeFilter === 'latest') {
+          params.append('isLatest', true);
+        } else if (activeFilter === 'a-z' || activeFilter === 'z-a') {
+          params.append('sortOrder', activeFilter);
+        }
+        
         const res = await fetch(
-          `http://localhost:5190/api/CandidateVacancy/JobWiseVacancies?pageNumber=${currentPage}&search=${encodeURIComponent(
-            searchTerm
-          )}&sortOrder=${sortOrder}`
+          `http://localhost:5190/api/CandidateVacancy/JobWiseVacancies?${params.toString()}`
         );
+        
         if (!res.ok) throw new Error(`Status ${res.status}`);
 
         const data = await res.json();
@@ -49,12 +63,11 @@ const JobPage = () => {
     };
 
     fetchJobs();
-  }, [currentPage, searchTerm, sortOrder]);
+  }, [currentPage, searchTerm, activeFilter]); // 👈 Added activeFilter to dependency array
 
-  const handleSort = (order) => {
-    setSortOrder(order);
-    setShowFilters(false);
-    setCurrentPage(1);
+  const handleFilterChange = (filter) => {
+    setActiveFilter(filter);
+    setCurrentPage(1); // Reset to the first page when filter changes
   };
 
   const handleSearchChange = (e) => {
@@ -62,9 +75,15 @@ const JobPage = () => {
     setCurrentPage(1);
   };
 
-  // Handler for the pagination component
   const handlePageChange = (page) => {
     setCurrentPage(page);
+  };
+
+  // Style for the buttons to highlight the active one
+  const getButtonClass = (filter) => {
+    return activeFilter === filter
+      ? 'bg-blue-600 text-white px-4 py-2 rounded-full'
+      : 'bg-blue-100 text-blue-600 px-4 py-2 rounded-full hover:bg-blue-200';
   };
 
   return (
@@ -74,50 +93,43 @@ const JobPage = () => {
         <Search className="text-gray-400 mr-2" />
         <input
           type="text"
-          placeholder="Search jobs..."
+          placeholder="Search jobs by title or location..."
           value={searchTerm}
           onChange={handleSearchChange}
-          className="w-full outline-none bg-transparent" // Added bg-transparent
+          className="w-full outline-none bg-transparent"
         />
       </div>
 
       {/* Header and Filter */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Job Listings</h2>
-        <div className="relative">
+        
+        {/* 👇 All filter/sort buttons in one container */}
+        <div className="flex items-center space-x-2 flex-wrap">
           <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="bg-blue-100 text-blue-600 px-4 py-2 rounded-full flex items-center"
+            onClick={() => handleFilterChange('latest')}
+            className={getButtonClass('latest')}
           >
-            <Filter size={16} className="mr-1" />
-            Filter
-            <ChevronDown size={16} className="ml-1" />
+            Latest Jobs
           </button>
-
-          {showFilters && (
-            <ul className="absolute right-0 mt-2 bg-white shadow rounded-md border w-40 z-10">
-              <li
-                onClick={() => handleSort('a-z')}
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-              >
-                Sort A-Z
-              </li>
-              <li
-                onClick={() => handleSort('z-a')}
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-              >
-                Sort Z-A
-              </li>
-              {sortOrder !== 'none' && (
-                <li
-                  onClick={() => handleSort('none')}
-                  className="px-4 py-2 text-gray-500 hover:bg-gray-100 cursor-pointer"
-                >
-                  Clear
-                </li>
-              )}
-            </ul>
-          )}
+          <button
+            onClick={() => handleFilterChange('demanded')}
+            className={getButtonClass('demanded')}
+          >
+            Demanded Jobs
+          </button>
+          <button
+            onClick={() => handleFilterChange('a-z')}
+            className={getButtonClass('a-z')}
+          >
+            Sort A-Z
+          </button>
+          <button
+            onClick={() => handleFilterChange('z-a')}
+            className={getButtonClass('z-a')}
+          >
+            Sort Z-A
+          </button>
         </div>
       </div>
 
