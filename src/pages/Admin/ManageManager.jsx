@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import AdminHeader from "../../components/AdminHeader";
+import AdminHeader from "../../components/Admin/AdminHeader";
 import { BiTrash, BiChevronDown } from "react-icons/bi";
 import { IoIosSearch } from "react-icons/io";
 import axios from "axios";
@@ -15,12 +15,11 @@ export default function ManageManager() {
   useEffect(() => {
     const fetchManagers = async () => {
       try {
-        const response = await axios.get("http://localhost:5190/api/AdminUser"); // No token
+        const response = await axios.get("http://localhost:5190/api/AdminUser"); 
         const allUsers = response.data;
 
         const managerOnly = allUsers.filter(user => user.role === "Manager");
-        setManagers(managerOnly); // ✅ Corrected (was mistakenly written setAdmins)
-
+        setManagers(managerOnly); 
       } catch (error) {
         console.error("Error fetching managers:", error);
       }

@@ -13,7 +13,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 const PieChart = () => {
   // Sample data for the Pie chart
   const data = {
-    labels: ["Active Users", "Inactive Users", "New Users"],
+    labels: ["Active Users", "Inactive Users", "New Users", "Returning Users"],
     datasets: [
       {
         label: "User Distribution",

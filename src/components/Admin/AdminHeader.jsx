@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from "react";
 import { IoIosSearch } from "react-icons/io";
 import { FaUserCircle, FaBell } from "react-icons/fa";
+import ProfileModal from "../ProfileModal";
 
 export default function AdminHeader() {
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
   return (
     <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
       {/* Search Bar */}
@@ -18,8 +21,17 @@ export default function AdminHeader() {
       {/* Icons */}
       <div className="flex items-center space-x-4 sm:space-x-6">
         <FaBell className="text-2xl text-gray-700 transition duration-200 cursor-pointer hover:text-gray-900" />
-        <FaUserCircle className="text-2xl text-gray-700 transition duration-200 cursor-pointer hover:text-gray-900" />
+
+        {/* Profile Icon - Opens Modal */}
+        <button onClick={() => setShowProfileModal(true)} title="Profile">
+          <FaUserCircle className="text-2xl text-gray-700 transition duration-200 hover:text-gray-900" />
+        </button>
       </div>
+
+      {/* Profile Modal */}
+      {showProfileModal && (
+        <ProfileModal onClose={() => setShowProfileModal(false)} />
+      )}
     </div>
   );
 }
