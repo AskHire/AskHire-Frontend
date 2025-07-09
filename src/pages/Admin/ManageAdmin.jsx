@@ -17,6 +17,7 @@ export default function ManageAdmin() {
         const response = await axios.get("http://localhost:5190/api/AdminUser");
         const adminOnly = response.data.filter(user => user.role === "Admin");
         setAdmins(adminOnly);
+
       } catch (error) {
         console.error("Error fetching admins:", error);
       }
@@ -33,6 +34,7 @@ export default function ManageAdmin() {
       });
       setAdmins((prev) => prev.filter((admin) => admin.id !== adminId));
       alert("Admin deleted successfully.");
+
     } catch (error) {
       const message = error.response?.data?.title || error.response?.data?.message || error.message;
       alert(`Failed to delete admin: ${message}`);

@@ -15,11 +15,13 @@ export default function ManageCandidate() {
   useEffect(() => {
     const fetchCandidates = async () => {
       try {
+
         const response = await axios.get("http://localhost:5190/api/AdminUser"); // 🚫 No token
         const allUsers = response.data;
 
         const candidateOnly = allUsers.filter(user => user.role === "Candidate");
         setCandidates(candidateOnly);
+
       } catch (error) {
         console.error("Error fetching candidates:", error);
       }
@@ -35,11 +37,13 @@ export default function ManageCandidate() {
     if (!window.confirm("Are you sure you want to delete this candidate?")) return;
 
     try {
+
       await axios.delete(`http://localhost:5190/api/AdminUser/${candidateId}`); // 🚫 No token
 
       setCandidates((prevCandidates) => prevCandidates.filter(candidate => candidate.id !== candidateId));
       alert("Candidate deleted successfully.");
     } catch (error) {
+
       console.error("Error deleting candidate:", error);
 
       const errorMessage = error.response?.data?.title || error.response?.data?.message || error.message;

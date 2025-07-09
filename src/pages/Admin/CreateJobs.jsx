@@ -62,7 +62,6 @@ export default function CreateJobs() {
     if (!newJob.JobTitle || !newJob.Description) return alert("Please fill all fields.");
     try {
 
-
       await axios.post("http://localhost:5190/api/adminjobrole", newJob);
 
       alert("Job Created Successfully!");

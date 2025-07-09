@@ -33,9 +33,11 @@ export default function ManageManager() {
     if (!window.confirm("Are you sure you want to delete this manager?")) return;
 
     try {
+
       await axios.delete(`http://localhost:5190/api/AdminUser/${managerId}`); // No token
       setManagers((prevManagers) => prevManagers.filter(manager => manager.id !== managerId));
       alert("Manager deleted successfully.");
+
     } catch (error) {
       console.error("Error deleting manager:", error);
 
