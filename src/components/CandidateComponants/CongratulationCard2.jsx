@@ -93,8 +93,8 @@ const CongratulationsCard2 = () => {
         }
 
         const data = await res.json();
-        setMatchScore(data.cv_Mark || 0);
-        setStatus(data.status || '');
+        setMatchScore(data.cV_Mark ?? 0);
+        setStatus(data.status ?? '');
       } catch (err) {
         console.error('Error:', err);
         setError(err.message);
