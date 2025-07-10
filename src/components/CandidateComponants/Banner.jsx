@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // Adjust the path as needed
+import { useAuth } from '../../context/AuthContext'; // Adjust the path as needed
 
 export default function Banner() {
   const navigate = useNavigate();

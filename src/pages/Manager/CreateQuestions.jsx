@@ -11,32 +11,32 @@ const CreateQuestions = () => {
   const [loading, setLoading] = useState(true);
   const [loadingError, setLoadingError] = useState(null);
   const [submissionError, setSubmissionError] = useState("");
+
   const [options, setOptions] = useState([
     { id: 1, text: "" },
     { id: 2, text: "" },
     { id: 3, text: "" },
     { id: 4, text: "" }
   ]);
-  
+
   const [formData, setFormData] = useState({
     jobId: "",
     questionName: "",
-    answer: "", // This will now store the option name (e.g., "option2") instead of the number
+    answer: "", // Will be "Option1", "Option2", etc.
   });
 
-  // Fetch job roles when component mounts
   useEffect(() => {
     const fetchJobRoles = async () => {
       try {
         setLoading(true);
         const response = await axios.get('http://localhost:5190/api/JobRole');
         setJobRoles(response.data);
-        
-        // Set the first job role as selected if available
+
         if (response.data.length > 0) {
-          setSelectedRole(response.data[0].jobTitle);
-          setSelectedJobId(response.data[0].jobId);
-          setFormData(prev => ({ ...prev, jobId: response.data[0].jobId }));
+          const defaultJob = response.data[0];
+          setSelectedRole(defaultJob.jobTitle);
+          setSelectedJobId(defaultJob.jobId);
+          setFormData(prev => ({ ...prev, jobId: defaultJob.jobId }));
         }
       } catch (err) {
         console.error('Error fetching job roles:', err);
@@ -49,14 +49,9 @@ const CreateQuestions = () => {
     fetchJobRoles();
   }, []);
 
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen);
-  };
-  
-  const toggleAnswerDropdown = () => {
-    setIsAnswerDropdownOpen(!isAnswerDropdownOpen);
-  };
-  
+  const toggleDropdown = () => setIsOpen(!isOpen);
+  const toggleAnswerDropdown = () => setIsAnswerDropdownOpen(!isAnswerDropdownOpen);
+
   const selectRole = (role, id) => {
     setSelectedRole(role);
     setSelectedJobId(id);
@@ -64,10 +59,8 @@ const CreateQuestions = () => {
     setIsOpen(false);
   };
 
-  const selectAnswer = (answerNumber) => {
-    // Convert the answer number to the option format (e.g., 2 -> "option2")
-    const optionKey = `Option${answerNumber}`;
-    setFormData(prev => ({ ...prev, answer: optionKey }));
+  const selectAnswer = (num) => {
+    setFormData(prev => ({ ...prev, answer: `Option${num}` }));
     setIsAnswerDropdownOpen(false);
   };
 
@@ -77,61 +70,60 @@ const CreateQuestions = () => {
   };
 
   const handleOptionChange = (id, value) => {
-    setOptions(options.map(option => 
-      option.id === id ? { ...option, text: value } : option
-    ));
+    setOptions(prev =>
+      prev.map(option =>
+        option.id === id ? { ...option, text: value } : option
+      )
+    );
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Transform options to the format expected by the API
+
     const optionsForSubmission = {};
-    options.forEach((Option, index) => {
-      optionsForSubmission[`Option${index + 1}`] = Option.text;
+    options.forEach((opt, idx) => {
+      optionsForSubmission[`Option${idx + 1}`] = opt.text;
     });
-    
+
     const dataToSubmit = {
       jobId: formData.jobId,
       questionName: formData.questionName,
-      // The answer is already in the format "option#"
       answer: formData.answer,
-      ...optionsForSubmission
+      ...optionsForSubmission,
     };
-    
+
     try {
       const response = await axios.post("http://localhost:5190/api/Question", dataToSubmit);
       alert("Question added successfully!");
-      console.log(response.data);
-      
+
       // Reset form
       setFormData({
-        jobId: selectedJobId, // Keep the selected job ID
+        jobId: selectedJobId,
         questionName: "",
         answer: "",
       });
-      
+
       setOptions([
         { id: 1, text: "" },
         { id: 2, text: "" },
         { id: 3, text: "" },
         { id: 4, text: "" }
       ]);
-      
+
     } catch (err) {
-      if (err.response) {
-        setSubmissionError(`Error: ${err.response.data.message || "Unable to add the question"}`);
+      console.error("Submission error:", err);
+      if (err.response?.data?.message) {
+        setSubmissionError(`Error: ${err.response.data.message}`);
       } else {
         setSubmissionError("Error: Unable to connect to the server.");
       }
-      console.error("Error:", err);
     }
   };
 
-  // Helper function to get the number from option format
-  const getAnswerNumber = (optionFormat) => {
+  const getAnswerLabel = (optionFormat) => {
     if (!optionFormat) return '';
-    return optionFormat.replace('Option', '');
+    const num = optionFormat.replace("Option", "");
+    return `Option ${num}`;
   };
 
   return (
@@ -139,35 +131,33 @@ const CreateQuestions = () => {
       <div className="pb-4">
         <ManagerTopbar />
       </div>
+
       <h1 className="text-3xl font-bold mb-6">Create Questions</h1>
-      
+
       {/* Job Role Selector */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-bold mb-4">Select Job Role</h2>
-        
+
         <div className="relative w-full">
           <div
-            className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer"
             onClick={toggleDropdown}
           >
-            <div className="flex items-center gap-2">
-              🔍
-              <span className="text-gray-700">
-                {loading ? 'Loading...' : selectedRole || 'Select a job role'}
-              </span>
+            <div className="text-gray-700">
+              {loading ? "Loading..." : selectedRole || "Select a job role"}
             </div>
-            ▼
+            <div className="text-gray-500">▼</div>
           </div>
-          
+
           {isOpen && !loading && (
-            <div className="absolute w-full mt-1 bg-white rounded-lg shadow-lg border z-10">
+            <div className="absolute w-full mt-1 bg-white border rounded-lg shadow-lg z-10">
               {loadingError ? (
                 <p className="px-4 py-2 text-red-500">{loadingError}</p>
               ) : jobRoles.length === 0 ? (
                 <p className="px-4 py-2">No job roles found</p>
               ) : (
                 <ul className="py-1 max-h-60 overflow-y-auto">
-                  {jobRoles.map((role) => (
+                  {jobRoles.map(role => (
                     <li
                       key={role.jobId}
                       className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
@@ -182,77 +172,65 @@ const CreateQuestions = () => {
           )}
         </div>
       </div>
-      
-      {/* Question Form */}
+
+      {/* Form */}
       {selectedRole && (
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-bold mb-4">{selectedRole}</h2>
-          
+
           {submissionError && <p className="text-red-500 mb-4">{submissionError}</p>}
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Question Text */}
+            {/* Question */}
             <div>
-              <label htmlFor="questionName" className="block text-gray-700 font-medium mb-2">
-                Question Text
-              </label>
+              <label className="block font-medium mb-2">Question</label>
               <textarea
-                id="questionName"
                 name="questionName"
                 value={formData.questionName}
                 onChange={handleChange}
-                placeholder="Enter your question here..."
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={3}
+                placeholder="Enter your question..."
+                className="w-full p-3 border rounded-lg focus:ring-blue-500"
                 required
               />
             </div>
-            
-            {/* Answer Options - Always 4 options */}
+
+            {/* Options */}
             <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Answer Options
-              </label>
+              <label className="block font-medium mb-2">Answer Options</label>
               <div className="space-y-3">
-                {options.map((option) => (
-                  <div key={option.id} className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={option.text}
-                      onChange={(e) => handleOptionChange(option.id, e.target.value)}
-                      placeholder={`Option ${option.id}`}
-                      className="flex-grow p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
+                {options.map((opt) => (
+                  <input
+                    key={opt.id}
+                    type="text"
+                    placeholder={`Option ${opt.id}`}
+                    value={opt.text}
+                    onChange={(e) => handleOptionChange(opt.id, e.target.value)}
+                    className="w-full p-3 border rounded-lg focus:ring-blue-500"
+                    required
+                  />
                 ))}
               </div>
             </div>
-            
+
             {/* Correct Answer Dropdown */}
             <div>
-              <label htmlFor="answer" className="block text-gray-700 font-medium mb-2">
-                Correct Answer
-              </label>
+              <label className="block font-medium mb-2">Correct Answer</label>
               <div className="relative w-full">
                 <div
-                  className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="p-3 border rounded-lg bg-white cursor-pointer"
                   onClick={toggleAnswerDropdown}
                 >
-                  <span className="text-gray-700">
-                    {formData.answer ? `Option ${getAnswerNumber(formData.answer)}` : 'Select correct answer'}
-                  </span>
-                  ▼
+                  {formData.answer ? getAnswerLabel(formData.answer) : "Select correct answer"}
                 </div>
-                
+
                 {isAnswerDropdownOpen && (
-                  <div className="absolute w-full mt-1 bg-white rounded-lg shadow-lg border z-10">
+                  <div className="absolute w-full mt-1 bg-white border rounded-lg shadow-lg z-10">
                     <ul className="py-1">
-                      {[1, 2, 3, 4].map((num) => (
+                      {[1, 2, 3, 4].map(num => (
                         <li
                           key={num}
                           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                          onClick={() => selectAnswer(num.toString())}
+                          onClick={() => selectAnswer(num)}
                         >
                           Option {num}
                         </li>
@@ -262,10 +240,11 @@ const CreateQuestions = () => {
                 )}
               </div>
             </div>
-            
+
+            {/* Submit */}
             <button
               type="submit"
-              className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition font-medium"
+              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700"
             >
               Save Question
             </button>

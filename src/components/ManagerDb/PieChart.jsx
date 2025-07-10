@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -6,16 +6,40 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import axios from "axios";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const PieChart = () => {
+  const [dataCounts, setDataCounts] = useState({
+    scheduled: 0,
+    yetToSchedule: 0,
+    completed: 15,
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get("http://localhost:5190/api/Application/interview-status-summary");
+        setDataCounts({
+          scheduled: response.data.scheduledCount,
+          yetToSchedule: response.data.yetToScheduleCount,
+          completed: response.data.completedCount,
+        });
+      } catch (error) {
+        console.error("Error fetching interview summary", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const data = {
     labels: ["Scheduled", "Yet to Schedule", "Completed"],
     datasets: [
       {
         label: "Interview Status",
-        data: [55, 30, 15],
+        data: [dataCounts.scheduled, dataCounts.yetToSchedule, dataCounts.completed],
         backgroundColor: ["#4F46E5", "#EC4899", "#FACC15"],
         hoverOffset: 4,
       },

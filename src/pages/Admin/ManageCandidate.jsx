@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import AdminHeader from "../../components/AdminHeader";
+import AdminHeader from "../../components/Admin/AdminHeader";
 import { BiTrash, BiChevronDown } from "react-icons/bi";
 import { IoIosSearch } from "react-icons/io";
 import axios from "axios";

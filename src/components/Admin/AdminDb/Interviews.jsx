@@ -52,30 +52,28 @@ const Interviews = () => {
       {/* Header Section */}
       <div className="flex items-center justify-end mb-4">
         {!showAll && (
-          <button
-            onClick={() => setShowAll(true)}
-            className="text-blue-600 hover:underline"
-          >
+          <button onClick={() => setShowAll(true)} className="text-blue-600 hover:underline">
             View All
           </button>
         )}
       </div>
 
       {/* Table Header */}
-        <div className="hidden grid-cols-5 px-4 py-2 text-sm font-semibold rounded-lg md:grid">
-          <span className="pl-20">Profile</span>
-          <span>Name</span>
-          <span>Vacancy</span>
-          <span className="pl-20">Date</span>
-          <span>Time</span>
-        </div>
+      <div className="hidden grid-cols-6 px-4 py-2 text-sm font-semibold rounded-lg md:grid">
+        <span className="pl-20">Profile</span>
+        <span>Name</span>
+        <span>Vacancy</span>
+        <span className="pl-20">Date</span>
+        <span>Time</span>
+        <span >More</span>
+      </div>
 
-        {/* Interview List */}
+      {/* Interview List */}
       <div className="mt-2 space-y-3">
         {(showAll ? interviews : interviews.slice(0, 4)).map((interview) => (
           <div
             key={interview.id}
-            className="grid items-center grid-cols-5 p-3 bg-white rounded-lg shadow-sm hover:bg-gray-100"
+            className="grid items-center grid-cols-6 p-3 bg-white rounded-lg shadow-sm hover:bg-gray-100"
           >
             {/* Profile Image */}
             <div className="flex justify-center col-span-1">
@@ -98,6 +96,7 @@ const Interviews = () => {
             {/* Time & More Button */}
             <div className="flex items-center justify-between">
               <span className="font-semibold text-green-600">{interview.time}</span>
+              </div><div className="flex items-center ">
               <button className="text-gray-500 hover:text-gray-700">
                 <BiDotsVerticalRounded className="w-5 h-5" />
               </button>
