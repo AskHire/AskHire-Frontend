@@ -1,6 +1,10 @@
-export default function UserDetailModal({ user, onClose }) {
+import React from "react";
+
+export default function UserDetailsModal({ user, onClose }) {
+  if (!user) return null;
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gray-400 bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-50">
       <div className="w-full max-w-lg p-6 bg-white border border-gray-200 rounded-lg shadow-lg">
         <h2 className="text-2xl font-bold text-center text-gray-700">User Details</h2>
         <div className="mt-4 space-y-2">
