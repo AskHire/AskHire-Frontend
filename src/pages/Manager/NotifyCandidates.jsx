@@ -145,7 +145,8 @@ const NotifyCandidates = () => {
         message,
         type,
         time: new Date().toISOString(),
-        candidateIds: selectedCandidates
+        candidateIds: selectedCandidates,
+        status: 'Manager' // Ensure status is set to Manager for DB
       };
 
       console.log('Sending notification with data:', notificationData);

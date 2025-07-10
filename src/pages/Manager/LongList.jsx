@@ -34,14 +34,25 @@ const LongList = () => {
         // Map vacancy data to the format needed for the component
         const formattedVacancies = data.map(vacancy => ({
           id: vacancy.vacancyId || vacancy.id,
-          title: vacancy.vacancyName || vacancy.title || vacancy.name,
+          title: (vacancy.vacancyName || vacancy.title || vacancy.name || "").trim(),
           description: vacancy.description,
           department: vacancy.department,
           location: vacancy.location,
           createdDate: vacancy.createdDate
         }));
         
-        setVacancies(formattedVacancies);
+        // Remove any duplicates by title
+        const uniqueVacancies = formattedVacancies.reduce((acc, current) => {
+          const x = acc.find(item => item.title.toLowerCase() === current.title.toLowerCase());
+          if (!x) {
+            return acc.concat([current]);
+          } else {
+            return acc;
+          }
+        }, []);
+        
+        console.log("Formatted vacancies:", uniqueVacancies);
+        setVacancies(uniqueVacancies);
         
       } catch (error) {
         console.error("Error fetching vacancies:", error);
@@ -103,8 +114,13 @@ const LongList = () => {
   // Handle view long-list navigation - FIXED
   const handleViewLongList = (vacancyTitle) => {
     console.log("Navigating to View_LongList with vacancy:", vacancyTitle);
-    // Use navigate instead of window.location for better React Router integration
-    navigate(`/manager/View_LongList?vacancy=${encodeURIComponent(vacancyTitle)}`);
+    if (!vacancyTitle) {
+      console.error("No vacancy title provided");
+      return;
+    }
+    // Ensure the vacancy title is properly encoded and navigate
+    const encodedTitle = encodeURIComponent(vacancyTitle.trim());
+    navigate(`/manager/View_LongList?vacancy=${encodedTitle}`);
   };
 
   // Handle delete functionality
@@ -267,7 +283,7 @@ const LongList = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {/* FIXED: Corrected the URL path and spelling */}
-                          <Link to={`/manager/LongListInterviewSheduler?vacancy=${encodeURIComponent(vacancy.title)}`}>
+                          <Link to={`/manager/LongListInterviewScheduler?vacancy=${encodeURIComponent(vacancy.title)}`}>
                             <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-full shadow-md">
                               Schedule Long-List Interviews
                             </button>
