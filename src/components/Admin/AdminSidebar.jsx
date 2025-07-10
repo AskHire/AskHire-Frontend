@@ -12,7 +12,7 @@ import {
   AiOutlineLogout
 } from "react-icons/ai";
 import { FiBriefcase, FiList } from "react-icons/fi";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 const AdminSidebar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
