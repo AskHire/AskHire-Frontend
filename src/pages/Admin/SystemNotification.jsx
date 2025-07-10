@@ -26,14 +26,20 @@ export default function SystemNotification() {
   };
 
   return (
-    <div className="flex-1 p-6">
+    <div className="flex-1 min-h-screen p-6 bg-blue-50">
+      {/* Admin header */}
       <AdminHeader />
-      <h1 className="mt-8 text-3xl font-bold">System Notification</h1>
 
-      <NotificationForm onNotify={fetchNotifications} />
+      {/* Page Title */}
+      <h1 className="mt-8 text-3xl font-bold text-gray-800">System Notifications</h1>
 
+      {/* Create Form */}
+      <div className="mt-6">
+        <NotificationForm onNotify={fetchNotifications} />
+      </div>
+
+      {/* Notification List Table */}
       <div className="mt-10">
-        <h2 className="text-lg font-bold">Recent Notifications</h2>
         <NotificationList
           notifications={notifications}
           showAll={showAll}
@@ -43,6 +49,7 @@ export default function SystemNotification() {
         />
       </div>
 
+      {/* Modal */}
       {selectedNotification && (
         <NotificationModal
           notification={selectedNotification}

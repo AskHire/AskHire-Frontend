@@ -9,18 +9,28 @@ const InterviewScheduler = () => {
   const [candidate, setCandidate] = useState(null);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
-  const [duration, setDuration] = useState('01:00:00'); // Added duration state with default 1 hour
+  const [duration, setDuration] = useState('01:00:00');
   const [interviewInstructions, setInterviewInstructions] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [interviewId, setInterviewId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [timeWarning, setTimeWarning] = useState('');
+  const [originalVacancy, setOriginalVacancy] = useState('');
 
-  // Check if we're editing an existing interview
+  // Get the original vacancy from URL when component mounts
   useEffect(() => {
     const params = new URLSearchParams(location.search);
+    const vacancy = params.get('vacancy');
     const editMode = params.get('edit') === 'true';
+    
+    if (vacancy) {
+      // Decode the vacancy parameter
+      const decodedVacancy = decodeURIComponent(vacancy);
+      setOriginalVacancy(decodedVacancy);
+      console.log("Original vacancy set to:", decodedVacancy); // Debug log
+    }
     setIsEditing(editMode);
   }, [location.search]);
 
@@ -29,7 +39,6 @@ const InterviewScheduler = () => {
     const fetchCandidateAndInterview = async () => {
       try {
         setIsLoading(true);
-        // Add cache busting parameter to prevent caching
         const timestamp = new Date().getTime();
         const response = await fetch(`http://localhost:5190/api/ManagerCandidates/${applicationId}?_=${timestamp}`);
         
@@ -42,43 +51,40 @@ const InterviewScheduler = () => {
         if (data && data.user) {
           setCandidate(data);
           
-          // Now fetch interview directly to ensure we have the latest data
+          // If no vacancy was passed in URL, try to get it from candidate data
+          if (!originalVacancy && data.jobTitle) {
+            setOriginalVacancy(data.jobTitle);
+            console.log("Vacancy set from candidate data:", data.jobTitle);
+          }
+          
           if (isEditing) {
             try {
               const interviewResponse = await fetch(`http://localhost:5190/api/ManagerInterview/application/${applicationId}?_=${timestamp}`);
               if (interviewResponse.ok) {
                 const interviewData = await interviewResponse.json();
-                console.log("Fetched interview data:", interviewData);
                 
                 if (interviewData) {
                   setInterviewId(interviewData.interviewId);
                   
-                  // Format date from API (assuming format is ISO or similar)
                   if (interviewData.date) {
                     const interviewDate = new Date(interviewData.date);
                     setDate(interviewDate.toISOString().split('T')[0]);
                   }
                   
-                  // Set time if available
                   if (interviewData.time) {
                     setTime(interviewData.time);
                   }
                   
-                  // Set duration if available (if not in the current model, will be ignored)
                   if (interviewData.duration) {
                     setDuration(interviewData.duration);
                   }
                   
-                  // Set instructions if available - using the property name from API
                   if (interviewData.instructions) {
                     setInterviewInstructions(interviewData.instructions);
                   } else if (interviewData.interview_Instructions) {
-                    // Fallback for backward compatibility
                     setInterviewInstructions(interviewData.interview_Instructions);
                   }
                 }
-              } else {
-                console.log("No interview found or error fetching interview");
               }
             } catch (interviewError) {
               console.error("Error fetching interview:", interviewError);
@@ -96,7 +102,37 @@ const InterviewScheduler = () => {
     };
 
     fetchCandidateAndInterview();
-  }, [applicationId, isEditing]);
+  }, [applicationId, isEditing, originalVacancy]);
+
+  // Helper to get min time for time input
+  const getMinTime = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (date === todayStr) {
+      const now = new Date();
+      now.setSeconds(0, 0);
+      now.setMinutes(now.getMinutes() + 1);
+      return now.toTimeString().slice(0, 5);
+    }
+    return "00:00";
+  };
+
+  // Handle time change with validation
+  const handleTimeChange = (e) => {
+    const selectedTime = e.target.value;
+    if (date === new Date().toISOString().split('T')[0]) {
+      const minTime = getMinTime();
+      if (selectedTime < minTime) {
+        setTimeWarning(`Please select a time after ${minTime}`);
+        setTime('');
+        return;
+      } else {
+        setTimeWarning('');
+      }
+    } else {
+      setTimeWarning('');
+    }
+    setTime(selectedTime);
+  };
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -110,33 +146,33 @@ const InterviewScheduler = () => {
       return;
     }
 
+    const selectedDateTime = new Date(`${date}T${time}`);
+    const now = new Date();
+    if (selectedDateTime < now) {
+      setError('Cannot schedule an interview in the past. Please select a valid date and time.');
+      setIsSaving(false);
+      return;
+    }
+
     try {
-      // Create the interview data object
       const interviewData = {
         applicationId: applicationId,
         date: date,
         time: time,
-        duration: duration, // Added duration field in time format (HH:MM:SS)
-        instructions: interviewInstructions // Based on the API documentation, this should be "instructions"
+        duration: duration,
+        instructions: interviewInstructions
       };
       
       let url, method;
       
-      // If editing and we have an interview ID, use PUT to update existing record
       if (isEditing && interviewId) {
         interviewData.interviewId = interviewId;
         url = `http://localhost:5190/api/ManagerInterview/${interviewId}`;
         method = "PUT";
-        console.log("Updating interview with ID:", interviewId);
       } else {
-        // For new interview, use POST
         url = "http://localhost:5190/api/ManagerInterview";
         method = "POST";
-        console.log("Creating new interview");
       }
-      
-      console.log("Sending request:", method, url);
-      console.log("Request data:", interviewData);
       
       const response = await fetch(url, {
         method: method,
@@ -145,27 +181,23 @@ const InterviewScheduler = () => {
         },
         body: JSON.stringify(interviewData),
       });
-
-      console.log("Response status:", response.status);
       
       if (response.ok) {
         const successMessage = isEditing 
           ? "Interview updated successfully!" 
           : "Interview scheduled successfully and invitation sent!";
           
-        // Navigate back with success message
-        const encodedMessage = encodeURIComponent(successMessage);
-        navigate(`/manager/View_LongList?message=${encodedMessage}`);
+        // Navigate back to the correct vacancy page
+        navigateBackToLongList(successMessage);
       } else {
         let errorMessage = "Failed to process interview. Please try again.";
         try {
           const errorData = await response.json();
-          console.error("Error data:", errorData);
           if (errorData.message) {
             errorMessage = errorData.message;
           }
         } catch (e) {
-          // Ignore JSON parsing error
+          console.error("Error parsing error response:", e);
         }
         setError(errorMessage);
         setIsSaving(false);
@@ -177,14 +209,45 @@ const InterviewScheduler = () => {
     }
   };
 
+  // Helper function to navigate back to the correct long-list page
+  const navigateBackToLongList = (message = null) => {
+    // Determine the vacancy to use for navigation
+    let vacancyForNavigation = originalVacancy;
+    
+    // If no original vacancy, try to get it from candidate data
+    if (!vacancyForNavigation && candidate && candidate.jobTitle) {
+      vacancyForNavigation = candidate.jobTitle;
+    }
+    
+    // Build the navigation URL
+    let navUrl = '/manager/View_LongList';
+    const params = new URLSearchParams();
+    
+    if (message) {
+      params.append('message', message);
+    }
+    
+    if (vacancyForNavigation) {
+      params.append('vacancy', vacancyForNavigation);
+      params.append('filter', 'true');
+    }
+    
+    if (params.toString()) {
+      navUrl += '?' + params.toString();
+    }
+    
+    console.log("Navigating back to:", navUrl, "with vacancy:", vacancyForNavigation);
+    navigate(navUrl);
+  };
+
   // Handle cancel button
   const handleCancel = () => {
-    navigate('/manager/View_LongList');
+    navigateBackToLongList();
   };
 
   if (isLoading) {
     return (
-      <div className="bg-gray-100 flex-auto min-h-screen">
+      <div className="bg-blue-50 flex-auto min-h-screen">
         <ManagerTopbar />
         <main className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex justify-center items-center mt-12">
@@ -196,7 +259,7 @@ const InterviewScheduler = () => {
   }
 
   return (
-    <div className="bg-gray-100 flex-auto min-h-screen">
+    <div className="bg-blue-50 flex-auto min-h-screen">
       <ManagerTopbar />
 
       <main className="max-w-7xl mx-auto px-4 py-6">
@@ -221,46 +284,45 @@ const InterviewScheduler = () => {
             </h2>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit}>
-            {/* Candidate Name Display */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-600 mb-1">Scheduling for:</label>
               <input
                 type="text"
                 className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={candidate ? `${candidate.user.firstName} ${candidate.user.lastName} (${candidate.user.position || 'Candidate'})` : "Loading..."}
+                value={candidate ? `${candidate.user.firstName} ${candidate.user.lastName} (${originalVacancy || candidate.jobTitle || 'Candidate'})` : "Loading..."}
                 readOnly
               />
             </div>
 
-            {/* Date and Time Flex Container */}
             <div className="flex flex-col md:flex-row gap-6 mb-6">
-              {/* Date field */}
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-600 mb-1">Date</label>
                 <input
                   type="date"
                   className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                   value={date}
+                  min={new Date().toISOString().split('T')[0]}
                   onChange={(e) => setDate(e.target.value)}
                   required
                 />
               </div>
 
-              {/* Time field */}
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-600 mb-1">Time</label>
                 <input
                   type="time"
                   className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                   value={time}
-                  onChange={(e) => setTime(e.target.value)}
+                  min={getMinTime()}
+                  onChange={handleTimeChange}
                   required
                 />
+                {timeWarning && (
+                  <div className="text-red-500 text-xs mt-1">{timeWarning}</div>
+                )}
               </div>
               
-              {/* Duration field (new) */}
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-600 mb-1">Duration</label>
                 <select
@@ -279,7 +341,6 @@ const InterviewScheduler = () => {
               </div>
             </div>
 
-            {/* Instructions field - updated label for clarity */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-600 mb-1">Interview Instructions</label>
               <textarea
@@ -291,7 +352,6 @@ const InterviewScheduler = () => {
               ></textarea>
             </div>
 
-            {/* Button container */}
             <div className="flex flex-col-reverse sm:flex-row justify-between pt-4 gap-3">
               <button
                 type="button"

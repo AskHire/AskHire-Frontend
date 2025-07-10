@@ -7,23 +7,43 @@ const ViewDetails = () => {
   const [candidateData, setCandidateData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  // Helper function to get auth headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('accessToken'); // Adjust this based on your auth service
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+  };
 
   // Fetch candidate data from the backend based on the ID
   useEffect(() => {
     const fetchCandidateDetails = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`http://localhost:5190/api/ManagerCandidates/${id}`);
+        const response = await fetch(`http://localhost:5190/api/ManagerCandidates/${id}`, {
+          method: 'GET',
+          headers: getAuthHeaders(),
+        });
+        
         if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('Candidate not found');
+          } else if (response.status === 401) {
+            throw new Error('Unauthorized access. Please login again.');
+          }
           throw new Error(`API request failed with status ${response.status}`);
         }
+        
         const data = await response.json();
-        console.log('Fetched candidate data:', data); // Log the data to see structure
-        setCandidateData(data); // Set the data to state
+        console.log('Fetched candidate data:', data);
+        setCandidateData(data);
         setError(null);
       } catch (error) {
         console.error('Error fetching candidate data:', error);
-        setError('Failed to load candidate data. Please try again later.');
+        setError(error.message || 'Failed to load candidate data. Please try again later.');
       } finally {
         setIsLoading(false);
       }
@@ -35,39 +55,106 @@ const ViewDetails = () => {
   }, [id]);
 
   const handleDownloadCV = async () => {
+    // Prevent multiple simultaneous downloads
+    if (isDownloading) {
+      return;
+    }
+
+    setIsDownloading(true);
+    
     try {
-      if (!candidateData || !candidateData.cvFilePath) {
-        alert('CV file not available for download.');
+      // Check if candidate data exists
+      if (!candidateData) {
+        alert('No candidate data available.');
         return;
       }
 
+      console.log('Attempting to download CV for candidate:', id);
+      
       const response = await fetch(`http://localhost:5190/api/ManagerCandidates/download-cv/${id}`, {
         method: 'GET',
         headers: {
-          'Accept': 'application/pdf',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Accept': 'application/pdf, application/octet-stream, */*',
         },
       });
 
+      console.log('Download response status:', response.status);
+      console.log('Download response headers:', response.headers);
+
       if (!response.ok) {
-        throw new Error(`Download failed with status ${response.status}`);
+        let errorMessage = 'Download failed';
+        
+        try {
+          const errorData = await response.text();
+          if (errorData) {
+            errorMessage = errorData;
+          }
+        } catch (e) {
+          // If we can't parse the error response, use the status
+          if (response.status === 404) {
+            errorMessage = 'CV file not found. The CV may not have been uploaded for this candidate.';
+          } else if (response.status === 401) {
+            errorMessage = 'Unauthorized access. Please login again.';
+          } else if (response.status === 403) {
+            errorMessage = 'Access denied. You do not have permission to download this CV.';
+          } else if (response.status === 500) {
+            errorMessage = 'Server error occurred while downloading the CV.';
+          } else {
+            errorMessage = `Download failed with status ${response.status}`;
+          }
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      // Check if response has content
+      const contentLength = response.headers.get('content-length');
+      if (contentLength && parseInt(contentLength) === 0) {
+        throw new Error('CV file is empty');
       }
 
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      
+      // Verify blob has content
+      if (blob.size === 0) {
+        throw new Error('Downloaded file is empty');
+      }
 
+      // Get filename from response headers or use default
+      let filename = `Candidate_${candidateData.user?.firstName || 'Unknown'}_${candidateData.user?.lastName || 'Candidate'}_CV.pdf`;
+      const contentDisposition = response.headers.get('content-disposition');
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '');
+        }
+      }
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Candidate_${id}_CV.pdf`);
+      link.setAttribute('download', filename);
+      link.style.display = 'none';
+      
       document.body.appendChild(link);
       link.click();
 
+      // Cleanup
       setTimeout(() => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
       }, 100);
+
+      console.log('CV downloaded successfully');
+      alert('CV downloaded successfully!');
+      
     } catch (error) {
       console.error('Error downloading CV:', error);
       alert(`Failed to download CV: ${error.message}`);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -209,10 +296,14 @@ const ViewDetails = () => {
 
           <button
             onClick={handleDownloadCV}
-            className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-3 px-4 rounded-full transition duration-300 transform hover:-translate-y-1"
-            disabled={!candidateData.cvFilePath}
+            disabled={isDownloading}
+            className={`w-full font-semibold py-3 px-4 rounded-full transition duration-300 transform hover:-translate-y-1 ${
+              isDownloading
+                ? 'bg-gray-400 cursor-not-allowed text-white'
+                : 'bg-pink-600 hover:bg-pink-700 text-white'
+            }`}
           >
-            {candidateData.cvFilePath ? 'Download CV' : 'CV Not Available'}
+            {isDownloading ? 'Downloading...' : 'Download CV'}
           </button>
         </div>
       </div>
