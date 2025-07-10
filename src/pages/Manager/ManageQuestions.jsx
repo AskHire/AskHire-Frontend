@@ -3,7 +3,6 @@ import { ChevronDown, Search, Edit, Trash2, X } from 'lucide-react';
 import ManagerTopbar from '../../components/ManagerTopbar';
 
 const ManageQuestions = () => {
-  // States
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
   const [selectedJobId, setSelectedJobId] = useState(null);
@@ -18,16 +17,17 @@ const ManageQuestions = () => {
   const [showModal, setShowModal] = useState(false);
   const [updatedQuestion, setUpdatedQuestion] = useState({});
 
-  // Fetch job roles on mount
+  const [currentPage, setCurrentPage] = useState(1);
+  const questionsPerPage = 10;
+
   useEffect(() => {
     const fetchJobRoles = async () => {
       try {
         setLoading(true);
         const response = await fetch('http://localhost:5190/api/JobRole');
-        if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
         const data = await response.json();
         setJobRoles(data);
-      } catch (err) {
+      } catch {
         setError('Failed to load job roles');
       } finally {
         setLoading(false);
@@ -36,13 +36,11 @@ const ManageQuestions = () => {
     fetchJobRoles();
   }, []);
 
-  // Fetch all questions on mount
   useEffect(() => {
     const fetchAllQuestions = async () => {
       try {
         setQuestionsLoading(true);
         const response = await fetch('http://localhost:5190/api/Question');
-        if (!response.ok) throw new Error('Failed to fetch questions');
         setAllQuestions(await response.json());
       } catch (err) {
         setError(err.message);
@@ -53,16 +51,15 @@ const ManageQuestions = () => {
     fetchAllQuestions();
   }, []);
 
-  // Filter questions when job role is selected
   useEffect(() => {
     if (selectedJobId) {
       setQuestions(allQuestions.filter(q => q.jobId === selectedJobId));
+      setCurrentPage(1);
     } else {
       setQuestions([]);
     }
   }, [selectedJobId, allQuestions]);
 
-  // Handle dropdown actions
   const toggleDropdown = () => setIsOpen(!isOpen);
   const selectRole = (role, jobId) => {
     setSelectedRole(role);
@@ -70,26 +67,18 @@ const ManageQuestions = () => {
     setIsOpen(false);
   };
 
-  // CRUD operations
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this question?')) return;
-    
     try {
-      const response = await fetch(`http://localhost:5190/api/Question/${id}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) throw new Error('Failed to delete question');
-      
-      setQuestions(questions.filter(q => q.questionId !== id));
-      setAllQuestions(allQuestions.filter(q => q.questionId !== id));
+      await fetch(`http://localhost:5190/api/Question/${id}`, { method: 'DELETE' });
+      setAllQuestions(prev => prev.filter(q => q.questionId !== id));
     } catch (err) {
       setError(err.message);
     }
   };
 
   const handleEdit = (question) => {
-    setUpdatedQuestion({...question});
+    setUpdatedQuestion({ ...question });
     setShowModal(true);
   };
 
@@ -108,45 +97,50 @@ const ManageQuestions = () => {
 
   const handleSaveQuestion = async () => {
     try {
-      if (updatedQuestion.questionId) {
-        // Update existing question
-        const response = await fetch(`http://localhost:5190/api/Question/${updatedQuestion.questionId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedQuestion),
-        });
-        
-        if (!response.ok) throw new Error('Failed to update question');
-        
-        const updatedQuestions = questions.map(q => 
-          q.questionId === updatedQuestion.questionId ? updatedQuestion : q
-        );
-        setQuestions(updatedQuestions);
-        setAllQuestions(allQuestions.map(q => 
-          q.questionId === updatedQuestion.questionId ? updatedQuestion : q
-        ));
-      } else {
-        // Create new question
-        const response = await fetch('http://localhost:5190/api/Question', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedQuestion),
-        });
-        
-        if (!response.ok) throw new Error('Failed to create question');
-        
-        const createdQuestion = await response.json();
-        setQuestions([...questions, createdQuestion]);
-        setAllQuestions([...allQuestions, createdQuestion]);
+      const answerText = updatedQuestion.answer;
+
+      let answerKey = '';
+      for (let i = 1; i <= 4; i++) {
+        if (updatedQuestion[`option${i}`] === answerText) {
+          answerKey = `Option${i}`;
+          break;
+        }
       }
+
+      const dataToSave = {
+        ...updatedQuestion,
+        answer: answerKey
+      };
+
+      const method = updatedQuestion.questionId ? 'PUT' : 'POST';
+      const url = updatedQuestion.questionId
+        ? `http://localhost:5190/api/Question/${updatedQuestion.questionId}`
+        : 'http://localhost:5190/api/Question';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dataToSave)
+      });
+
+      const saved = await response.json();
+      const updated = updatedQuestion.questionId
+        ? allQuestions.map(q => q.questionId === saved.questionId ? saved : q)
+        : [...allQuestions, saved];
+
+      setAllQuestions(updated);
       setShowModal(false);
     } catch (err) {
       alert(`Error: ${err.message}`);
     }
   };
 
-  // Filter and sort questions
-  const filteredQuestions = questions.filter(q => 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setUpdatedQuestion(prev => ({ ...prev, [name]: value }));
+  };
+
+  const filteredQuestions = questions.filter(q =>
     q.questionName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -157,21 +151,23 @@ const ManageQuestions = () => {
     return 0;
   });
 
+  const indexOfLast = currentPage * questionsPerPage;
+  const indexOfFirst = indexOfLast - questionsPerPage;
+  const currentQuestions = sortedQuestions.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(sortedQuestions.length / questionsPerPage);
+
+  const paginate = (pageNum) => setCurrentPage(pageNum);
+
   return (
     <div className="flex-1 pt-1 pb-4 pr-6 pl-6">
-      <div className="pb-4">
-        <ManagerTopbar />
-      </div>
+      <div className="pb-4"><ManagerTopbar /></div>
       <h1 className="text-3xl font-bold mb-6">Manage Questions</h1>
-      
+
       {/* Job Role Selector */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-bold mb-4">Select Job Role</h2>
         <div className="relative w-full">
-          <div
-            className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer"
-            onClick={toggleDropdown}
-          >
+          <div className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer" onClick={toggleDropdown}>
             <div className="flex items-center gap-2">
               <Search size={20} className="text-gray-400" />
               <span className="text-lg">
@@ -180,7 +176,6 @@ const ManageQuestions = () => {
             </div>
             <ChevronDown className={`text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
           </div>
-          
           {isOpen && !loading && (
             <div className="absolute w-full mt-1 bg-white rounded-lg shadow-lg border z-10">
               {error ? (
@@ -205,12 +200,11 @@ const ManageQuestions = () => {
         </div>
       </div>
 
-      {/* Questions List */}
+      {/* Questions Table */}
       {selectedJobId && (
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">{selectedRole}</h2>
-            
             <div className="flex space-x-2">
               <div className="relative">
                 <input
@@ -222,7 +216,6 @@ const ManageQuestions = () => {
                 />
                 <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
               </div>
-              
               <select
                 className="px-4 py-2 bg-gray-100 rounded-lg"
                 value={sortOption}
@@ -234,70 +227,70 @@ const ManageQuestions = () => {
               </select>
             </div>
           </div>
-          
-          {questionsLoading ? (
-            <p className="text-center py-4">Loading questions...</p>
-          ) : error ? (
-            <p className="text-center py-4 text-red-500">Error: {error}</p>
-          ) : (
-            <>
-              {/* Table */}
-              <div className="grid grid-cols-12 py-2 border-b text-gray-500 text-sm">
-                <div className="col-span-1 px-4">#</div>
-                <div className="col-span-9 px-4">Name</div>
-                <div className="col-span-1 text-center">Edit</div>
-                <div className="col-span-1 text-center">Delete</div>
-              </div>
-              
-              {sortedQuestions.length > 0 ? (
-                sortedQuestions.map((question, index) => (
-                  <div 
-                    key={question.questionId} 
-                    className="grid grid-cols-12 py-4 border-b items-center hover:bg-gray-50"
-                  >
-                    <div className="col-span-1 px-4 text-gray-500">{index + 1}</div>
-                    <div className="col-span-9 px-4 font-medium">
-                      {question.questionName}
-                    </div>
-                    <div className="col-span-1 flex justify-center">
-                      <button 
-                        className="p-2 bg-blue-100 text-blue-600 rounded-full"
-                        onClick={() => handleEdit(question)}
-                      >
-                        <Edit size={16} />
-                      </button>
-                    </div>
-                    <div className="col-span-1 flex justify-center">
-                      <button 
-                        className="p-2 bg-red-100 text-red-600 rounded-full"
-                        onClick={() => handleDelete(question.questionId)}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  No questions found for this job role.
+
+          <div className="grid grid-cols-12 py-2 border-b text-gray-500 text-sm">
+            <div className="col-span-1 px-4">#</div>
+            <div className="col-span-9 px-4">Name</div>
+            <div className="col-span-1 text-center">Edit</div>
+            <div className="col-span-1 text-center">Delete</div>
+          </div>
+
+          {currentQuestions.length > 0 ? (
+            currentQuestions.map((question, index) => (
+              <div
+                key={question.questionId}
+                className="grid grid-cols-12 py-4 border-b items-center hover:bg-gray-50"
+              >
+                <div className="col-span-1 px-4 text-gray-500">
+                  {(currentPage - 1) * questionsPerPage + index + 1}
                 </div>
-              )}
-              
-              {/* Add Button */}
-              <div className="flex justify-center mt-8">
-                <button 
-                  className="bg-blue-600 text-white py-3 px-6 rounded-full text-lg font-medium"
-                  onClick={handleAddNewQuestion}
-                >
-                  + Add New Question
-                </button>
+                <div className="col-span-9 px-4 font-medium">{question.questionName}</div>
+                <div className="col-span-1 flex justify-center">
+                  <button className="p-2 bg-blue-100 text-blue-600 rounded-full" onClick={() => handleEdit(question)}>
+                    <Edit size={16} />
+                  </button>
+                </div>
+                <div className="col-span-1 flex justify-center">
+                  <button className="p-2 bg-red-100 text-red-600 rounded-full" onClick={() => handleDelete(question.questionId)}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
-            </>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No questions found for this job role.
+            </div>
           )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-6 space-x-2">
+              {Array.from({ length: totalPages }, (_, idx) => (
+                <button
+                  key={idx + 1}
+                  className={`px-4 py-2 rounded-lg border ${
+                    currentPage === idx + 1
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-blue-600 border-blue-600'
+                  }`}
+                  onClick={() => paginate(idx + 1)}
+                >
+                  {idx + 1}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="flex justify-center mt-8">
+            <button className="bg-blue-600 text-white py-3 px-6 rounded-full text-lg font-medium" onClick={handleAddNewQuestion}>
+              + Add New Question
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Question Modal */}
+      {/* Modal for Add/Edit */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-lg">
@@ -305,75 +298,35 @@ const ManageQuestions = () => {
               <h2 className="text-xl font-bold">
                 {updatedQuestion.questionId ? 'Edit Question' : 'Add New Question'}
               </h2>
-              <button 
-                className="text-gray-500 hover:text-gray-700"
-                onClick={() => setShowModal(false)}
-              >
+              <button className="text-gray-500 hover:text-gray-700" onClick={() => setShowModal(false)}>
                 <X size={20} />
               </button>
             </div>
-            
+
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Question Text</label>
-                <textarea
-                  name="questionName"
-                  value={updatedQuestion.questionName || ''}
-                  onChange={e => setUpdatedQuestion({...updatedQuestion, questionName: e.target.value})}
-                  className="w-full p-3 border rounded-lg resize-none"
-                  rows={3}
-                  placeholder="Enter question text here..."
-                />
-              </div>
-              
-              {/* Options */}
-              <div className="space-y-3">
-                <label className="block text-sm font-medium">Answer Options</label>
-                
-                {[1, 2, 3, 4].map(num => (
-                  <div key={num}>
-                    <label className="block text-xs text-gray-500 mb-1">Option {num}</label>
-                    <input
-                      type="text"
-                      name={`option${num}`}
-                      value={updatedQuestion[`option${num}`] || ''}
-                      onChange={e => setUpdatedQuestion({
-                        ...updatedQuestion, 
-                        [`option${num}`]: e.target.value
-                      })}
-                      className="w-full p-3 border rounded-lg"
-                      placeholder={`Enter option ${num}`}
-                    />
-                  </div>
+              <input name="questionName" value={updatedQuestion.questionName} onChange={handleChange} placeholder="Question" className="w-full border px-4 py-2 rounded" />
+              <input name="option1" value={updatedQuestion.option1} onChange={handleChange} placeholder="Option 1" className="w-full border px-4 py-2 rounded" />
+              <input name="option2" value={updatedQuestion.option2} onChange={handleChange} placeholder="Option 2" className="w-full border px-4 py-2 rounded" />
+              <input name="option3" value={updatedQuestion.option3} onChange={handleChange} placeholder="Option 3" className="w-full border px-4 py-2 rounded" />
+              <input name="option4" value={updatedQuestion.option4} onChange={handleChange} placeholder="Option 4" className="w-full border px-4 py-2 rounded" />
+
+              <select
+                name="answer"
+                value={updatedQuestion.answer}
+                onChange={handleChange}
+                className="w-full border px-4 py-2 rounded"
+              >
+                <option value="">Select Correct Answer</option>
+                {['option1', 'option2', 'option3', 'option4'].map((optKey, index) => (
+                  <option key={optKey} value={updatedQuestion[optKey]}>
+                    {`Option ${index + 1}`}
+                  </option>
                 ))}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Correct Answer</label>
-                <input
-                  type="text"
-                  name="answer"
-                  value={updatedQuestion.answer || ''}
-                  onChange={e => setUpdatedQuestion({...updatedQuestion, answer: e.target.value})}
-                  className="w-full p-3 border rounded-lg"
-                  placeholder="Enter the correct answer"
-                />
-              </div>
-              
-              <div className="flex space-x-2 pt-4">
-                <button 
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium"
-                  onClick={handleSaveQuestion}
-                >
-                  {updatedQuestion.questionId ? 'Save Changes' : 'Create Question'}
-                </button>
-                <button 
-                  className="bg-gray-300 px-6 py-2 rounded-lg font-medium"
-                  onClick={() => setShowModal(false)}
-                >
-                  Cancel
-                </button>
-              </div>
+              </select>
+
+              <button onClick={handleSaveQuestion} className="bg-blue-600 text-white py-2 px-4 rounded w-full">
+                Save
+              </button>
             </div>
           </div>
         </div>
