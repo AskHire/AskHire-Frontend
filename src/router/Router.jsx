@@ -21,7 +21,7 @@ import UserRoles from "../pages/Admin/UserRoles";
 import ManageManager from "../pages/Admin/ManageManager";
 import ManageCandidate from "../pages/Admin/ManageCandidate";
 import SystemNotification from "../pages/Admin/SystemNotification";
-import LongListInterviewScheduler from "../pages/Manager/LongListInterviewSheduler";
+
 import Prescreen from "../pages/Candidate/Prescreen";
 import TextAssessment from "../pages/Candidate/TextAssessment";
 import VoiceAssessment from "../pages/Candidate/VoiceAssessment";
@@ -39,7 +39,14 @@ import CandidateDashboard from "../pages/Candidate/CandidateDashboard";
 import { AuthProvider } from "../context/AuthContext";
 import PrivateRoute from "../context/PrivateRoute";
 import Unauthorized from "../pages/Common/Unauthorized";
+<<<<<<< HEAD
+import CongratulationsCard2 from "../components/CongratulationCard2";
+import LongListInterviewScheduler from "../pages/Manager/LongListInterviewSheduler";
+
+
+=======
 import CongratulationsCard2 from "../components/CandidateComponants/CongratulationCard2";
+>>>>>>> 2e5371a50717106e7aca98160a841d33a97658ed
 
 const router = createBrowserRouter([
   {

@@ -28,99 +28,50 @@ const LongListInterviewScheduler = () => {
     notScheduledCount: 0
   });
 
-  // Extract vacancy name from URL query params
+  // Extract vacancyId from URL query params and fetch unscheduled candidates directly
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const vacancy = params.get('vacancy');
-    if (vacancy) {
-      setVacancyName(vacancy);
-      fetchVacancies(vacancy);
+    const vacancyId = params.get('vacancyId');
+    if (vacancyId) {
+      setVacancyId(vacancyId);
+      fetchUnscheduledCandidates(vacancyId);
     } else {
-      setError('No vacancy specified');
+      setError('No vacancy ID specified');
       setIsLoading(false);
     }
   }, [location.search]);
 
-  // Fetch all vacancies and find the matching one
-  const fetchVacancies = async (name) => {
+  // Fetch unscheduled candidates for the given vacancy ID using the correct backend API
+  const fetchUnscheduledCandidates = async (vacancyId) => {
     try {
       setIsLoading(true);
-      
-      // First get all job roles
-      const jobResponse = await fetch('http://localhost:5190/api/JobRole');
-      if (!jobResponse.ok) throw new Error('Failed to fetch job roles');
-      const jobs = await jobResponse.json();
-      setAllVacancies(jobs);
-      
-      console.log("All job roles:", jobs);
-      console.log("Looking for job role with name:", name);
-      
-      // Try to find the job by exact title match first
-      let job = jobs.find(j => j.jobTitle.toLowerCase() === name.toLowerCase());
-      
-      // If not found, try a more flexible match
-      if (!job) {
-        job = jobs.find(j => j.jobTitle.toLowerCase().includes(name.toLowerCase()) || 
-                            name.toLowerCase().includes(j.jobTitle.toLowerCase()));
-      }
-      
-      if (job) {
-        console.log("Found matching job role:", job);
-        
-        // Now fetch all vacancies to find the one matching this job ID
-        const vacancyResponse = await fetch('http://localhost:5190/api/ManagerLonglistVacancy');
-        if (!vacancyResponse.ok) throw new Error('Failed to fetch vacancies');
-        const vacancies = await vacancyResponse.json();
-        console.log("All vacancies:", vacancies);
-        
-        // Find the vacancy that matches the job ID
-        const matchingVacancy = vacancies.find(v => v.jobId === job.jobId);
-        
-        if (matchingVacancy) {
-          console.log("Found matching vacancy:", matchingVacancy);
-          setVacancyId(matchingVacancy.vacancyId);
-          fetchUnscheduledCandidates(matchingVacancy.vacancyId);
-        } else {
-          console.log("No matching vacancy found for job ID:", job.jobId);
-          // Try to fetch candidates using the job ID anyway as a fallback
-          setVacancyId(job.jobId);
-          fetchUnscheduledCandidates(job.jobId);
-        }
-      } 
-    } catch (error) {
-      console.error("Error fetching vacancies:", error);
-      setError(`Error fetching vacancy information: ${error.message}`);
-      setIsLoading(false);
-    }
-  };
+      setError(null);
 
-  // Fetch unscheduled candidates for the given vacancy ID
-  const fetchUnscheduledCandidates = async (id) => {
-    try {
-      console.log(`Fetching unscheduled candidates for vacancy ID: ${id}`);
-      
-      // Ensure the ID is properly formatted (no extra spaces, etc.)
-      const formattedId = id.trim();
-      
-      const url = `http://localhost:5190/api/ManagerLongListInterviewScheduler/unscheduled-candidates/${formattedId}`;
-      console.log("Fetching from URL:", url);
-      
+      const formattedId = vacancyId.trim();
+      const url = `http://localhost:5190/api/ManagerLongListInterviewScheduler/unscheduled-candidates/63742936-66b8-48a7-ba06-d476f344ec9f`;
+      // const url = `http://localhost:5190/api/ManagerLongListInterviewScheduler/unscheduled-candidates/${formattedId}`;
       const response = await fetch(url);
-      
+      // console.log("Fetching unscheduled candidates for vacancy ID:", response);
+
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`API Error (${response.status}):`, errorText);
         throw new Error(`Failed to fetch unscheduled candidates: ${response.status} - ${errorText}`);
       }
-      
+
       const data = await response.json();
       console.log("Unscheduled candidates data:", data);
-      
-      setUnscheduledCandidates(data);
+      // Only keep candidates with status 'longlist' (case-insensitive)
+      const unscheduled = data.filter(
+        c => (c.status || '').toLowerCase() === 'longlist'
+      );
+      setUnscheduledCandidates(unscheduled);
       setIsLoading(false);
+
+      if (unscheduled.length === 0) {
+        setError("No unscheduled candidates found for this vacancy.");
+      }
     } catch (error) {
-      console.error("Error in fetchUnscheduledCandidates:", error);
-      setError(`Error fetching unscheduled candidates: ${error.message}`);
+      setError('Error fetching unscheduled candidates: ' + error.message);
       setIsLoading(false);
     }
   };
@@ -160,18 +111,6 @@ const LongListInterviewScheduler = () => {
     }
   }, [startTime, endTime, interviewDuration]);
 
-  // Helper to get min time for time input
-  const getMinTime = () => {
-    const todayStr = new Date().toISOString().split('T')[0];
-    if (date === todayStr) {
-      const now = new Date();
-      now.setSeconds(0, 0);
-      now.setMinutes(now.getMinutes() + 1); // round up to next minute
-      return now.toTimeString().slice(0, 5); // "HH:MM"
-    }
-    return "00:00";
-  };
-
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -188,14 +127,6 @@ const LongListInterviewScheduler = () => {
     
     if (!interviewInstructions) {
       setError('Please provide interview instructions');
-      return;
-    }
-
-    // Safety check: prevent scheduling in the past
-    const selectedDateTime = new Date(`${date}T${startTime}`);
-    const now = new Date();
-    if (selectedDateTime < now) {
-      setError('Cannot schedule an interview in the past. Please select a valid date and time.');
       return;
     }
     
@@ -358,7 +289,7 @@ const LongListInterviewScheduler = () => {
   );
 
   return (
-    <div className="bg-blue-50 flex-auto min-h-screen">
+    <div className="bg-gray-100 flex-auto min-h-screen">
       <ManagerTopbar />
 
       <main className="max-w-7xl mx-auto px-4 py-6">
@@ -414,7 +345,7 @@ const LongListInterviewScheduler = () => {
                     </button>
                   </div>
                 </div>
-                
+                {console.log('Rendering unscheduledCandidates:', unscheduledCandidates)}
                 {unscheduledCandidates.length > 0 ? (
                   <div className="bg-gray-50 p-4 rounded-lg max-h-40 overflow-y-auto">
                     <ul className="space-y-2">
@@ -454,7 +385,6 @@ const LongListInterviewScheduler = () => {
                   type="date"
                   className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                   value={date}
-                  min={new Date().toISOString().split('T')[0]} // restrict to today and future
                   onChange={(e) => setDate(e.target.value)}
                   required
                 />
@@ -469,7 +399,6 @@ const LongListInterviewScheduler = () => {
                     type="time"
                     className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                     value={startTime}
-                    min={getMinTime()} // restrict to after current time if today
                     onChange={(e) => setStartTime(e.target.value)}
                     required
                   />
@@ -482,7 +411,6 @@ const LongListInterviewScheduler = () => {
                     type="time"
                     className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                     value={endTime}
-                    min={getMinTime()} // restrict to after current time if today
                     onChange={(e) => setEndTime(e.target.value)}
                     required
                   />
