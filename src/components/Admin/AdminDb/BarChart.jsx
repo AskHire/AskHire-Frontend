@@ -9,48 +9,60 @@ import {
   Legend,
 } from "chart.js";
 
-// Register chart components
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-const BarChart = () => {
-  // Chart Data
+const getNiceStep = (max) => {
+  if (max <= 10) return 1;
+  if (max <= 25) return 5;
+  if (max <= 50) return 10;
+  if (max <= 100) return 20;
+  if (max <= 250) return 50;
+  if (max <= 500) return 100;
+  return 200; // fallback for very large numbers
+};
+
+const BarChart = ({ signupsPerMonth = Array(12).fill(0) }) => {
+  const labels = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  ];
+
+  const rawData = signupsPerMonth;
+
+  const maxValue = Math.max(...rawData);
+  const stepSize = getNiceStep(maxValue);
+  const axisTop = Math.ceil(maxValue / stepSize) * stepSize;
+
   const data = {
-    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    labels,
     datasets: [
       {
         label: "Users",
-        data: [120, 190, 300, 250, 500, 700, 650, 800, 450, 320, 600, 750], // Example data
-        backgroundColor: "#4F46E5", // Blue color for bars
-        borderRadius: 5, // Rounded bars
+        data: rawData,
+        backgroundColor: "#4F46E5",
+        borderRadius: 5,
       },
     ],
   };
 
-  // Chart Options
   const options = {
     responsive: true,
-    maintainAspectRatio: false, // Allows dynamic resizing
-    plugins: {
-      legend: {
-        display: false, // Hide legend
-      },
-    },
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
     scales: {
-      x: {
-        grid: {
-          display: false, // Hide grid lines
-        },
-      },
+      x: { grid: { display: false } },
       y: {
         beginAtZero: true,
+        max: axisTop,
+        ticks: { stepSize },
       },
     },
   };
 
   return (
-    <div className="p-4 rounded-lg ">
+    <div className="p-4 rounded-lg">
       <h2 className="mb-2 text-lg font-bold text-gray-700">Users Overview</h2>
-      <div className="w-full h-80">
+      <div className="w-full min-h-[20rem]">
         <Bar data={data} options={options} />
       </div>
     </div>

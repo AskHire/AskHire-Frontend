@@ -13,22 +13,22 @@ export default function Dashboard() {
     totalUsers: 0,
     totalCandidates: 0,
     totalManagers: 0,
-    totalJobs: 0
+    totalJobs: 0,
+    signupsPerMonth: Array(12).fill(0),
   });
 
   useEffect(() => {
-    const fetchDashboardStats = async () => {
-      try 
-      {
-        const response = await axios.get("http://localhost:5190/api/AdminDashboard"); // Update URL
-        setStats(response.data);
-      } catch (error) {
-        console.error("Failed to fetch dashboard stats:", error);
-      }
-    };
+  const fetchDashboardStats = async () => {
+    try {
+      const response = await axios.get("http://localhost:5190/api/AdminDashboard");
+      setStats(response.data);
+    } catch (error) {
+      console.error("Failed to fetch dashboard stats:", error);
+    }
+  };
 
-    fetchDashboardStats();
-  }, []);
+  fetchDashboardStats();
+}, []);
 
   return (
     <div className="flex-1 p-4 md:p-6">
@@ -65,7 +65,7 @@ export default function Dashboard() {
       {/* Charts */}
       <div className="grid grid-cols-1 gap-6 mt-6 lg:grid-cols-3">
         <div className="bg-white rounded-lg shadow-md lg:col-span-2">
-          <BarChart />
+          <BarChart signupsPerMonth={stats.signupsPerMonth} />
         </div>
         <div className="bg-white rounded-lg shadow-md">
           <PieChart />
