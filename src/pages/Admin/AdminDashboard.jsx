@@ -15,6 +15,7 @@ export default function Dashboard() {
     totalManagers: 0,
     totalJobs: 0,
     signupsPerMonth: Array(12).fill(0),
+    usersByAgeGroup: {},
   });
 
   useEffect(() => {
@@ -68,7 +69,7 @@ export default function Dashboard() {
           <BarChart signupsPerMonth={stats.signupsPerMonth} />
         </div>
         <div className="bg-white rounded-lg shadow-md">
-          <PieChart />
+          <PieChart ageGroupData={stats.usersByAgeGroup}/>
         </div>
       </div>
 
