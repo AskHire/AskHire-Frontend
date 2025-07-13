@@ -7,20 +7,22 @@ const LongListInterviewScheduler = () => {
   const location = useLocation();
   const [vacancyName, setVacancyName] = useState('');
   const [vacancyId, setVacancyId] = useState('');
+  const [jobId, setJobId] = useState('');
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [interviewDuration, setInterviewDuration] = useState('00:30:00'); // Default 30 minutes
+  const [interviewDuration, setInterviewDuration] = useState('00:30:00');
   const [interviewInstructions, setInterviewInstructions] = useState('');
   const [unscheduledCandidates, setUnscheduledCandidates] = useState([]);
+  const [selectedCandidates, setSelectedCandidates] = useState([]);
   const [possibleInterviews, setPossibleInterviews] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [allVacancies, setAllVacancies] = useState([]);
-  const [sendEmail, setSendEmail] = useState(true); // Added email toggle
+  const [sendEmail, setSendEmail] = useState(true);
+  const [selectAll, setSelectAll] = useState(false);
   
-  // New state for success message and view
+  // Success state
   const [successMessage, setSuccessMessage] = useState(null);
   const [showSuccessView, setShowSuccessView] = useState(false);
   const [scheduledResults, setScheduledResults] = useState({
@@ -28,63 +30,247 @@ const LongListInterviewScheduler = () => {
     notScheduledCount: 0
   });
 
-  // Extract vacancyId from URL query params and fetch unscheduled candidates directly
+  // Extract vacancy info from URL query params
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const vacancyId = params.get('vacancyId');
-    if (vacancyId) {
-      setVacancyId(vacancyId);
-      fetchUnscheduledCandidates(vacancyId);
+    const vacancy = params.get('vacancy');
+    const vacancyIdParam = params.get('vacancyId');
+    
+    console.log("URL params - vacancy:", vacancy, "vacancyId:", vacancyIdParam);
+    
+    if (vacancy) {
+      setVacancyName(vacancy);
+      if (vacancyIdParam) {
+        setVacancyId(vacancyIdParam);
+        fetchUnscheduledCandidates(vacancyIdParam);
+      } else {
+        fetchVacancyByName(vacancy);
+      }
+    } else if (vacancyIdParam) {
+      // If only vacancyId is provided, try to fetch vacancy details
+      setVacancyId(vacancyIdParam);
+      fetchVacancyDetails(vacancyIdParam);
     } else {
-      setError('No vacancy ID specified');
+      setError('No vacancy information specified in URL parameters');
       setIsLoading(false);
     }
   }, [location.search]);
 
-  // Fetch unscheduled candidates for the given vacancy ID using the correct backend API
-  const fetchUnscheduledCandidates = async (vacancyId) => {
+  // Fetch vacancy details by ID
+  const fetchVacancyDetails = async (vacancyId) => {
     try {
       setIsLoading(true);
       setError(null);
-
-      const formattedId = vacancyId.trim();
-      const url = `http://localhost:5190/api/ManagerLongListInterviewScheduler/unscheduled-candidates/63742936-66b8-48a7-ba06-d476f344ec9f`;
-      // const url = `http://localhost:5190/api/ManagerLongListInterviewScheduler/unscheduled-candidates/${formattedId}`;
-      const response = await fetch(url);
-      // console.log("Fetching unscheduled candidates for vacancy ID:", response);
-
+      
+      console.log("Fetching vacancy details for ID:", vacancyId);
+      
+      const response = await fetch(`http://localhost:5190/api/ManagerLonglistVacancy/${vacancyId}`);
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to fetch unscheduled candidates: ${response.status} - ${errorText}`);
+        throw new Error(`Failed to fetch vacancy details: ${response.status}`);
       }
-
-      const data = await response.json();
-      console.log("Unscheduled candidates data:", data);
-      // Only keep candidates with status 'longlist' (case-insensitive)
-      const unscheduled = data.filter(
-        c => (c.status || '').toLowerCase() === 'longlist'
-      );
-      setUnscheduledCandidates(unscheduled);
-      setIsLoading(false);
-
-      if (unscheduled.length === 0) {
-        setError("No unscheduled candidates found for this vacancy.");
-      }
+      
+      const vacancyData = await response.json();
+      console.log("Vacancy details:", vacancyData);
+      
+      setVacancyName(vacancyData.vacancyName || `Vacancy ${vacancyId}`);
+      setJobId(vacancyData.jobId || '');
+      
+      await fetchUnscheduledCandidates(vacancyId);
+      
     } catch (error) {
-      setError('Error fetching unscheduled candidates: ' + error.message);
+      console.error("Error fetching vacancy details:", error);
+      // Don't fail completely, just set a default name and continue
+      setVacancyName(`Vacancy ${vacancyId}`);
+      await fetchUnscheduledCandidates(vacancyId);
+    }
+  };
+
+  // Fetch vacancy by name to get the vacancy ID
+  const fetchVacancyByName = async (name) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      console.log("Fetching vacancy by name:", name);
+      
+      const vacancyResponse = await fetch('http://localhost:5190/api/ManagerLonglistVacancy');
+      if (!vacancyResponse.ok) {
+        throw new Error(`Failed to fetch vacancies: ${vacancyResponse.status}`);
+      }
+      const vacancies = await vacancyResponse.json();
+      
+      console.log("All vacancies:", vacancies);
+      
+      const matchingVacancy = vacancies.find(vacancy => 
+        vacancy.vacancyName.toLowerCase() === name.toLowerCase() ||
+        vacancy.vacancyName.toLowerCase().includes(name.toLowerCase()) ||
+        name.toLowerCase().includes(vacancy.vacancyName.toLowerCase())
+      );
+      
+      if (!matchingVacancy) {
+        throw new Error(`No vacancy found matching: ${name}`);
+      }
+      
+      console.log("Matching vacancy found:", matchingVacancy);
+      setVacancyId(matchingVacancy.vacancyId);
+      setJobId(matchingVacancy.jobId || '');
+      
+      await fetchUnscheduledCandidates(matchingVacancy.vacancyId);
+      
+    } catch (error) {
+      console.error("Error fetching vacancy data:", error);
+      setError(`Error fetching vacancy information: ${error.message}`);
       setIsLoading(false);
     }
   };
 
-  // Calculate number of possible interviews based on time range and duration
+  // Enhanced function to fetch unscheduled candidates
+  const fetchUnscheduledCandidates = async (vacancyId) => {
+    try {
+      setError(null);
+      console.log(`Fetching unscheduled candidates for vacancy ID: ${vacancyId}`);
+      
+      if (!vacancyId) {
+        throw new Error('No vacancy ID provided');
+      }
+      
+      // Try multiple API endpoints to get unscheduled candidates
+      let candidates = [];
+      
+      // First try the specific unscheduled candidates endpoint
+      try {
+        const response = await fetch(
+          `http://localhost:5190/api/ManagerLongListInterviewScheduler/unscheduled-candidates/${vacancyId}`
+        );
+        
+        if (response.ok) {
+          candidates = await response.json();
+          console.log("Fetched from unscheduled endpoint:", candidates);
+        } else {
+          console.warn("Unscheduled endpoint returned:", response.status);
+        }
+      } catch (error) {
+        console.warn("Unscheduled endpoint failed:", error);
+      }
+      
+      // If no candidates found, try to get all applications for this vacancy
+      if (!candidates || candidates.length === 0) {
+        try {
+          const allApplicationsResponse = await fetch(
+            `http://localhost:5190/api/ManagerLonglistVacancy/applications/${vacancyId}`
+          );
+          
+          if (allApplicationsResponse.ok) {
+            const allApplications = await allApplicationsResponse.json();
+            console.log("All applications for vacancy:", allApplications);
+            
+            // Filter for unscheduled candidates (those without interview scheduled)
+            candidates = allApplications.filter(app => 
+              !app.interviewScheduled && 
+              app.applicationStatus !== 'Rejected' &&
+              app.applicationStatus !== 'Hired'
+            );
+            
+            console.log("Filtered unscheduled candidates:", candidates);
+          } else {
+            console.warn("Applications endpoint returned:", allApplicationsResponse.status);
+          }
+        } catch (error) {
+          console.warn("Applications endpoint failed:", error);
+        }
+      }
+      
+      // If still no candidates, try alternative approach
+      if (!candidates || candidates.length === 0) {
+        try {
+          const longlistResponse = await fetch(
+            `http://localhost:5190/api/ManagerLonglistVacancy/longlist/${vacancyId}`
+          );
+          
+          if (longlistResponse.ok) {
+            const longlistData = await longlistResponse.json();
+            console.log("Longlist data:", longlistData);
+            
+            // Extract candidates from longlist data
+            candidates = longlistData.candidates || longlistData.applications || [];
+            
+            // Filter for unscheduled
+            candidates = candidates.filter(candidate => 
+              !candidate.interviewScheduled && 
+              !candidate.hasInterview &&
+              candidate.status !== 'Rejected'
+            );
+          } else {
+            console.warn("Longlist endpoint returned:", longlistResponse.status);
+          }
+        } catch (error) {
+          console.warn("Longlist endpoint failed:", error);
+        }
+      }
+      
+      // Ensure candidates is an array and has proper structure
+      const candidatesArray = Array.isArray(candidates) ? candidates : [];
+      
+      // Normalize candidate data structure
+      const normalizedCandidates = candidatesArray.map(candidate => ({
+        applicationId: candidate.applicationId || candidate.id,
+        candidateId: candidate.candidateId || candidate.userId,
+        firstName: candidate.firstName || candidate.user?.firstName || candidate.candidate?.firstName || 'Unknown',
+        lastName: candidate.lastName || candidate.user?.lastName || candidate.candidate?.lastName || 'Name',
+        email: candidate.email || candidate.user?.email || candidate.candidate?.email || 'No email',
+        phone: candidate.phone || candidate.user?.phone || candidate.candidate?.phone || '',
+        applicationStatus: candidate.applicationStatus || candidate.status || 'Applied',
+        appliedDate: candidate.appliedDate || candidate.createdAt || new Date().toISOString()
+      }));
+      
+      console.log("Normalized candidates:", normalizedCandidates);
+      
+      setUnscheduledCandidates(normalizedCandidates);
+      setIsLoading(false);
+      
+      // Auto-select all candidates if auto-scheduling is enabled
+      if (normalizedCandidates.length > 0) {
+        setSelectedCandidates(normalizedCandidates.map(c => c.applicationId));
+        setSelectAll(true);
+      }
+      
+    } catch (error) {
+      console.error("Error fetching unscheduled candidates:", error);
+      setError(`Error fetching unscheduled candidates: ${error.message}`);
+      setIsLoading(false);
+    }
+  };
+
+  // Handle individual candidate selection
+  const handleCandidateToggle = (candidateId) => {
+    setSelectedCandidates(prev => {
+      const newSelected = prev.includes(candidateId)
+        ? prev.filter(id => id !== candidateId)
+        : [...prev, candidateId];
+      
+      setSelectAll(newSelected.length === unscheduledCandidates.length);
+      return newSelected;
+    });
+  };
+
+  // Handle select all toggle
+  const handleSelectAllToggle = () => {
+    if (selectAll) {
+      setSelectedCandidates([]);
+      setSelectAll(false);
+    } else {
+      setSelectedCandidates(unscheduledCandidates.map(c => c.applicationId));
+      setSelectAll(true);
+    }
+  };
+
+  // Calculate number of possible interviews
   useEffect(() => {
     if (startTime && endTime && interviewDuration) {
       try {
-        // Parse times to calculate difference
         const [startHours, startMinutes] = startTime.split(':').map(Number);
         const [endHours, endMinutes] = endTime.split(':').map(Number);
         
-        // Calculate total minutes in range
         const startTotalMinutes = startHours * 60 + startMinutes;
         const endTotalMinutes = endHours * 60 + endMinutes;
         
@@ -94,12 +280,9 @@ const LongListInterviewScheduler = () => {
         }
         
         const totalAvailableMinutes = endTotalMinutes - startTotalMinutes;
-        
-        // Parse duration to get minutes
         const [durationHours, durationMinutes] = interviewDuration.split(':').map(Number);
         const interviewDurationMinutes = durationHours * 60 + durationMinutes;
         
-        // Calculate number of possible interviews
         const possibleCount = Math.floor(totalAvailableMinutes / interviewDurationMinutes);
         setPossibleInterviews(possibleCount);
       } catch (error) {
@@ -111,22 +294,108 @@ const LongListInterviewScheduler = () => {
     }
   }, [startTime, endTime, interviewDuration]);
 
-  // Handle form submission
+  // Get minimum time for date validation
+  const getMinTime = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (date === todayStr) {
+      const now = new Date();
+      now.setSeconds(0, 0);
+      now.setMinutes(now.getMinutes() + 1);
+      return now.toTimeString().slice(0, 5);
+    }
+    return "00:00";
+  };
+
+  // Generate automatic interview schedule
+  const generateInterviewSchedule = () => {
+    if (!startTime || !endTime || !interviewDuration || selectedCandidates.length === 0) {
+      return [];
+    }
+
+    const schedule = [];
+    const [startHours, startMinutes] = startTime.split(':').map(Number);
+    const [durationHours, durationMinutes] = interviewDuration.split(':').map(Number);
+    const interviewDurationMinutes = durationHours * 60 + durationMinutes;
+
+    let currentTime = startHours * 60 + startMinutes;
+    const [endHours, endMinutes] = endTime.split(':').map(Number);
+    const endTotalMinutes = endHours * 60 + endMinutes;
+
+    const selectedCandidateDetails = unscheduledCandidates.filter(candidate => 
+      selectedCandidates.includes(candidate.applicationId)
+    );
+
+    for (let i = 0; i < selectedCandidateDetails.length && currentTime + interviewDurationMinutes <= endTotalMinutes; i++) {
+      const candidate = selectedCandidateDetails[i];
+      const interviewStartHours = Math.floor(currentTime / 60);
+      const interviewStartMinutes = currentTime % 60;
+      const interviewEndTime = currentTime + interviewDurationMinutes;
+      const interviewEndHours = Math.floor(interviewEndTime / 60);
+      const interviewEndMinutes = interviewEndTime % 60;
+
+      schedule.push({
+        candidateId: candidate.candidateId,
+        applicationId: candidate.applicationId,
+        candidateName: `${candidate.firstName} ${candidate.lastName}`,
+        candidateEmail: candidate.email,
+        startTime: `${interviewStartHours.toString().padStart(2, '0')}:${interviewStartMinutes.toString().padStart(2, '0')}`,
+        endTime: `${interviewEndHours.toString().padStart(2, '0')}:${interviewEndMinutes.toString().padStart(2, '0')}`,
+        date: date
+      });
+
+      currentTime = interviewEndTime;
+    }
+
+    return schedule;
+  };
+
+  // Handle form submission with automatic scheduling - ENHANCED VERSION
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Clear any previous errors
+    setError(null);
+    
+    // Enhanced validation with better error messages
+    if (!vacancyId || vacancyId.trim() === '') {
+      setError('Vacancy ID is missing. Please try refreshing the page or go back and select the vacancy again.');
+      return;
+    }
+    
+    if (!date || date.trim() === '') {
+      setError('Please select a date for the interviews');
+      return;
+    }
+    
+    if (!startTime || startTime.trim() === '') {
+      setError('Please set the start time for interviews');
+      return;
+    }
+    
+    if (!endTime || endTime.trim() === '') {
+      setError('Please set the end time for interviews');
+      return;
+    }
+    
+    if (!interviewInstructions || interviewInstructions.trim() === '') {
+      setError('Please provide interview instructions');
+      return;
+    }
     
     if (possibleInterviews <= 0) {
       setError('Please set a valid time range and duration that allows for at least one interview');
       return;
     }
     
-    if (!date) {
-      setError('Please select a date for the interviews');
+    if (selectedCandidates.length === 0) {
+      setError('Please select at least one candidate to schedule interviews. If no candidates are available, try refreshing the candidates list.');
       return;
     }
-    
-    if (!interviewInstructions) {
-      setError('Please provide interview instructions');
+
+    const selectedDateTime = new Date(`${date}T${startTime}`);
+    const now = new Date();
+    if (selectedDateTime < now) {
+      setError('Cannot schedule interviews in the past. Please select a valid date and time.');
       return;
     }
     
@@ -134,48 +403,74 @@ const LongListInterviewScheduler = () => {
       setIsSubmitting(true);
       setError(null);
       
-      // Format time strings properly - just send the time part without trying to combine with date
-      // The backend will handle combining the date and time
-      const requestData = {
-        vacancy: vacancyId,
-        date: date, // Just send the date as YYYY-MM-DD
-        startTime: startTime, // Send just the time HH:MM
-        endTime: endTime, // Send just the time HH:MM
-        interviewDuration: interviewDuration,
-        interviewInstructions: interviewInstructions,
-        sendEmail: sendEmail // Add the email flag
-      };
+      console.log("Starting interview scheduling with vacancy ID:", vacancyId);
       
-      console.log("Submitting interview schedule request:", requestData);
+      // Generate the automatic interview schedule
+      const interviewSchedule = generateInterviewSchedule();
       
-      const response = await fetch('http://localhost:5190/api/ManagerLongListInterviewScheduler/schedule', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestData)
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`API Error (${response.status}):`, errorText);
-        throw new Error(errorText || 'Failed to schedule interviews');
+      if (interviewSchedule.length === 0) {
+        setError('No interviews could be scheduled with the current time constraints');
+        setIsSubmitting(false);
+        return;
       }
       
-      const result = await response.json();
-      console.log("Schedule response:", result);
+      console.log("Generated interview schedule:", interviewSchedule);
       
-      // Set the success message and show success view instead of navigating immediately
+      // Create individual interview requests based on working InterviewScheduler format
+      const scheduledInterviews = [];
+      const failedInterviews = [];
+      
+      for (const interview of interviewSchedule) {
+        try {
+          const interviewData = {
+            applicationId: interview.applicationId,
+            date: interview.date,
+            time: interview.startTime,
+            duration: interviewDuration,
+            instructions: interviewInstructions
+          };
+          
+          console.log("Creating interview:", interviewData);
+          
+          const response = await fetch('http://localhost:5190/api/ManagerInterview', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(interviewData)
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            console.log("Interview created successfully:", result);
+            scheduledInterviews.push(interview);
+          } else {
+            const errorText = await response.text();
+            console.error(`Failed to create interview for ${interview.candidateName}:`, errorText);
+            failedInterviews.push(interview);
+          }
+        } catch (error) {
+          console.error(`Error creating interview for ${interview.candidateName}:`, error);
+          failedInterviews.push(interview);
+        }
+      }
+      
+      console.log("Scheduled interviews:", scheduledInterviews);
+      console.log("Failed interviews:", failedInterviews);
+      
       setScheduledResults({
-        scheduledCount: result.scheduledCount,
-        notScheduledCount: result.notScheduledCount || 0
+        scheduledCount: scheduledInterviews.length,
+        notScheduledCount: failedInterviews.length
       });
-      setSuccessMessage(`Successfully scheduled ${result.scheduledCount} interviews. ${result.notScheduledCount || 0} candidates could not be scheduled. ${sendEmail ? 'Email invitations have been sent.' : ''}`);
+      
+      const successMsg = `Successfully scheduled ${scheduledInterviews.length} interviews.${
+        failedInterviews.length > 0 ? ` ${failedInterviews.length} interviews could not be scheduled.` : ''
+      }${sendEmail ? ' Email invitations have been sent.' : ''}`;
+      
+      setSuccessMessage(successMsg);
       setShowSuccessView(true);
       setIsSubmitting(false);
       
-      // Don't navigate away automatically - we'll show the success screen instead
-      // navigate(`/manager/LongList?message=${successMessage}`);
     } catch (error) {
       console.error("Error during submission:", error);
       setError(`Error scheduling interviews: ${error.message}`);
@@ -185,7 +480,6 @@ const LongListInterviewScheduler = () => {
 
   // Handle cancel
   const handleCancel = () => {
-    // Check the referrer to determine which page to go back to
     const referrer = document.referrer;
     if (referrer.includes('/manager/View_LongList')) {
       navigate('/manager/View_LongList');
@@ -198,15 +492,17 @@ const LongListInterviewScheduler = () => {
   const handleRefresh = () => {
     if (vacancyId) {
       setIsLoading(true);
+      setSelectedCandidates([]);
+      setSelectAll(false);
+      setError(null);
       fetchUnscheduledCandidates(vacancyId);
     } else {
-      setError("No vacancy ID available to refresh data");
+      setError("No vacancy ID available to refresh data. Please go back and select the vacancy again.");
     }
   };
   
   // Handle return to listing after successful scheduling
   const handleReturnToListing = () => {
-    // Check the referrer to determine which page to go back to
     const referrer = document.referrer;
     if (referrer.includes('/manager/View_LongList')) {
       navigate('/manager/View_LongList');
@@ -217,11 +513,11 @@ const LongListInterviewScheduler = () => {
 
   // Handle scheduling more interviews
   const handleScheduleMore = () => {
-    // Reset the success view but keep the form data
     setShowSuccessView(false);
     setSuccessMessage(null);
+    setSelectedCandidates([]);
+    setSelectAll(false);
     
-    // If there are still unscheduled candidates, refresh the list
     if (vacancyId) {
       setIsLoading(true);
       fetchUnscheduledCandidates(vacancyId);
@@ -229,47 +525,62 @@ const LongListInterviewScheduler = () => {
   };
 
   // Success view component
-  const SuccessView = () => (
+  const SuccessView = () => {
+  console.log("SuccessView - scheduledResults:", scheduledResults);
+  console.log("SuccessView - successMessage:", successMessage);
+
+  return (
     <div className="bg-white rounded-lg shadow-md p-6 text-center">
+      {/* big green check */}
       <div className="flex justify-center mb-6">
         <div className="bg-green-100 rounded-full p-3">
-          <svg className="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+          <svg className="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
           </svg>
         </div>
       </div>
-      
-      <h3 className="text-2xl font-bold text-gray-800 mb-4">Interviews Scheduled Successfully!</h3>
-      
+
+      <h3 className="text-2xl font-bold text-gray-800 mb-4">
+        Interviews Scheduled Successfully!
+      </h3>
+
       <div className="text-gray-600 mb-8">
         <p className="mb-4">{successMessage}</p>
-        
+
+        {/* counts */}
         <div className="flex justify-center space-x-6 mb-6">
+          {/* scheduled → always show */}
           <div className="text-center">
-            <div className="text-3xl font-bold text-blue-600 mb-1">{scheduledResults.scheduledCount}</div>
+            <div className="text-3xl font-bold text-blue-600 mb-1">
+              {scheduledResults.scheduledCount}
+            </div>
             <div className="text-sm text-gray-500">Scheduled</div>
           </div>
-          
+
+          {/* not scheduled → show only if any */}
           {scheduledResults.notScheduledCount > 0 && (
             <div className="text-center">
-              <div className="text-3xl font-bold text-orange-500 mb-1">{scheduledResults.notScheduledCount}</div>
-              <div className="text-sm text-gray-500">Not Scheduled</div>
+              <div className="text-3xl font-bold text-orange-500 mb-1">
+                {scheduledResults.notScheduledCount}
+              </div>
+              <div className="text-sm text-gray-500">Not Scheduled</div>
             </div>
           )}
         </div>
-        
+
+        {/* optional email banner */}
         {sendEmail && (
           <div className="flex items-center justify-center mb-6">
             <div className="bg-blue-50 px-4 py-2 rounded-full flex items-center">
-              <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
               <span className="text-blue-700">Email invitations sent</span>
             </div>
           </div>
         )}
       </div>
-      
+
       <div className="flex flex-col sm:flex-row justify-center gap-4">
         <button
           onClick={handleScheduleMore}
@@ -277,19 +588,20 @@ const LongListInterviewScheduler = () => {
         >
           Schedule More Interviews
         </button>
-        
+
         <button
           onClick={handleReturnToListing}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
         >
-          Return to Long List
+          Return to Long List
         </button>
       </div>
     </div>
   );
+};
 
   return (
-    <div className="bg-gray-100 flex-auto min-h-screen">
+    <div className="bg-blue-50 flex-auto min-h-screen">
       <ManagerTopbar />
 
       <main className="max-w-7xl mx-auto px-4 py-6">
@@ -301,6 +613,16 @@ const LongListInterviewScheduler = () => {
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             <strong className="font-bold">Error:</strong>
             <span className="block sm:inline"> {error}</span>
+            {error.includes('Vacancy ID is missing') && (
+              <div className="mt-2">
+                <button
+                  onClick={handleCancel}
+                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+                >
+                  Go Back and Select Vacancy Again
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -318,9 +640,14 @@ const LongListInterviewScheduler = () => {
                 <svg className="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                 </svg>
-                <h3 className="text-xl font-semibold text-gray-800">
-                  Vacancy: {vacancyName}
-                </h3>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-800">
+                    Vacancy: {vacancyName}
+                  </h3>
+                  {vacancyId && (
+                    <p className="text-sm text-gray-600">ID: {vacancyId}</p>
+                  )}
+                </div>
               </div>
 
               {/* Candidates Summary */}
@@ -345,7 +672,7 @@ const LongListInterviewScheduler = () => {
                     </button>
                   </div>
                 </div>
-                {console.log('Rendering unscheduledCandidates:', unscheduledCandidates)}
+                
                 {unscheduledCandidates.length > 0 ? (
                   <div className="bg-gray-50 p-4 rounded-lg max-h-40 overflow-y-auto">
                     <ul className="space-y-2">
@@ -385,6 +712,7 @@ const LongListInterviewScheduler = () => {
                   type="date"
                   className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                   value={date}
+                  min={new Date().toISOString().split('T')[0]}
                   onChange={(e) => setDate(e.target.value)}
                   required
                 />
@@ -392,25 +720,25 @@ const LongListInterviewScheduler = () => {
 
               {/* Time Range Fields */}
               <div className="flex flex-col md:flex-row gap-6 mb-6">
-                {/* Start Time */}
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-600 mb-1">Interviews Start Time</label>
                   <input
                     type="time"
                     className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                     value={startTime}
+                    min={getMinTime()}
                     onChange={(e) => setStartTime(e.target.value)}
                     required
                   />
                 </div>
 
-                {/* End Time */}
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-600 mb-1">Interviews End Time</label>
                   <input
                     type="time"
                     className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                     value={endTime}
+                    min={getMinTime()}
                     onChange={(e) => setEndTime(e.target.value)}
                     required
                   />

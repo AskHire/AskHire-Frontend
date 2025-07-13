@@ -283,7 +283,7 @@ const LongList = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {/* FIXED: Corrected the URL path and spelling */}
-                          <Link to={`/manager/LongListInterviewScheduler?vacancy=${encodeURIComponent(vacancy.title)}`}>
+                          <Link to={`/manager/LongListInterviewSheduler?vacancy=${encodeURIComponent(vacancy.title)}`}>
                             <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-full shadow-md">
                               Schedule Long-List Interviews
                             </button>
