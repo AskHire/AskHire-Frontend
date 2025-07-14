@@ -24,12 +24,8 @@ const InterviewScheduler = () => {
     const params = new URLSearchParams(location.search);
     const vacancy = params.get('vacancy');
     const editMode = params.get('edit') === 'true';
-    
     if (vacancy) {
-      // Decode the vacancy parameter
-      const decodedVacancy = decodeURIComponent(vacancy);
-      setOriginalVacancy(decodedVacancy);
-      console.log("Original vacancy set to:", decodedVacancy); // Debug log
+      setOriginalVacancy(decodeURIComponent(vacancy));
     }
     setIsEditing(editMode);
   }, [location.search]);
@@ -41,49 +37,23 @@ const InterviewScheduler = () => {
         setIsLoading(true);
         const timestamp = new Date().getTime();
         const response = await fetch(`http://localhost:5190/api/ManagerCandidates/${applicationId}?_=${timestamp}`);
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch candidate: ${response.status}`);
-        }
-        
+        if (!response.ok) throw new Error(`Failed to fetch candidate: ${response.status}`);
         const data = await response.json();
-
         if (data && data.user) {
           setCandidate(data);
-          
-          // If no vacancy was passed in URL, try to get it from candidate data
-          if (!originalVacancy && data.jobTitle) {
-            setOriginalVacancy(data.jobTitle);
-            console.log("Vacancy set from candidate data:", data.jobTitle);
-          }
-          
+          if (!originalVacancy && data.jobTitle) setOriginalVacancy(data.jobTitle);
           if (isEditing) {
             try {
               const interviewResponse = await fetch(`http://localhost:5190/api/ManagerInterview/application/${applicationId}?_=${timestamp}`);
               if (interviewResponse.ok) {
                 const interviewData = await interviewResponse.json();
-                
                 if (interviewData) {
                   setInterviewId(interviewData.interviewId);
-                  
-                  if (interviewData.date) {
-                    const interviewDate = new Date(interviewData.date);
-                    setDate(interviewDate.toISOString().split('T')[0]);
-                  }
-                  
-                  if (interviewData.time) {
-                    setTime(interviewData.time);
-                  }
-                  
-                  if (interviewData.duration) {
-                    setDuration(interviewData.duration);
-                  }
-                  
-                  if (interviewData.instructions) {
-                    setInterviewInstructions(interviewData.instructions);
-                  } else if (interviewData.interview_Instructions) {
-                    setInterviewInstructions(interviewData.interview_Instructions);
-                  }
+                  if (interviewData.date) setDate(new Date(interviewData.date).toISOString().split('T')[0]);
+                  if (interviewData.time) setTime(interviewData.time);
+                  if (interviewData.duration) setDuration(interviewData.duration);
+                  if (interviewData.instructions) setInterviewInstructions(interviewData.instructions);
+                  else if (interviewData.interview_Instructions) setInterviewInstructions(interviewData.interview_Instructions);
                 }
               }
             } catch (interviewError) {
@@ -95,13 +65,12 @@ const InterviewScheduler = () => {
         }
         setIsLoading(false);
       } catch (error) {
-        console.error('Error fetching candidate data:', error);
         setError(`Error loading data: ${error.message}`);
         setIsLoading(false);
       }
     };
-
     fetchCandidateAndInterview();
+    // eslint-disable-next-line
   }, [applicationId, isEditing, originalVacancy]);
 
   // Helper to get min time for time input
@@ -162,9 +131,7 @@ const InterviewScheduler = () => {
         duration: duration,
         instructions: interviewInstructions
       };
-      
       let url, method;
-      
       if (isEditing && interviewId) {
         interviewData.interviewId = interviewId;
         url = `http://localhost:5190/api/ManagerInterview/${interviewId}`;
@@ -173,37 +140,26 @@ const InterviewScheduler = () => {
         url = "http://localhost:5190/api/ManagerInterview";
         method = "POST";
       }
-      
       const response = await fetch(url, {
         method: method,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(interviewData),
       });
-      
       if (response.ok) {
-        const successMessage = isEditing 
-          ? "Interview updated successfully!" 
+        const successMessage = isEditing
+          ? "Interview updated successfully!"
           : "Interview scheduled successfully and invitation sent!";
-          
-        // Navigate back to the correct vacancy page
         navigateBackToLongList(successMessage);
       } else {
         let errorMessage = "Failed to process interview. Please try again.";
         try {
           const errorData = await response.json();
-          if (errorData.message) {
-            errorMessage = errorData.message;
-          }
-        } catch (e) {
-          console.error("Error parsing error response:", e);
-        }
+          if (errorData.message) errorMessage = errorData.message;
+        } catch (e) {}
         setError(errorMessage);
         setIsSaving(false);
       }
     } catch (error) {
-      console.error('Error handling interview:', error);
       setError(`An error occurred: ${error.message}`);
       setIsSaving(false);
     }
@@ -211,32 +167,18 @@ const InterviewScheduler = () => {
 
   // Helper function to navigate back to the correct long-list page
   const navigateBackToLongList = (message = null) => {
-    // Determine the vacancy to use for navigation
     let vacancyForNavigation = originalVacancy;
-    
-    // If no original vacancy, try to get it from candidate data
     if (!vacancyForNavigation && candidate && candidate.jobTitle) {
       vacancyForNavigation = candidate.jobTitle;
     }
-    
-    // Build the navigation URL
     let navUrl = '/manager/View_LongList';
     const params = new URLSearchParams();
-    
-    if (message) {
-      params.append('message', message);
-    }
-    
+    if (message) params.append('message', message);
     if (vacancyForNavigation) {
       params.append('vacancy', vacancyForNavigation);
       params.append('filter', 'true');
     }
-    
-    if (params.toString()) {
-      navUrl += '?' + params.toString();
-    }
-    
-    console.log("Navigating back to:", navUrl, "with vacancy:", vacancyForNavigation);
+    if (params.toString()) navUrl += '?' + params.toString();
     navigate(navUrl);
   };
 
@@ -261,29 +203,25 @@ const InterviewScheduler = () => {
   return (
     <div className="bg-blue-50 flex-auto min-h-screen">
       <ManagerTopbar />
-
       <main className="max-w-7xl mx-auto px-4 py-6">
         <h2 className="text-2xl font-bold mb-6">
           {isEditing ? "Edit Interview Schedule" : "Interview Scheduler"}
         </h2>
-
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             <strong className="font-bold">Error:</strong>
             <span className="block sm:inline"> {error}</span>
           </div>
         )}
-
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-blue-600 flex flex-col py-4">
           <div className="flex items-center mb-6">
-            <svg className="w-6 h-6 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-6 h-6 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
             <h2 className="text-xl font-bold text-gray-800">
               {isEditing ? "Edit Interview Schedule" : "Schedule Interview"}
             </h2>
           </div>
-
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-600 mb-1">Scheduling for:</label>
@@ -294,7 +232,6 @@ const InterviewScheduler = () => {
                 readOnly
               />
             </div>
-
             <div className="flex flex-col md:flex-row gap-6 mb-6">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-600 mb-1">Date</label>
@@ -303,11 +240,13 @@ const InterviewScheduler = () => {
                   className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                   value={date}
                   min={new Date().toISOString().split('T')[0]}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={(e) => {
+                    setDate(e.target.value);
+                    setTime(''); // Reset time when date changes
+                  }}
                   required
                 />
               </div>
-
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-600 mb-1">Time</label>
                 <input
@@ -322,7 +261,6 @@ const InterviewScheduler = () => {
                   <div className="text-red-500 text-xs mt-1">{timeWarning}</div>
                 )}
               </div>
-              
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-600 mb-1">Duration</label>
                 <select
@@ -340,7 +278,6 @@ const InterviewScheduler = () => {
                 </select>
               </div>
             </div>
-
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-600 mb-1">Interview Instructions</label>
               <textarea
@@ -351,7 +288,6 @@ const InterviewScheduler = () => {
                 required
               ></textarea>
             </div>
-
             <div className="flex flex-col-reverse sm:flex-row justify-between pt-4 gap-3">
               <button
                 type="button"
