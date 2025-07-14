@@ -9,7 +9,7 @@ export default function BaseTable({
   sortOptions = [],
 }) {
   const [search, setSearch] = useState('');
-  const [sortOrder, setSortOrder] = useState(''); 
+  const [sortOrder, setSortOrder] = useState('');
 
   const sortKeyExists = (val) => {
     if (!val.includes(':')) return false;
@@ -51,19 +51,20 @@ export default function BaseTable({
   }, [rows, search, sortOrder, searchKey]);
 
   return (
-    <div className="p-6 bg-white shadow-md rounded-xl">
+    <div className="p-4 overflow-x-auto bg-white shadow-md rounded-xl">
       {/* Title and Controls */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-col items-start gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-xl font-bold text-gray-800 sm:text-2xl">{title}</h2>
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           {/* Search Input */}
           {searchKey && (
             <input
               type="text"
-              placeholder=" Search..."
+              placeholder="Search..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="px-4 py-2 text-sm bg-gray-100 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="px-3 py-2 text-sm bg-gray-100 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200"
             />
           )}
 
@@ -72,7 +73,7 @@ export default function BaseTable({
             <select
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value)}
-              className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md"
+              className="px-3 py-2 text-sm text-gray-700 bg-gray-100 border rounded-md"
             >
               <option value="" disabled>
                 Sort by
@@ -88,7 +89,7 @@ export default function BaseTable({
       </div>
 
       {/* Table Header */}
-      <div className="grid grid-cols-12 px-4 py-3 text-sm font-semibold text-gray-600 border-b bg-gray-50 rounded-t-md">
+      <div className="min-w-[768px] grid grid-cols-12 px-4 py-3 text-sm font-semibold text-gray-600 bg-gray-50 border-b rounded-t-md">
         {headers.map((header, idx) => (
           <span
             key={idx}
@@ -100,7 +101,7 @@ export default function BaseTable({
       </div>
 
       {/* Table Rows */}
-      <div className="divide-y">
+      <div className="min-w-[768px] divide-y">
         {filteredRows.length > 0 ? (
           filteredRows.map((row, idx) => (
             <div

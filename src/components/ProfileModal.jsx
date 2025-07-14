@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-
-const avatarList = ["avatar1.png", "avatar2.png", "avatar3.png", "avatar4.png"];
 
 export default function ProfileModal({ onClose, onAvatarChange }) {
   const [profile, setProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const avatarList = ["avatar1.png", "avatar2.png", "avatar3.png", "avatar4.png"];
 
-  useEffect(() => {
+  useEffect(() => 
+  {
     axios
       .get("http://localhost:5190/api/profile", { withCredentials: true })
       .then((res) => setProfile(res.data))
@@ -22,22 +22,18 @@ export default function ProfileModal({ onClose, onAvatarChange }) {
         {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
-        }
-      );
-
+        });
       const newUrl = `/avatars/${avatar}`;
       setProfile((prev) => ({
-        ...prev,
-        profilePictureUrl: newUrl,
+      ...prev,
+      profilePictureUrl: newUrl,
       }));
 
       // Notify parent (e.g., AdminHeader)
-      onAvatarChange && onAvatarChange(newUrl);
-
-    } catch (error) {
-      console.error("Avatar update failed", error);
-    }
-  };
+      onAvatarChange && onAvatarChange(newUrl);} 
+    catch (error) {
+      console.error("Avatar update failed", error);}
+    };
 
   const handleSave = async () => {
     try {
@@ -58,7 +54,8 @@ export default function ProfileModal({ onClose, onAvatarChange }) {
       console.log("Save response:", response);
       setIsEditing(false);
       alert("Profile updated successfully!");
-    } catch (error) {
+    } 
+    catch (error) {
       console.error("Error updating profile", error);
       alert("Failed to update profile.");
     }
@@ -68,13 +65,11 @@ export default function ProfileModal({ onClose, onAvatarChange }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="relative w-full max-w-md p-6 bg-white shadow-lg rounded-xl">
+      <div className="relative w-[90%] max-w-md max-h-screen overflow-y-auto p-6 bg-white shadow-lg rounded-xl">
         <button
           onClick={onClose}
-          className="absolute text-2xl text-gray-500 top-2 right-4 hover:text-gray-700"
-        >
-          &times;
-        </button>
+          className="absolute text-2xl text-gray-500 top-2 right-4 hover:text-gray-700">
+        &times; </button>
 
         <h2 className="mb-4 text-xl font-bold text-center">Profile</h2>
 

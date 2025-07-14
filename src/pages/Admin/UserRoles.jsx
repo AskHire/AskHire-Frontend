@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import AdminHeader from "../../components/Admin/AdminHeader";
 import BaseTable from "../../components/BaseTable";
 import UserRoleBadge from "../../components/Admin/AdminUserRoles/UserRoleBadge";
 import UserDetailsModal from "../../components/Admin/AdminUserRoles/UserDetailsModal";
@@ -45,8 +44,7 @@ export default function UserRoles() {
 
   return (
     <div className="flex-1 p-6">
-      <AdminHeader />
-      <h1 className="mt-8 text-3xl font-bold">Admin Users Role Manager</h1>
+      <h1 className="mt-3 text-3xl font-bold">Admin Users Role Manager</h1>
 
       <div className="mt-6">
         <BaseTable

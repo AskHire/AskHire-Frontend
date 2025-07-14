@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import AdminHeader from "../../components/Admin/AdminHeader";
 import axios from "axios";
 import { BiTrash } from "react-icons/bi";
 import BaseTable from "../../components/BaseTable";
@@ -38,8 +37,7 @@ export default function ManageCandidate() {
 
   return (
     <div className="flex-1 p-6">
-      <AdminHeader />
-      <h1 className="mt-8 text-3xl font-bold">Candidate Management</h1>
+      <h1 className="mt-3 text-3xl font-bold">Candidate Management</h1>
 
       <div className="mt-6">
         <BaseTable
