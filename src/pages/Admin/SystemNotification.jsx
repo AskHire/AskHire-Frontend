@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import AdminHeader from '../../components/Admin/AdminHeader';
 import NotificationForm from '../../components/Admin/SystemNotification/NotificationForm';
 import NotificationList from '../../components/Admin/SystemNotification/NotificationList';
 import NotificationModal from '../../components/Admin/SystemNotification/NotificationModal';
@@ -27,11 +26,7 @@ export default function SystemNotification() {
 
   return (
     <div className="flex-1 min-h-screen p-6 bg-blue-50">
-      {/* Admin header */}
-      <AdminHeader />
-
-      {/* Page Title */}
-      <h1 className="mt-8 text-3xl font-bold text-gray-800">System Notifications</h1>
+      <h1 className="mt-3 text-3xl font-bold text-gray-800">System Notifications</h1>
 
       {/* Create Form */}
       <div className="mt-6">
