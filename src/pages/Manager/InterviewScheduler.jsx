@@ -166,23 +166,15 @@ const InterviewScheduler = () => {
 
   // Helper function to navigate back to the correct long-list page
   const navigateBackToLongList = (message = null) => {
-    // Always use the vacancy param from the URL if present
-    const paramsFromUrl = new URLSearchParams(location.search);
-    const vacancyParam = paramsFromUrl.get('vacancy');
+    let vacancyForNavigation = originalVacancy;
+    if (!vacancyForNavigation && candidate && candidate.jobTitle) {
+      vacancyForNavigation = candidate.jobTitle;
+    }
     let navUrl = '/manager/View_LongList';
     const params = new URLSearchParams();
     if (message) params.append('message', message);
-    if (vacancyParam) {
-      params.append('vacancy', vacancyParam);
-      params.append('filter', 'true');
-    } else if (originalVacancy) {
-      params.append('vacancy', originalVacancy);
-      params.append('filter', 'true');
-    } else if (candidate && candidate.vacancyId) {
-      params.append('vacancyId', candidate.vacancyId);
-      params.append('filter', 'true');
-    } else if (candidate && candidate.jobTitle) {
-      params.append('vacancy', candidate.jobTitle);
+    if (vacancyForNavigation) {
+      params.append('vacancy', vacancyForNavigation);
       params.append('filter', 'true');
     }
     if (params.toString()) navUrl += '?' + params.toString();
