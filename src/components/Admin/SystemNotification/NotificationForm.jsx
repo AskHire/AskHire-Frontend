@@ -46,7 +46,7 @@ export default function NotificationForm({ onNotify }) {
       setForm({ subject: '', message: '', type: 'normal' });
       setTimeout(() => onNotify(), 500);
     } catch (error) {
-      console.error("Error creating notification:", error.response?.data);
+      // Removed console.error here
       alert(`Error: ${error.response?.data?.title || "Unknown error"}`);
     }
   };

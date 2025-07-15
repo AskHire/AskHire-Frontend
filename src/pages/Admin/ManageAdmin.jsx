@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { BiTrash } from "react-icons/bi";
 import Pagination from "../../components/Admin/Pagination";
+import DeleteModal from "../../components/DeleteModal"; 
 
 export default function ManageAdmin() {
   const [admins, setAdmins] = useState([]);
@@ -9,7 +10,10 @@ export default function ManageAdmin() {
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("FirstName");
-  const [isDescending, setIsDescending] = useState(false); // toggle this for A-Z / Z-A
+  const [isDescending, setIsDescending] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [adminToDelete, setAdminToDelete] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const itemsPerPage = 5;
   const token = localStorage.getItem("accessToken");
@@ -44,15 +48,20 @@ export default function ManageAdmin() {
     }
   };
 
-  const handleDeleteAdmin = async (adminId) => {
-    if (!window.confirm("Are you sure you want to delete this admin?")) return;
+  // When delete icon clicked, open modal
+  const handleDeleteClick = (adminId) => {
+    setAdminToDelete(adminId);
+    setDeleteModalOpen(true);
+  };
 
+  // Confirm delete from modal
+  const confirmDelete = async () => {
     try {
-      await axios.delete(`http://localhost:5190/api/AdminUser/${adminId}`, {
+      await axios.delete(`http://localhost:5190/api/AdminUser/${adminToDelete}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      setSuccessMessage("Admin deleted successfully!");
       fetchAdmins(currentPage, searchQuery, sortBy, isDescending);
-      alert("Admin deleted successfully.");
     } catch (error) {
       console.error("Error deleting admin:", error);
       const msg =
@@ -60,7 +69,17 @@ export default function ManageAdmin() {
         error.response?.data?.message ||
         error.message;
       alert(`Failed to delete admin: ${msg}`);
+    } finally {
+      setDeleteModalOpen(false);
+      setAdminToDelete(null);
+      setTimeout(() => setSuccessMessage(""), 3000);
     }
+  };
+
+  // Cancel modal
+  const cancelDelete = () => {
+    setDeleteModalOpen(false);
+    setAdminToDelete(null);
   };
 
   return (
@@ -100,6 +119,13 @@ export default function ManageAdmin() {
         </select>
       </div>
 
+      {/* Toast Success Message */}
+      {successMessage && (
+        <div className="fixed z-50 px-4 py-2 text-blue-800 bg-blue-100 border border-blue-300 rounded-lg shadow-lg top-4 right-4 animate-slide-in-out">
+          <strong className="font-medium">Success!</strong> {successMessage}
+        </div>
+      )}
+
       {/* Table */}
       <div className="p-4 overflow-x-auto bg-white shadow-md rounded-xl min-w-[768px]">
         <div className="grid grid-cols-12 px-4 py-3 text-sm font-semibold text-gray-600 border-b bg-gray-50 rounded-t-md">
@@ -137,7 +163,7 @@ export default function ManageAdmin() {
 
               <div className="col-span-4 text-right">
                 <button
-                  onClick={() => handleDeleteAdmin(admin.id)}
+                  onClick={() => handleDeleteClick(admin.id)}
                   className="p-2 text-red-600 hover:text-red-800"
                 >
                   <BiTrash className="w-5 h-5" />
@@ -159,6 +185,13 @@ export default function ManageAdmin() {
         onPrev={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
         onNext={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
         onPageChange={(page) => setCurrentPage(page)}
+      />
+
+      {/* Delete Modal */}
+      <DeleteModal
+        isOpen={deleteModalOpen}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
       />
     </div>
   );

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { BiTrash } from "react-icons/bi";
 import Pagination from "../../components/Admin/Pagination";
+import DeleteModal from "../../components/DeleteModal"; 
 
 export default function ManageManager() {
   const [managers, setManagers] = useState([]);
@@ -9,6 +10,10 @@ export default function ManageManager() {
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState(""); // e.g., "firstName:asc"
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [managerToDelete, setManagerToDelete] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const itemsPerPage = 5;
   const token = localStorage.getItem("accessToken");
@@ -43,21 +48,36 @@ export default function ManageManager() {
     }
   };
 
-  const handleDeleteManager = async (managerId) => {
-    if (!window.confirm("Are you sure you want to delete this manager?")) return;
+  // Open delete modal on click delete button
+  const handleDeleteClick = (id) => {
+    setManagerToDelete(id);
+    setDeleteModalOpen(true);
+  };
 
+  // Confirm deletion from modal
+  const confirmDelete = async () => {
     try {
-      await axios.delete(`http://localhost:5190/api/AdminUser/${managerId}`, {
+      await axios.delete(`http://localhost:5190/api/AdminUser/${managerToDelete}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Refresh after delete
+      setSuccessMessage("Manager deleted successfully!");
       fetchManagers(currentPage, searchQuery, sortOrder);
-      alert("Manager deleted successfully.");
     } catch (error) {
       console.error("Error deleting manager:", error);
       const msg = error.response?.data?.title || error.response?.data?.message || error.message;
       alert(`Failed to delete manager: ${msg}`);
+    } finally {
+      setDeleteModalOpen(false);
+      setManagerToDelete(null);
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(""), 3000);
     }
+  };
+
+  // Cancel deletion modal
+  const cancelDelete = () => {
+    setDeleteModalOpen(false);
+    setManagerToDelete(null);
   };
 
   return (
@@ -91,6 +111,13 @@ export default function ManageManager() {
         </select>
       </div>
 
+      {/*  Toast-style floating success message */}
+      {successMessage && (
+        <div className="fixed z-50 px-4 py-2 text-blue-800 bg-blue-100 border border-blue-300 rounded-lg shadow-lg top-4 right-4 animate-slide-in-out">
+          <strong className="font-medium">Success!</strong> {successMessage}
+        </div>
+      )}
+      
       {/* Table */}
       <div className="p-4 overflow-x-auto bg-white shadow-md rounded-xl min-w-[768px]">
         <div className="grid grid-cols-12 px-4 py-3 text-sm font-semibold text-gray-600 border-b bg-gray-50 rounded-t-md">
@@ -128,7 +155,7 @@ export default function ManageManager() {
 
               <div className="col-span-4 text-right">
                 <button
-                  onClick={() => handleDeleteManager(manager.id)}
+                  onClick={() => handleDeleteClick(manager.id)}
                   className="p-2 text-red-600 hover:text-red-800"
                 >
                   <BiTrash className="w-5 h-5" />
@@ -150,6 +177,13 @@ export default function ManageManager() {
         onPrev={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
         onNext={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
         onPageChange={(page) => setCurrentPage(page)}
+      />
+
+      {/* Delete Modal */}
+      <DeleteModal
+        isOpen={deleteModalOpen}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
       />
     </div>
   );

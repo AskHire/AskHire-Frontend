@@ -16,6 +16,8 @@ export default function SystemNotification() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("Time:desc");
 
+  const [successMessage, setSuccessMessage] = useState("");
+
   const itemsPerPage = 5;
   const token = localStorage.getItem("accessToken");
 
@@ -45,7 +47,8 @@ export default function SystemNotification() {
       setNotifications(response.data.data || []);
       setTotalPages(response.data.totalPages || 1);
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      // You can handle error nicely or show a toast
+      alert("Error fetching notifications.");
     }
   };
 
@@ -57,12 +60,22 @@ export default function SystemNotification() {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchNotifications(currentPage, searchQuery, sortOrder);
-      alert("Notification deleted successfully.");
+      setSuccessMessage("Notification deleted successfully.");
+      setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
-      console.error("Error deleting notification:", error);
-      const msg = error.response?.data?.title || error.response?.data?.message || error.message;
-      alert(`Failed to delete notification: ${msg}`);
+      alert(
+        `Failed to delete notification: ${
+          error.response?.data?.title || error.response?.data?.message || error.message
+        }`
+      );
     }
+  };
+
+  // This is called by NotificationForm after successful creation
+  const handleNotificationCreated = () => {
+    fetchNotifications(currentPage, searchQuery, sortOrder);
+    setSuccessMessage("Notification created successfully.");
+    setTimeout(() => setSuccessMessage(""), 3000);
   };
 
   return (
@@ -71,14 +84,18 @@ export default function SystemNotification() {
 
       {/* Create Form */}
       <div className="mt-6">
-        <NotificationForm onNotify={() => fetchNotifications(currentPage, searchQuery, sortOrder)} />
+        <NotificationForm onNotify={handleNotificationCreated} />
+      </div>
+
+      <div>
+        <h1 className="mt-12 mb-4 text-2xl font-bold">Notification List</h1>
       </div>
 
       {/* Search and Sort Controls */}
       <div className="flex flex-col gap-2 my-4 sm:flex-row sm:items-center sm:justify-between">
         <input
           type="text"
-          placeholder="Search by subject or message..."
+          placeholder="Search by subject "
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
@@ -95,74 +112,63 @@ export default function SystemNotification() {
           }}
           className="px-3 py-2 text-sm text-gray-700 bg-gray-100 border rounded-md"
         >
+          <option>Sort By</option>
           <option value="Time:desc">Newest</option>
           <option value="Time:asc">Oldest</option>
         </select>
       </div>
-
-      {/* Table */}
-      <div className="p-4 overflow-x-auto bg-white shadow-md rounded-xl min-w-[768px]">
-        <div className="grid grid-cols-12 px-4 py-3 text-sm font-semibold text-gray-600 border-b bg-gray-50 rounded-t-md">
-          <span className="col-span-1">#</span>
-          <span className="col-span-1 ">Type</span>
-          <span className="col-span-5">Subject</span>
-          <span className="col-span-2">Date</span>
-          <span className="col-span-2">Time</span>
-          <span className="col-span-1 text-right">Delete</span>
-        </div>
-
-        {notifications.length > 0 ? (
-          notifications.map((notification, index) => {
-            const dateTime = new Date(notification.time);
-            const date = dateTime.toLocaleDateString();
-            const time = dateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            return (
-              <div
-                key={notification.notificationId}
-                className="grid grid-cols-12 px-4 py-3 text-sm bg-white border-b hover:bg-gray-50"
-                onClick={() => setSelectedNotification(notification)}
-                style={{ cursor: "pointer" }}
-              >
-                <span className="col-span-1">
-                  {(currentPage - 1) * itemsPerPage + index + 1}
-                </span>
-
-                <div className="flex col-span-1">
-                  <span
-                    className={`w-3 h-3 rounded-full ${
-                      notification.type.toLowerCase() === "important"
-                        ? "bg-red-500"
-                        : "bg-green-500"
-                    }`}
-                  />
-                </div>
-
-                <span className="col-span-5">{notification.subject}</span>
-                <span className="col-span-2">{date}</span>
-                <span className="col-span-2">{time}</span>
-
-                <div className="col-span-1 text-right">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteNotification(notification.notificationId);
-                    }}
-                    className="p-2 text-red-600 hover:text-red-800"
-                    title="Delete Notification"
-                  >
-                    <BiTrash className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            );
-          })
-        ) : (
-          <div className="col-span-12 px-4 py-6 text-center text-gray-400">
-            No notifications found.
-          </div>
-        )}
+       <div className="p-4 overflow-x-auto bg-white shadow-md rounded-xl min-w-[768px]"> 
+      {/* Table Header */}
+      <div className="grid grid-cols-12 px-4 py-3 text-sm font-semibold text-gray-600 border-b bg-gray-50 rounded-t-md">
+        <span className="col-span-1">#</span>
+        <span className="col-span-1">Type</span>
+        <span className="col-span-5">Subject</span>
+        <span className="col-span-2">Date</span>
+        <span className="col-span-2">Time</span>
+        <span className="col-span-1 text-center">More</span>
       </div>
+
+      {/* Table Rows */}
+      {notifications.length > 0 ? (
+        notifications.map((notification, index) => {
+          const dateTime = new Date(notification.time);
+          const date = dateTime.toLocaleDateString();
+          const time = dateTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+          return (
+            <div
+              key={notification.notificationId}
+              className="grid grid-cols-12 px-4 py-3 text-sm bg-white border-b hover:bg-gray-50"
+              style={{ cursor: "default" }}
+            >
+              <span className="col-span-1">{(currentPage - 1) * itemsPerPage + index + 1}</span>
+
+              <div className="flex items-center col-span-1">
+                <span
+                  className={`w-5 h-5 rounded-full ${
+                    notification.type.toLowerCase() === "important" ? "bg-red-500" : "bg-green-500"
+                  }`}
+                />
+              </div>
+
+              <span className="flex items-center col-span-5">{notification.subject}</span>
+              <span className="flex items-center col-span-2">{date}</span>
+              <span className="flex items-center col-span-2">{time}</span>
+
+              <div
+                className="flex items-center justify-center col-span-1 text-blue-600 cursor-pointer select-none hover:text-blue-800"
+                title="View More"
+                onClick={() => setSelectedNotification(notification)}
+              >
+                ...
+              </div>
+            </div>
+          );
+        })
+      ) : (
+        <div className="col-span-12 px-4 py-6 text-center text-gray-400">No notifications found.</div>
+      )}
+      </div>  
 
       {/* Pagination Controls */}
       <Pagination
@@ -175,11 +181,16 @@ export default function SystemNotification() {
 
       {/* Modal */}
       {selectedNotification && (
-        <NotificationModal
-          notification={selectedNotification}
-          onClose={() => setSelectedNotification(null)}
-        />
+        <NotificationModal notification={selectedNotification} onClose={() => setSelectedNotification(null)} />
+      )}
+
+      {/* Toast-style floating success message */}
+      {successMessage && (
+        <div className="fixed z-50 px-4 py-2 text-blue-800 bg-blue-100 border border-blue-300 rounded-lg shadow-lg top-4 right-4 animate-slide-in-out">
+          <strong className="font-medium">Success!</strong> {successMessage}
+        </div>
       )}
     </div>
+    
   );
 }
