@@ -21,12 +21,10 @@ export default function Pagination({ currentPage, totalPages, onPrev, onNext, on
 
   const pages = getPageNumbers();
 
-  // Don't render pagination if only one page
   if (totalPages <= 1) return null;
 
   return (
     <div className="flex items-center justify-center mt-8 mb-1 space-x-2">
-      {/* Previous Button */}
       <button
         onClick={onPrev}
         disabled={currentPage === 1}
@@ -35,22 +33,20 @@ export default function Pagination({ currentPage, totalPages, onPrev, onNext, on
         Prev
       </button>
 
-      {/* Page Number Buttons */}
       {pages.map((page) => (
         <button
           key={page}
           onClick={() => onPageChange(page)}
           className={`mx-1 px-4 py-2 rounded-full ${
             currentPage === page
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
           }`}
         >
           {page}
         </button>
       ))}
 
-      {/* Next Button */}
       <button
         onClick={onNext}
         disabled={currentPage === totalPages}

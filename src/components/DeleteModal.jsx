@@ -8,9 +8,9 @@ const DeleteModal = ({ isOpen, onClose, onConfirm }) => {
       id="deleteModal"
       tabIndex="-1"
       aria-hidden="true"
-      className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center w-full h-full overflow-y-auto overflow-x-hidden bg-black bg-opacity-50"
+      className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center w-full h-full overflow-x-hidden overflow-y-auto bg-black bg-opacity-50"
     >
-      <div className="relative p-4 w-full max-w-md">
+      <div className="relative w-full max-w-md p-4">
         {/* Modal content */}
         <div className="relative p-4 text-center bg-white rounded-lg shadow dark:bg-gray-800 sm:p-5">
           {/* Close Button */}
@@ -71,16 +71,16 @@ const DeleteModal = ({ isOpen, onClose, onConfirm }) => {
           </p>
 
           {/* Buttons */}
-          <div className="flex justify-center items-center space-x-4">
+          <div className="flex items-center justify-center space-x-4">
             <button
               onClick={onClose}
-              className="py-2 px-3 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600"
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600"
             >
               No, cancel
             </button>
             <button
               onClick={onConfirm}
-              className="py-2 px-3 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-500 dark:hover:bg-red-600 dark:focus:ring-red-900"
+              className="px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-500 dark:hover:bg-red-600 dark:focus:ring-red-900"
             >
               Yes, I'm sure
             </button>

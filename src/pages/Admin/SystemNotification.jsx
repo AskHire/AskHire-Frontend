@@ -1,27 +1,81 @@
-import { useState, useEffect } from 'react';
-import NotificationForm from '../../components/Admin/SystemNotification/NotificationForm';
-import NotificationList from '../../components/Admin/SystemNotification/NotificationList';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { BiTrash } from "react-icons/bi";
+import Pagination from "../../components/Admin/Pagination";
 import NotificationModal from '../../components/Admin/SystemNotification/NotificationModal';
+import NotificationForm from '../../components/Admin/SystemNotification/NotificationForm';
 
-const API_URL = 'http://localhost:5190/api/adminnotification';
+const API_URL = "http://localhost:5190/api/adminnotification";
 
 export default function SystemNotification() {
   const [notifications, setNotifications] = useState([]);
-  const [showAll, setShowAll] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState("Time:desc");
 
-  const fetchNotifications = async () => {
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const itemsPerPage = 5;
+  const token = localStorage.getItem("accessToken");
+
+  useEffect(() => {
+    fetchNotifications(currentPage, searchQuery, sortOrder);
+  }, [currentPage, searchQuery, sortOrder]);
+
+  const fetchNotifications = async (page, search, sort) => {
     try {
-      const res = await fetch(API_URL);
-      const data = await res.json();
-      setNotifications(data);
-    } catch (err) {
-      console.error('Failed to load notifications', err);
+      const params = new URLSearchParams({
+        Page: page,
+        PageSize: itemsPerPage,
+      });
+
+      if (search) params.append("SearchTerm", search);
+
+      if (sort) {
+        const [key, dir] = sort.split(":");
+        params.append("SortBy", key);
+        params.append("IsDescending", dir === "desc");
+      }
+
+      const response = await axios.get(`${API_URL}?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setNotifications(response.data.data || []);
+      setTotalPages(response.data.totalPages || 1);
+    } catch (error) {
+      // You can handle error nicely or show a toast
+      alert("Error fetching notifications.");
     }
+  };
+
+  const handleDeleteNotification = async (notificationId) => {
+    if (!window.confirm("Are you sure you want to delete this notification?")) return;
+
+    try {
+      await axios.delete(`${API_URL}/${notificationId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchNotifications(currentPage, searchQuery, sortOrder);
+      setSuccessMessage("Notification deleted successfully.");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      alert(
+        `Failed to delete notification: ${
+          error.response?.data?.title || error.response?.data?.message || error.message
+        }`
+      );
+    }
+  };
+
+  // This is called by NotificationForm after successful creation
+  const handleNotificationCreated = () => {
+    fetchNotifications(currentPage, searchQuery, sortOrder);
+    setSuccessMessage("Notification created successfully.");
+    setTimeout(() => setSuccessMessage(""), 3000);
   };
 
   return (
@@ -30,27 +84,113 @@ export default function SystemNotification() {
 
       {/* Create Form */}
       <div className="mt-6">
-        <NotificationForm onNotify={fetchNotifications} />
+        <NotificationForm onNotify={handleNotificationCreated} />
       </div>
 
-      {/* Notification List Table */}
-      <div className="mt-10">
-        <NotificationList
-          notifications={notifications}
-          showAll={showAll}
-          setShowAll={setShowAll}
-          onSelect={setSelectedNotification}
-          selectedNotification={selectedNotification}
-        />
+      <div>
+        <h1 className="mt-12 mb-4 text-2xl font-bold">Notification List</h1>
       </div>
+
+      {/* Search and Sort Controls */}
+      <div className="flex flex-col gap-2 my-4 sm:flex-row sm:items-center sm:justify-between">
+        <input
+          type="text"
+          placeholder="Search by subject "
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="px-3 py-2 text-sm bg-gray-100 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200"
+        />
+
+        <select
+          value={sortOrder}
+          onChange={(e) => {
+            setSortOrder(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="px-3 py-2 text-sm text-gray-700 bg-gray-100 border rounded-md"
+        >
+          <option>Sort By</option>
+          <option value="Time:desc">Newest</option>
+          <option value="Time:asc">Oldest</option>
+        </select>
+      </div>
+       <div className="p-4 overflow-x-auto bg-white shadow-md rounded-xl min-w-[768px]"> 
+      {/* Table Header */}
+      <div className="grid grid-cols-12 px-4 py-3 text-sm font-semibold text-gray-600 border-b bg-gray-50 rounded-t-md">
+        <span className="col-span-1">#</span>
+        <span className="col-span-1">Type</span>
+        <span className="col-span-5">Subject</span>
+        <span className="col-span-2">Date</span>
+        <span className="col-span-2">Time</span>
+        <span className="col-span-1 text-center">More</span>
+      </div>
+
+      {/* Table Rows */}
+      {notifications.length > 0 ? (
+        notifications.map((notification, index) => {
+          const dateTime = new Date(notification.time);
+          const date = dateTime.toLocaleDateString();
+          const time = dateTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+          return (
+            <div
+              key={notification.notificationId}
+              className="grid grid-cols-12 px-4 py-3 text-sm bg-white border-b hover:bg-gray-50"
+              style={{ cursor: "default" }}
+            >
+              <span className="col-span-1">{(currentPage - 1) * itemsPerPage + index + 1}</span>
+
+              <div className="flex items-center col-span-1">
+                <span
+                  className={`w-5 h-5 rounded-full ${
+                    notification.type.toLowerCase() === "important" ? "bg-red-500" : "bg-green-500"
+                  }`}
+                />
+              </div>
+
+              <span className="flex items-center col-span-5">{notification.subject}</span>
+              <span className="flex items-center col-span-2">{date}</span>
+              <span className="flex items-center col-span-2">{time}</span>
+
+              <div
+                className="flex items-center justify-center col-span-1 text-blue-600 cursor-pointer select-none hover:text-blue-800"
+                title="View More"
+                onClick={() => setSelectedNotification(notification)}
+              >
+                ...
+              </div>
+            </div>
+          );
+        })
+      ) : (
+        <div className="col-span-12 px-4 py-6 text-center text-gray-400">No notifications found.</div>
+      )}
+      </div>  
+
+      {/* Pagination Controls */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPrev={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+        onNext={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+        onPageChange={(page) => setCurrentPage(page)}
+      />
 
       {/* Modal */}
       {selectedNotification && (
-        <NotificationModal
-          notification={selectedNotification}
-          onClose={() => setSelectedNotification(null)}
-        />
+        <NotificationModal notification={selectedNotification} onClose={() => setSelectedNotification(null)} />
+      )}
+
+      {/* Toast-style floating success message */}
+      {successMessage && (
+        <div className="fixed z-50 px-4 py-2 text-blue-800 bg-blue-100 border border-blue-300 rounded-lg shadow-lg top-4 right-4 animate-slide-in-out">
+          <strong className="font-medium">Success!</strong> {successMessage}
+        </div>
       )}
     </div>
+    
   );
 }
