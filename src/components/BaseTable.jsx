@@ -3,10 +3,14 @@ import { useState, useMemo } from 'react';
 export default function BaseTable({
   title,
   headers,
-  rows,
+  rows = [],           // default to empty array to avoid undefined errors
   renderRow,
   searchKey = '',
   sortOptions = [],
+  onEdit,
+  onDelete,
+  currentPage,
+  itemsPerPage,
 }) {
   const [search, setSearch] = useState('');
   const [sortOrder, setSortOrder] = useState('');
@@ -20,21 +24,18 @@ export default function BaseTable({
   const filteredRows = useMemo(() => {
     let result = [...rows];
 
-    // 🔍 Filter by search
     if (search && searchKey) {
       result = result.filter((row) =>
         row[searchKey]?.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    // ⬇️ Sort if selected
     if (sortOrder && sortKeyExists(sortOrder)) {
       const [key, direction] = sortOrder.split(':');
       result.sort((a, b) => {
         const valA = a[key];
         const valB = b[key];
 
-        // Handle dates or strings
         if (!isNaN(new Date(valA)) && !isNaN(new Date(valB))) {
           return direction === 'desc'
             ? new Date(valB) - new Date(valA)
@@ -57,34 +58,6 @@ export default function BaseTable({
         <h2 className="text-xl font-bold text-gray-800 sm:text-2xl">{title}</h2>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          {/* Search Input */}
-          {searchKey && (
-            <input
-              type="text"
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="px-3 py-2 text-sm bg-gray-100 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200"
-            />
-          )}
-
-          {/* Sort Dropdown */}
-          {sortOptions.length > 0 && (
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-              className="px-3 py-2 text-sm text-gray-700 bg-gray-100 border rounded-md"
-            >
-              <option value="" disabled>
-                Sort by
-              </option>
-              {sortOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          )}
         </div>
       </div>
 
@@ -105,7 +78,7 @@ export default function BaseTable({
         {filteredRows.length > 0 ? (
           filteredRows.map((row, idx) => (
             <div
-              key={idx}
+              key={row.jobId || idx}
               className="grid grid-cols-12 px-4 py-3 text-sm transition bg-white hover:bg-gray-50"
             >
               {renderRow(row, idx)}

@@ -1,30 +1,57 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { BiTrash } from "react-icons/bi";
-import BaseTable from "../../components/BaseTable";
+import Pagination from "../../components/Admin/Pagination";
 
 export default function ManageManager() {
   const [managers, setManagers] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState(""); // e.g., "firstName:asc"
+
+  const itemsPerPage = 5;
+  const token = localStorage.getItem("accessToken");
 
   useEffect(() => {
-    const fetchManagers = async () => {
-      try {
-        const response = await axios.get("http://localhost:5190/api/AdminUser");
-        const allUsers = response.data;
-        const managerOnly = allUsers.filter((user) => user.role === "Manager");
-        setManagers(managerOnly);
-      } catch (error) {
-        console.error("Error fetching managers:", error);
+    fetchManagers(currentPage, searchQuery, sortOrder);
+  }, [currentPage, searchQuery, sortOrder]);
+
+  const fetchManagers = async (page, search, sort) => {
+    try {
+      const params = new URLSearchParams({
+        Page: page,
+        PageSize: itemsPerPage,
+        RoleFilter: "Manager",
+      });
+
+      if (search) params.append("SearchTerm", search);
+      if (sort) {
+        const [key, dir] = sort.split(":");
+        params.append("SortBy", key);
+        params.append("IsDescending", dir === "desc");
       }
-    };
-    fetchManagers();
-  }, []);
+
+      const response = await axios.get(`http://localhost:5190/api/AdminUser?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setManagers(response.data.data || []);
+      setTotalPages(response.data.totalPages || 1);
+    } catch (error) {
+      console.error("Error fetching managers:", error);
+    }
+  };
 
   const handleDeleteManager = async (managerId) => {
     if (!window.confirm("Are you sure you want to delete this manager?")) return;
+
     try {
-      await axios.delete(`http://localhost:5190/api/AdminUser/${managerId}`);
-      setManagers((prev) => prev.filter((m) => m.id !== managerId));
+      await axios.delete(`http://localhost:5190/api/AdminUser/${managerId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // Refresh after delete
+      fetchManagers(currentPage, searchQuery, sortOrder);
       alert("Manager deleted successfully.");
     } catch (error) {
       console.error("Error deleting manager:", error);
@@ -37,32 +64,68 @@ export default function ManageManager() {
     <div className="flex-1 p-6">
       <h1 className="mt-3 text-3xl font-bold">Manager Management</h1>
 
-      <div className="mt-6">
-        <BaseTable
-         
-          rows={managers}
-          searchKey="firstName"
-          sortOptions={[
-            { label: "Newest", value: "createdAt:desc" },
-            { label: "Oldest", value: "createdAt:asc" },
-          ]}
-          headers={[
-            { label: "#", span: 1 },
-            { label: "Profile", span: 2 },
-            { label: "Name", span: 5 },
-            { label: "Delete", span: 4, align: "text-right" },
-          ]}
-          renderRow={(manager, index) => (
-            <>
-              <span className="col-span-1">{index + 1}</span>
+      {/* Search and Sort Controls */}
+      <div className="flex flex-col gap-2 my-4 sm:flex-row sm:items-center sm:justify-between">
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="px-3 py-2 text-sm bg-gray-100 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200"
+        />
+
+        <select
+          value={sortOrder}
+          onChange={(e) => {
+            setSortOrder(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="px-3 py-2 text-sm text-gray-700 bg-gray-100 border rounded-md"
+        >
+          <option value="">Sort by</option>
+          <option value="firstName:asc">Name (A-Z)</option>
+          <option value="firstName:desc">Name (Z-A)</option>
+        </select>
+      </div>
+
+      {/* Table */}
+      <div className="p-4 overflow-x-auto bg-white shadow-md rounded-xl min-w-[768px]">
+        <div className="grid grid-cols-12 px-4 py-3 text-sm font-semibold text-gray-600 border-b bg-gray-50 rounded-t-md">
+          <span className="col-span-1">#</span>
+          <span className="col-span-2">Profile</span>
+          <span className="col-span-5">Name</span>
+          <span className="col-span-4 text-right">Delete</span>
+        </div>
+
+        {managers.length > 0 ? (
+          managers.map((manager, index) => (
+            <div
+              key={manager.id}
+              className="grid grid-cols-12 px-4 py-3 text-sm bg-white border-b hover:bg-gray-50"
+            >
+              <span className="col-span-1">
+                {(currentPage - 1) * itemsPerPage + index + 1}
+              </span>
+
               <div className="col-span-2">
                 <img
                   className="w-10 h-10 rounded-full"
-                  src={manager.image || "https://via.placeholder.com/40"}
+                  src={
+                    manager.profilePictureUrl
+                      ? `http://localhost:5190${manager.profilePictureUrl}`
+                      : "https://via.placeholder.com/40"
+                  }
                   alt={manager.firstName}
                 />
               </div>
-              <span className="col-span-5">{manager.firstName} {manager.lastName}</span>
+
+              <span className="col-span-5">
+                {manager.firstName} {manager.lastName}
+              </span>
+
               <div className="col-span-4 text-right">
                 <button
                   onClick={() => handleDeleteManager(manager.id)}
@@ -71,10 +134,23 @@ export default function ManageManager() {
                   <BiTrash className="w-5 h-5" />
                 </button>
               </div>
-            </>
-          )}
-        />
+            </div>
+          ))
+        ) : (
+          <div className="col-span-12 px-4 py-6 text-center text-gray-400">
+            No managers found.
+          </div>
+        )}
       </div>
+
+      {/* Pagination Controls */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPrev={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+        onNext={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+        onPageChange={(page) => setCurrentPage(page)}
+      />
     </div>
   );
 }
