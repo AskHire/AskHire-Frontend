@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Search, Edit, Trash2, X } from 'lucide-react';
 import ManagerTopbar from '../../components/ManagerTopbar';
+import DeleteModal from '../../components/DeleteModal'; // adjust path if needed
 
 const ManageQuestions = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,6 +17,8 @@ const ManageQuestions = () => {
   const [sortOption, setSortOption] = useState('Newest');
   const [showModal, setShowModal] = useState(false);
   const [updatedQuestion, setUpdatedQuestion] = useState({});
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const questionsPerPage = 10;
@@ -67,13 +70,22 @@ const ManageQuestions = () => {
     setIsOpen(false);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this question?')) return;
+  const handleDeleteClick = (id) => {
+    setQuestionToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
     try {
-      await fetch(`http://localhost:5190/api/Question/${id}`, { method: 'DELETE' });
-      setAllQuestions(prev => prev.filter(q => q.questionId !== id));
+      await fetch(`http://localhost:5190/api/Question/${questionToDelete}`, {
+        method: 'DELETE',
+      });
+      setAllQuestions(prev => prev.filter(q => q.questionId !== questionToDelete));
     } catch (err) {
       setError(err.message);
+    } finally {
+      setShowDeleteModal(false);
+      setQuestionToDelete(null);
     }
   };
 
@@ -251,7 +263,7 @@ const ManageQuestions = () => {
                   </button>
                 </div>
                 <div className="col-span-1 flex justify-center">
-                  <button className="p-2 bg-red-100 text-red-600 rounded-full" onClick={() => handleDelete(question.questionId)}>
+                  <button className="p-2 bg-red-100 text-red-600 rounded-full" onClick={() => handleDeleteClick(question.questionId)}>
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -290,7 +302,7 @@ const ManageQuestions = () => {
         </div>
       )}
 
-      {/* Modal for Add/Edit */}
+      {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-lg">
@@ -331,6 +343,13 @@ const ManageQuestions = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 };
