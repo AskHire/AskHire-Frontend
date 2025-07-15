@@ -10,7 +10,6 @@ const Calendar = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [reminderTitle, setReminderTitle] = useState('');
   const [reminderDescription, setReminderDescription] = useState('');
-
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -21,19 +20,24 @@ const Calendar = () => {
         axios.get('http://localhost:5190/api/Reminder'),
       ]);
 
-      const interviewEvents = interviewsRes.data.map((interview) => ({
-        id: interview.interviewId,
-        title: `${interview.application?.vacancy?.vacancyName ?? 'Interview'}`,
-        date: interview.date,
-        backgroundColor: '#3b82f6',
-        borderColor: '#3b82f6',
-        textColor: 'white',
-        extendedProps: {
-          type: 'interview',
-          time: interview.time,
-          description: interview.interview_Instructions || '',
-        },
-      }));
+      const interviewEvents = interviewsRes.data.map((interview) => {
+        const fullTitle = interview.application?.vacancy?.vacancyName ?? '';
+        const displayTitle = fullTitle.replace(/Interview/i, '').trim();
+
+        return {
+          id: interview.interviewId,
+          title: displayTitle,
+          date: interview.date,
+          backgroundColor: '#bfdbfe',
+          borderColor: '#bfdbfe',
+          textColor: 'black',
+          extendedProps: {
+            type: 'interview',
+            time: interview.time,
+            description: interview.interview_Instructions || '',
+          },
+        };
+      });
 
       const reminderEvents = remindersRes.data.map((reminder) => ({
         id: reminder.reminderId,
@@ -185,13 +189,38 @@ const Calendar = () => {
         events={events}
         eventContent={(eventInfo) => {
           const { event } = eventInfo;
-          const { description } = event.extendedProps;
+          const { description, type } = event.extendedProps;
           const firstLine = description?.split('\n')[0] ?? '';
 
+          const bgColor = type === 'reminder' ? '#f59e0b' : '#bfdbfe';
+          const textColor = type === 'reminder' ? 'white' : 'black';
+
           return (
-            <div className="text-sm truncate">
-              <b>{event.title}</b>
-              {firstLine && <div className="text-xs truncate">{firstLine}</div>}
+            <div
+              className="p-1 rounded"
+              style={{
+                backgroundColor: bgColor,
+                color: textColor,
+                fontSize: '0.875rem',
+                lineHeight: '1.25rem',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              <strong>{event.title}</strong>
+              {firstLine && (
+                <div
+                  style={{
+                    fontSize: '0.75rem',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {firstLine}
+                </div>
+              )}
             </div>
           );
         }}
@@ -203,7 +232,6 @@ const Calendar = () => {
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-40">
           <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
             <h2 className="text-xl font-semibold mb-4">Add Reminder for {selectedDate}</h2>
-
             <input
               type="text"
               placeholder="Reminder Title"
@@ -211,7 +239,6 @@ const Calendar = () => {
               value={reminderTitle}
               onChange={(e) => setReminderTitle(e.target.value)}
             />
-
             <textarea
               placeholder="Reminder Description"
               rows={3}
@@ -219,7 +246,6 @@ const Calendar = () => {
               value={reminderDescription}
               onChange={(e) => setReminderDescription(e.target.value)}
             />
-
             <div className="flex justify-end gap-2">
               <button
                 className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm"
