@@ -11,6 +11,9 @@ const ManageVacancy = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('Newest');
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [vacancyToDelete, setVacancyToDelete] = useState(null);
+
   useEffect(() => {
     fetch("http://localhost:5190/api/Vacancy")
       .then((response) => {
@@ -28,20 +31,25 @@ const ManageVacancy = () => {
       });
   }, []);
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this job vacancy?");
-    if (!confirmDelete) return;
-
+  const confirmDeleteVacancy = async () => {
+    if (!vacancyToDelete) return;
     try {
-      const response = await fetch(`http://localhost:5190/api/Vacancy/${id}`, {
+      const response = await fetch(`http://localhost:5190/api/Vacancy/${vacancyToDelete.vacancyId}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete job");
-      setVacancies(vacancies.filter((vacancy) => vacancy.vacancyId !== id));
+      setVacancies(vacancies.filter(v => v.vacancyId !== vacancyToDelete.vacancyId));
+      setShowDeleteModal(false);
+      setVacancyToDelete(null);
     } catch (error) {
       console.error("Error deleting job:", error);
       alert("Error deleting job.");
     }
+  };
+
+  const handleDelete = (vacancy) => {
+    setVacancyToDelete(vacancy);
+    setShowDeleteModal(true);
   };
 
   const handleEdit = (vacancy) => {
@@ -68,8 +76,8 @@ const ManageVacancy = () => {
       });
       if (!response.ok) throw new Error("Failed to update job");
       setVacancies(
-        vacancies.map((vacancy) =>
-          vacancy.vacancyId === editVacancy.vacancyId ? editVacancy : vacancy
+        vacancies.map((v) =>
+          v.vacancyId === editVacancy.vacancyId ? editVacancy : v
         )
       );
       setShowModal(false);
@@ -79,8 +87,8 @@ const ManageVacancy = () => {
     }
   };
 
-  const filteredVacancies = vacancies.filter(vacancy =>
-    vacancy.vacancyName.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredVacancies = vacancies.filter(v =>
+    v.vacancyName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const sortedVacancies = [...filteredVacancies].sort((a, b) => {
@@ -105,16 +113,15 @@ const ManageVacancy = () => {
               <input type="text" placeholder="Search" className="px-4 py-2 pl-10 bg-gray-100 rounded-lg" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
             </div>
-            <div className="relative">
-              <select className="px-4 py-2 bg-gray-100 rounded-lg appearance-none pr-10" value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
-                <option>Newest</option>
-                <option>Oldest</option>
-                <option>Alphabetical</option>
-              </select>
-              <span className="absolute right-3 top-2.5 text-gray-400 pointer-events-none">Sort by:</span>
-            </div>
+            <select className="px-4 py-2 bg-gray-100 rounded-lg" value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+              <option>Newest</option>
+              <option>Oldest</option>
+              <option>Alphabetical</option>
+            </select>
           </div>
         </div>
+
+        {/* Header Row */}
         <div className="grid grid-cols-12 py-2 border-b text-gray-500 text-sm">
           <div className="col-span-1 px-4">#</div>
           <div className="col-span-5 px-4">Vacancy Name</div>
@@ -123,6 +130,8 @@ const ManageVacancy = () => {
           <div className="col-span-1 text-center">Edit</div>
           <div className="col-span-1 text-center">Delete</div>
         </div>
+
+        {/* Vacancy Rows */}
         {sortedVacancies.length > 0 ? (
           sortedVacancies.map((vacancy, index) => (
             <div key={vacancy.vacancyId} className="grid grid-cols-12 py-4 border-b items-center hover:bg-gray-50">
@@ -136,7 +145,7 @@ const ManageVacancy = () => {
                 </button>
               </div>
               <div className="col-span-1 flex justify-center">
-                <button className="p-2 bg-red-100 text-red-600 rounded-full" onClick={() => handleDelete(vacancy.vacancyId)}>
+                <button className="p-2 bg-red-100 text-red-600 rounded-full" onClick={() => handleDelete(vacancy)}>
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -147,7 +156,7 @@ const ManageVacancy = () => {
         )}
       </div>
 
-      {/* Modal */}
+      {/* Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-5xl max-h-screen overflow-y-auto">
@@ -158,7 +167,6 @@ const ManageVacancy = () => {
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Form fields here (same as your latest version) */}
               {['vacancyName', 'startDate', 'endDate', 'duration', 'requiredSkills', 'experience', 'education', 'instructions', 'nonTechnicalSkills', 'cvPassMark', 'preScreenPassMark', 'questionCount'].map(field => (
                 <div key={field} className="space-y-2">
                   <label className="block text-sm font-medium capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
@@ -179,6 +187,20 @@ const ManageVacancy = () => {
             <div className="flex space-x-2 pt-6 mt-4 border-t">
               <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium" onClick={handleSave}>Save Changes</button>
               <button className="bg-gray-300 px-6 py-2 rounded-lg font-medium" onClick={() => setShowModal(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full text-center shadow-xl">
+            <h2 className="text-xl font-semibold mb-4">Confirm Deletion</h2>
+            <p className="mb-6 text-gray-600">Are you sure you want to delete the vacancy <strong>{vacancyToDelete?.vacancyName}</strong>?</p>
+            <div className="flex justify-center gap-4">
+              <button onClick={() => setShowDeleteModal(false)} className="px-4 py-2 border rounded-lg bg-gray-100 hover:bg-gray-200">Cancel</button>
+              <button onClick={confirmDeleteVacancy} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Yes, Delete</button>
             </div>
           </div>
         </div>
