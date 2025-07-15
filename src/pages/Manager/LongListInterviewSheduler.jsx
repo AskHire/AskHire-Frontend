@@ -349,7 +349,7 @@ const LongListInterviewScheduler = () => {
     return schedule;
   };
 
-  // Handle form submission with automatic scheduling - ENHANCED VERSION
+  // Handle form submission with automatic scheduling - FIXED VERSION
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -416,9 +416,11 @@ const LongListInterviewScheduler = () => {
       
       console.log("Generated interview schedule:", interviewSchedule);
       
-      // Create individual interview requests based on working InterviewScheduler format
+      // Create individual interview requests - FIXED LOGIC
       const scheduledInterviews = [];
       const failedInterviews = [];
+      
+      console.log("Total interviews to schedule:", interviewSchedule.length);
       
       for (const interview of interviewSchedule) {
         try {
@@ -427,10 +429,10 @@ const LongListInterviewScheduler = () => {
             date: interview.date,
             time: interview.startTime,
             duration: interviewDuration,
-            instructions: interviewInstructions
+            Interview_Instructions: interviewInstructions
           };
           
-          console.log("Creating interview:", interviewData);
+          console.log("Creating interview for:", interview.candidateName, "Data:", interviewData);
           
           const response = await fetch('http://localhost:5190/api/ManagerInterview', {
             method: 'POST',
@@ -440,33 +442,72 @@ const LongListInterviewScheduler = () => {
             body: JSON.stringify(interviewData)
           });
           
+          const responseText = await response.text();
+          console.log(`API response for ${interview.candidateName}: status=`, response.status, 'body=', responseText);
+          
           if (response.ok) {
-            const result = await response.json();
-            console.log("Interview created successfully:", result);
-            scheduledInterviews.push(interview);
+            // Try to parse JSON if possible
+            let result = null;
+            try { result = JSON.parse(responseText); } catch {}
+            console.log("✅ Interview created successfully for:", interview.candidateName, result);
+            scheduledInterviews.push(interview); // SUCCESS: Add to scheduled
           } else {
-            const errorText = await response.text();
-            console.error(`Failed to create interview for ${interview.candidateName}:`, errorText);
-            failedInterviews.push(interview);
+            console.error("❌ Failed to create interview for:", interview.candidateName, "Error:", responseText);
+            failedInterviews.push(interview); // FAILURE: Add to failed
           }
         } catch (error) {
-          console.error(`Error creating interview for ${interview.candidateName}:`, error);
-          failedInterviews.push(interview);
+          console.error("❌ Exception creating interview for:", interview.candidateName, "Error:", error);
+          failedInterviews.push(interview); // EXCEPTION: Add to failed
         }
       }
-      
-      console.log("Scheduled interviews:", scheduledInterviews);
-      console.log("Failed interviews:", failedInterviews);
-      
+
+      // Add a short delay to allow backend to update
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // After scheduling, fetch all candidates for the vacancy and count scheduled/unscheduled
+      let allCandidates = [];
+      try {
+        const allApplicationsResponse = await fetch(
+          `http://localhost:5190/api/ManagerLonglistVacancy/applications/${vacancyId}`
+        );
+        if (allApplicationsResponse.ok) {
+          allCandidates = await allApplicationsResponse.json();
+        }
+      } catch (e) {
+        // fallback: leave allCandidates empty
+      }
+      let scheduledCount = 0;
+      let notScheduledCount = 0;
+      const candidateStatusLog = [];
+      for (const candidate of allCandidates) {
+        try {
+          const statusResp = await fetch(`http://localhost:5190/api/ManagerInterview/application/${candidate.applicationId}`);
+          if (statusResp.ok) {
+            const interviewData = await statusResp.json();
+            if (interviewData && interviewData.date) {
+              scheduledCount++;
+              candidateStatusLog.push({ id: candidate.applicationId, status: 'scheduled' });
+            } else {
+              notScheduledCount++;
+              candidateStatusLog.push({ id: candidate.applicationId, status: 'not scheduled' });
+            }
+          } else {
+            notScheduledCount++;
+            candidateStatusLog.push({ id: candidate.applicationId, status: 'not scheduled' });
+          }
+        } catch (e) {
+          notScheduledCount++;
+          candidateStatusLog.push({ id: candidate.applicationId, status: 'not scheduled' });
+        }
+      }
+      console.log('Candidate interview status for this vacancy:', candidateStatusLog);
       setScheduledResults({
-        scheduledCount: scheduledInterviews.length,
-        notScheduledCount: failedInterviews.length
+        scheduledCount,
+        notScheduledCount
       });
-      
-      const successMsg = `Successfully scheduled ${scheduledInterviews.length} interviews.${
-        failedInterviews.length > 0 ? ` ${failedInterviews.length} interviews could not be scheduled.` : ''
+      const successMsg = `Successfully scheduled ${scheduledCount} interviews for this vacancy.${
+        notScheduledCount > 0 ? ` ${notScheduledCount} candidates are still unscheduled.` : ''
       }${sendEmail ? ' Email invitations have been sent.' : ''}`;
-      
       setSuccessMessage(successMsg);
       setShowSuccessView(true);
       setIsSubmitting(false);
@@ -526,79 +567,44 @@ const LongListInterviewScheduler = () => {
 
   // Success view component
   const SuccessView = () => {
-  console.log("SuccessView - scheduledResults:", scheduledResults);
-  console.log("SuccessView - successMessage:", successMessage);
+    console.log("SuccessView - scheduledResults:", scheduledResults);
+    console.log("SuccessView - successMessage:", successMessage);
 
-  return (
-    <div className="bg-white rounded-lg shadow-md p-6 text-center">
-      {/* big green check */}
-      <div className="flex justify-center mb-6">
-        <div className="bg-green-100 rounded-full p-3">
-          <svg className="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-      </div>
-
-      <h3 className="text-2xl font-bold text-gray-800 mb-4">
-        Interviews Scheduled Successfully!
-      </h3>
-
-      <div className="text-gray-600 mb-8">
-        <p className="mb-4">{successMessage}</p>
-
-        {/* counts */}
-        <div className="flex justify-center space-x-6 mb-6">
-          {/* scheduled → always show */}
-          <div className="text-center">
-            <div className="text-3xl font-bold text-blue-600 mb-1">
-              {scheduledResults.scheduledCount}
-            </div>
-            <div className="text-sm text-gray-500">Scheduled</div>
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6 text-center">
+        {/* big green check */}
+        <div className="flex justify-center mb-6">
+          <div className="bg-green-100 rounded-full p-3">
+            <svg className="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
           </div>
-
-          {/* not scheduled → show only if any */}
-          {scheduledResults.notScheduledCount > 0 && (
-            <div className="text-center">
-              <div className="text-3xl font-bold text-orange-500 mb-1">
-                {scheduledResults.notScheduledCount}
-              </div>
-              <div className="text-sm text-gray-500">Not Scheduled</div>
-            </div>
-          )}
         </div>
 
-        {/* optional email banner */}
-        {sendEmail && (
-          <div className="flex items-center justify-center mb-6">
-            <div className="bg-blue-50 px-4 py-2 rounded-full flex items-center">
-              <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              <span className="text-blue-700">Email invitations sent</span>
-            </div>
-          </div>
-        )}
-      </div>
+        <h3 className="text-2xl font-bold text-gray-800 mb-4">
+          Interviews Scheduled Successfully!
+        </h3>
 
-      <div className="flex flex-col sm:flex-row justify-center gap-4">
-        <button
-          onClick={handleScheduleMore}
-          className="px-6 py-3 bg-white border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors"
-        >
-          Schedule More Interviews
-        </button>
+        
 
-        <button
-          onClick={handleReturnToListing}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-        >
-          Return to Long List
-        </button>
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <button
+            onClick={handleScheduleMore}
+            className="px-6 py-3 bg-white border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors"
+          >
+            Schedule More Interviews
+          </button>
+
+          <button
+            onClick={handleReturnToListing}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            Return to Long List
+          </button>
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
   return (
     <div className="bg-blue-50 flex-auto min-h-screen">
@@ -644,9 +650,7 @@ const LongListInterviewScheduler = () => {
                   <h3 className="text-xl font-semibold text-gray-800">
                     Vacancy: {vacancyName}
                   </h3>
-                  {vacancyId && (
-                    <p className="text-sm text-gray-600">ID: {vacancyId}</p>
-                  )}
+                  
                 </div>
               </div>
 
