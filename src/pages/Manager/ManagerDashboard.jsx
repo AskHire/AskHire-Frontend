@@ -94,29 +94,29 @@ const ManagerDashboard = () => {
         {statsData.map(stat => <StatCard key={stat.id} stat={stat} />)}
       </div>
 
-      {/* Calendar & Pie Chart */}
+      {/* Pie Chart & Bar Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        <Card>
-          <h2 className="text-xl font-semibold mb-4">Calendar and Reminders</h2>
-          <p className="text-sm text-gray-500 mb-4">Click on a date to add a reminder</p>
-          <Calendar />
-        </Card>
-
         <Card>
           <PieChart />
         </Card>
+
+        <Card>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">Interview Overview</h2>
+              <p className="text-gray-500 text-sm">This Week</p>
+            </div>
+          </div>
+
+          <InterviewLoadChart />
+        </Card>
       </div>
 
-      {/* Interview Load Chart */}
+      {/* Calendar */}
       <Card className="mt-6">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-xl font-semibold">Interview Overview</h2>
-            <p className="text-gray-500 text-sm">This Month</p>
-          </div>
-        </div>
-
-        <InterviewLoadChart />
+        <h2 className="text-xl font-semibold mb-4">Calendar and Reminders</h2>
+        <p className="text-sm text-gray-500 mb-4">Click on a date to add a reminder</p>
+        <Calendar />
       </Card>
     </div>
   );

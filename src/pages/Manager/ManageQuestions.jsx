@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Search, Edit, Trash2, X } from 'lucide-react';
 import ManagerTopbar from '../../components/ManagerTopbar';
-import DeleteModal from '../../components/DeleteModal'; // adjust path if needed
+import DeleteModal from '../../components/DeleteModal';
 
 const ManageQuestions = () => {
   const [isOpen, setIsOpen] = useState(false);
