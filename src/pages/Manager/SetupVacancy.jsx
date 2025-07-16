@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Search } from "lucide-react";
 import ManagerTopbar from '../../components/ManagerTopbar';
 
 const SetupVacancy = () => {
@@ -10,6 +11,7 @@ const SetupVacancy = () => {
   const [jobRoles, setJobRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingError, setLoadingError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Form states
   const [formData, setFormData] = useState({
@@ -59,6 +61,7 @@ const SetupVacancy = () => {
     setSelectedRole(role);
     setSelectedJobId(id);
     setIsOpen(false);
+    setSearchQuery(''); // Clear search when role is selected
   };
 
   const handleChange = (e) => {
@@ -119,6 +122,11 @@ const SetupVacancy = () => {
     });
   };
 
+  // Filter job roles based on search query
+  const filteredJobRoles = jobRoles.filter(role =>
+    role.jobTitle.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="flex-1 pt-1 pb-4 pr-6 pl-6">
       <div className="pb-4">
@@ -132,36 +140,65 @@ const SetupVacancy = () => {
         
         <div className="relative w-full">
           <div
-            className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
             onClick={toggleDropdown}
           >
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400">🔍</span>
-              <span className="text-gray-700">
-                {loading ? 'Loading...' : selectedRole || 'Select a job role'}
-              </span>
+            <div className="text-gray-700">
+              {loading ? 'Loading...' : selectedRole || 'Select a job role'}
             </div>
-            <span className="text-gray-400">{isOpen ? '▲' : '▼'}</span>
+            <div className={`text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}>▼</div>
           </div>
           
           {isOpen && !loading && (
-            <div className="absolute w-full mt-1 bg-white rounded-lg shadow-lg border z-10">
-              {loadingError ? (
-                <p className="px-4 py-2 text-red-500">{loadingError}</p>
-              ) : jobRoles.length === 0 ? (
-                <p className="px-4 py-2">No job roles found</p>
-              ) : (
-                <ul className="py-1 max-h-60 overflow-y-auto">
-                  {jobRoles.map((role) => (
-                    <li
-                      key={role.jobId}
-                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => selectRole(role.jobTitle, role.jobId)}
-                    >
-                      {role.jobTitle}
-                    </li>
-                  ))}
-                </ul>
+            <div className="absolute w-full mt-1 bg-white border rounded-lg shadow-lg z-10">
+              {/* Search Bar */}
+              <div className="p-3 border-b">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search job roles..."
+                    className="w-full px-4 py-2 pl-10 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onClick={(e) => e.stopPropagation()} // Prevent dropdown from closing
+                  />
+                  <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+                </div>
+              </div>
+
+              {/* Results */}
+              <div className="max-h-60 overflow-y-auto">
+                {loadingError ? (
+                  <p className="px-4 py-2 text-red-500">{loadingError}</p>
+                ) : filteredJobRoles.length === 0 ? (
+                  <p className="px-4 py-2 text-gray-500">
+                    {searchQuery ? `No job roles found matching "${searchQuery}"` : 'No job roles found'}
+                  </p>
+                ) : (
+                  <ul className="py-1">
+                    {filteredJobRoles.map((role) => (
+                      <li
+                        key={role.jobId}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer transition-colors"
+                        onClick={() => selectRole(role.jobTitle, role.jobId)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span>{role.jobTitle}</span>
+                          {role.jobId === selectedJobId && (
+                            <span className="text-blue-600 text-sm">✓ Selected</span>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Results summary */}
+              {searchQuery && filteredJobRoles.length > 0 && (
+                <div className="px-4 py-2 border-t bg-gray-50 text-sm text-gray-600">
+                  Showing {filteredJobRoles.length} result{filteredJobRoles.length !== 1 ? 's' : ''} for "{searchQuery}"
+                </div>
               )}
             </div>
           )}
@@ -171,7 +208,12 @@ const SetupVacancy = () => {
       {/* Vacancy Form Card */}
       {selectedRole && (
         <div className="bg-white p-6 rounded-lg shadow-md border border-blue-200">
-          <h2 className="text-xl font-bold mb-4">{selectedRole}</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">{selectedRole}</h2>
+            <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+              Job ID: {selectedJobId}
+            </span>
+          </div>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Instructions */}
