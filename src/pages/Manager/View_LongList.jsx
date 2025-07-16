@@ -232,13 +232,19 @@ const View_LongList = () => {
         })
       );
       setCandidatesData(candidatesWithInterviews);
+      // After setting candidatesWithInterviews, add a fallback redirect if no candidates and vacancy param is present
+      if (!viewAll && selectedVacancy && candidatesWithInterviews.length === 0) {
+        // Redirect to View All Candidates if no candidates found for the selected vacancy
+        navigate('/manager/View_LongList?view=all', { replace: true });
+        return;
+      }
     } catch (error) {
       handleApiError(error, 'fetch candidates');
       setCandidatesData([]);
     } finally {
       setIsLoading(false);
     }
-  }, [selectedVacancy, viewAll, refreshTrigger, createCacheBustedUrl, fetchInterviewForCandidate, handleApiError]);
+  }, [selectedVacancy, viewAll, refreshTrigger, createCacheBustedUrl, fetchInterviewForCandidate, handleApiError, navigate]);
 
   // Load data on component mount and when dependencies change
   useEffect(() => {
@@ -458,7 +464,7 @@ const View_LongList = () => {
                 )}
               </div>
             </div>
-            <Link to={`/manager/InterviewScheduler/${candidate.applicationId}?edit=true`}>
+            <Link to={`/manager/InterviewScheduler/${candidate.applicationId}?edit=true&vacancy=${encodeURIComponent(selectedVacancy)}`}>
               <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded flex items-center justify-center w-full transition-colors">
                 <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0015.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
@@ -468,7 +474,7 @@ const View_LongList = () => {
             </Link>
           </div>
         ) : (
-          <Link to={`/manager/InterviewScheduler/${candidate.applicationId}`}>
+          <Link to={`/manager/InterviewScheduler/${candidate.applicationId}?vacancy=${encodeURIComponent(selectedVacancy)}`}>
             <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded w-full transition-colors">
               Schedule Interview
             </button>
@@ -563,7 +569,7 @@ const fetchCandidatesWithFallback = useCallback(async () => {
 }, [selectedVacancy, viewAll, refreshTrigger, createCacheBustedUrl, fetchInterviewForCandidate, handleApiError]);
 
   return (
-    <div className="bg-gray-100 min-h-screen">
+    <div className="bg-blue-50 min-h-screen">
       <ManagerTopbar />
       <main className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex justify-between items-center mb-6">

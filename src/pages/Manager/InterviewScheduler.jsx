@@ -53,7 +53,6 @@ const InterviewScheduler = () => {
                   if (interviewData.time) setTime(interviewData.time);
                   if (interviewData.duration) setDuration(interviewData.duration);
                   if (interviewData.instructions) setInterviewInstructions(interviewData.instructions);
-                  else if (interviewData.interview_Instructions) setInterviewInstructions(interviewData.interview_Instructions);
                 }
               }
             } catch (interviewError) {
@@ -129,7 +128,7 @@ const InterviewScheduler = () => {
         date: date,
         time: time,
         duration: duration,
-        instructions: interviewInstructions
+        Interview_Instructions: interviewInstructions
       };
       let url, method;
       if (isEditing && interviewId) {

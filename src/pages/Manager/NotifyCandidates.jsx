@@ -4,7 +4,6 @@ import ManagerTopbar from '../../components/ManagerTopbar';
 
 const NotifyCandidates = () => {
   const [selectedTab, setSelectedTab] = useState('Longlist'); // Default tab is Longlist
-  const [selectedCandidates, setSelectedCandidates] = useState([]);
   const [candidatesByStatus, setCandidatesByStatus] = useState({ Longlist: [], Rejected: [], Pending: [] });
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
@@ -95,84 +94,89 @@ const NotifyCandidates = () => {
     return () => clearInterval(intervalId);
   }, [fetchCandidates]);
 
-  const handleCandidateSelect = (applicationId) => {
-    setSelectedCandidates(prev =>
-      prev.includes(applicationId) ? prev.filter(id => id !== applicationId) : [...prev, applicationId]
-    );
-  };
-  
-  // Handle select all candidates in current tab
-  const handleSelectAll = () => {
-    const currentTabCandidates = candidatesByStatus[selectedTab] || [];
-    
-    // If all candidates are already selected, unselect all
-    const allSelected = currentTabCandidates.every(candidate => 
-      selectedCandidates.includes(candidate.applicationId)
-    );
-    
-    if (allSelected) {
-      // Remove all current tab candidates from selection
-      setSelectedCandidates(prev => 
-        prev.filter(id => !currentTabCandidates.some(c => c.applicationId === id))
-      );
-    } else {
-      // Add all current tab candidates to selection
-      const newSelectedIds = currentTabCandidates
-        .map(candidate => candidate.applicationId)
-        .filter(id => !selectedCandidates.includes(id));
-      
-      setSelectedCandidates(prev => [...prev, ...newSelectedIds]);
-    }
-  };
-
-  const handleNotify = async () => {
-    if (!subject || !message || selectedCandidates.length === 0) {
+  // Add sendSingleEmail function
+  const sendSingleEmail = async (candidateId, fullName) => {
+    if (!subject || !message) {
       setNotification({
         show: true,
-        message: 'Please fill all fields and select at least one candidate.',
+        message: 'Please fill subject and message fields before sending.',
         type: 'error'
       });
-      setTimeout(() => setNotification({ show: false, message: '', type: '' }), 5000);
+      setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
       return;
     }
-
     try {
       setLoading(true);
-      
-      // Create notification with proper format for the API
       const notificationData = {
         subject,
         message,
         type,
         time: new Date().toISOString(),
-        candidateIds: selectedCandidates,
-        status: 'Manager' // Ensure status is set to Manager for DB
+        candidateIds: [candidateId],
+        status: 'Manager'
       };
+      await axios.post('http://localhost:5190/api/ManagerNotification', notificationData);
+      setNotification({
+        show: true,
+        message: `Notification sent to ${fullName}!`,
+        type: 'success'
+      });
+      setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
+    } catch (error) {
+      setNotification({
+        show: true,
+        message: `Failed to send notification: ${error.response?.data?.message || error.message}`,
+        type: 'error'
+      });
+      setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      console.log('Sending notification with data:', notificationData);
-      
-      // Send the notification with the proper structure
-      const response = await axios.post('http://localhost:5190/api/ManagerNotification', notificationData);
-      
-      console.log('Notification created successfully:', response.data);
-      
-      // Show success message in the page
+  // Add sendBulkNotification function
+  const sendBulkNotification = async () => {
+    if (!subject || !message) {
+      setNotification({
+        show: true,
+        message: 'Please fill all fields before sending.',
+        type: 'error'
+      });
+      setTimeout(() => setNotification({ show: false, message: '', type: '' }), 5000);
+      return;
+    }
+    const candidateIds = candidates.map(c => c.applicationId);
+    if (candidateIds.length === 0) {
+      setNotification({
+        show: true,
+        message: 'No candidates to notify in this tab.',
+        type: 'error'
+      });
+      setTimeout(() => setNotification({ show: false, message: '', type: '' }), 5000);
+      return;
+    }
+    try {
+      setLoading(true);
+      const notificationData = {
+        subject,
+        message,
+        type,
+        time: new Date().toISOString(),
+        candidateIds,
+        status: 'Manager'
+      };
+      await axios.post('http://localhost:5190/api/ManagerNotification', notificationData);
       setNotification({
         show: true,
         message: 'Notification sent successfully!',
         type: 'success'
       });
       setTimeout(() => setNotification({ show: false, message: '', type: '' }), 5000);
-
-      // Reset form
       setSubject('');
       setMessage('');
-      setSelectedCandidates([]);
-      
       // Refresh candidates after successful notification
       fetchCandidates();
     } catch (error) {
-      console.error('Notification error:', error);
       setNotification({
         show: true,
         message: `Failed to send notification: ${error.response?.data?.message || error.message}`,
@@ -200,7 +204,7 @@ const NotifyCandidates = () => {
   };
 
   return (
-    <div className="bg-gray-100 flex-auto min-h-screen">
+    <div className="bg-blue-50 flex-auto min-h-screen">
       <ManagerTopbar />
       <div className="bg-blue-50 min-h-screen p-4 md:p-6">
         <div className="max-w-4xl mx-auto">
@@ -233,15 +237,8 @@ const NotifyCandidates = () => {
             <div className="flex justify-between items-center mb-4">
               <div className="text-gray-700">Select candidates to send notifications</div>
               <div className="flex items-center space-x-4">
-                <button
-                  onClick={handleSelectAll}
-                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                >
-                  {candidatesByStatus[selectedTab]?.every(c => 
-                    selectedCandidates.includes(c.applicationId)
-                  ) ? 'Unselect All' : 'Select All'}
-                </button>
-                <div className="text-gray-500 text-sm">{selectedCandidates.length} selected</div>
+                {/* Removed Select All button */}
+                <div className="text-gray-500 text-sm">{candidates.length} candidates</div>
               </div>
             </div>
 
@@ -294,25 +291,16 @@ const NotifyCandidates = () => {
                     <div key={candidate.applicationId} className="border border-gray-200 rounded-lg hover:border-blue-300 transition">
                       <div className="p-4 flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                          <input
-                            type="checkbox"
-                            className="h-5 w-5 text-blue-600 rounded border-gray-300"
-                            checked={selectedCandidates.includes(candidate.applicationId)}
-                            onChange={() => handleCandidateSelect(candidate.applicationId)}
-                          />
+                          {/* Removed checkbox and Send Email button */}
                           <div>
                             <h3 className="font-medium text-gray-800">{fullName}</h3>
                             <p className="text-gray-500 text-sm">{vacancyName}</p>
                             <div className="flex space-x-4 mt-1">
                               <span className="text-xs text-gray-500">
-                                CV Score: <span className={`font-medium ${cvMark >= cvThreshold ? 'text-green-600' : 'text-red-600'}`}>
-                                  {cvMark}% / {cvThreshold}%
-                                </span>
+                                CV Score: <span className={`font-medium ${cvMark >= cvThreshold ? 'text-green-600' : 'text-red-600'}`}>{cvMark}% / {cvThreshold}%</span>
                               </span>
                               <span className="text-xs text-gray-500">
-                                Prescreening: <span className={`font-medium ${preScreenMark >= preScreenThreshold ? 'text-green-600' : 'text-red-600'}`}>
-                                  {preScreenMark}% / {preScreenThreshold}%
-                                </span>
+                                Prescreening: <span className={`font-medium ${preScreenMark >= preScreenThreshold ? 'text-green-600' : 'text-red-600'}`}>{preScreenMark}% / {preScreenThreshold}%</span>
                               </span>
                               <button 
                                 onClick={() => toggleCandidateDetails(candidate.applicationId)}
@@ -330,8 +318,8 @@ const NotifyCandidates = () => {
                         }`}>
                           {selectedTab === 'Longlist' ? 'Qualified' : selectedTab}
                         </div>
+                        {/* Removed Send Email button */}
                       </div>
-                      
                       {/* Expanded Candidate Details */}
                       {expandedCandidate === candidate.applicationId && (
                         <div className="border-t border-gray-100 p-4 bg-gray-50">
@@ -430,15 +418,15 @@ const NotifyCandidates = () => {
 
             <div className="flex justify-end">
               <button
-                onClick={handleNotify}
-                disabled={selectedCandidates.length === 0 || !subject || !message || loading}
+                onClick={sendBulkNotification}
+                disabled={!subject || !message || loading || candidates.length === 0}
                 className={`${
-                  selectedCandidates.length > 0 && subject && message && !loading
+                  subject && message && candidates.length > 0 && !loading
                     ? 'bg-blue-600 hover:bg-blue-700'
                     : 'bg-blue-300 cursor-not-allowed'
                 } text-white py-2 px-6 rounded-full font-medium`}
               >
-                {loading ? 'Processing...' : `Notify ${selectedCandidates.length} Candidate${selectedCandidates.length !== 1 ? 's' : ''}`}
+                {loading ? 'Processing...' : `Notify All (${candidates.length})`}
               </button>
             </div>
           </div>
