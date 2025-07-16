@@ -1,9 +1,48 @@
 import React from 'react';
 
-const SignupStep2 = ({ formData, setFormData, prevStep, onSubmit, isLoading }) => {
+const SignupStep2 = ({ formData, setFormData, prevStep, onSubmit, isLoading, setError }) => {
+  const validateStep2 = () => {
+    if (!formData.email.trim()) {
+      setError('Email is required.');
+      return false;
+    }
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      setError('Please enter a valid email address.');
+      return false;
+    }
+
+    if (!formData.password) {
+      setError('Password is required.');
+      return false;
+    }
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      return false;
+    }
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(formData.password)) {
+      setError('Password must have at least one uppercase letter, one lowercase letter, one number, and one special character.');
+      return false;
+    }
+
+    if (!formData.confirmPassword) {
+      setError('Confirm Password is required.');
+      return false;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match.');
+      return false;
+    }
+    
+    setError('');
+    return true;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit();
+    if (validateStep2()) {
+      onSubmit();
+    }
   };
 
   return (

@@ -27,7 +27,7 @@ const getCookie = (name) => {
           return decodeURIComponent(cookieValue);
         } catch (e) {
           console.warn('Failed to decode cookie value:', cookieValue);
-          return cookieValue; // Return raw value if decoding fails
+          return cookieValue;
         }
       }
     }
@@ -62,7 +62,6 @@ const setupRefreshTimer = (token) => {
   try {
     if (!token) return;
     
-    // Clear any existing timeout
     if (refreshTokenTimeoutId) {
       clearTimeout(refreshTokenTimeoutId);
     }
@@ -70,12 +69,10 @@ const setupRefreshTimer = (token) => {
     const tokenData = parseJwt(token);
     if (!tokenData || !tokenData.exp) return;
 
-    // Get time until expiration (in ms) and subtract buffer time (2 minutes)
-    const expiresIn = (tokenData.exp * 1000) - Date.now() - 120000;
+    const expiresIn = (tokenData.exp * 1000) - Date.now() - 120000; // 2 minutes before expiration
     
-    // Only set timeout if token is not already expired
     if (expiresIn <= 0) {
-      console.log('Token already expired, refreshing now...');
+      console.log('Token already expired or nearly expired, refreshing now...');
       refreshAccessToken();
       return;
     }
@@ -96,20 +93,18 @@ const refreshAccessToken = async () => {
   try {
     console.log('Attempting to refresh access token...');
     
-    // Skip the interceptor for this call to avoid infinite loops
     const response = await axios.post(`${API_URL}/refresh-token`, {}, {
       withCredentials: true,
       headers: {
         'Content-Type': 'application/json',
       },
-      skipAuthRefresh: true
+      skipAuthRefresh: true // Prevents infinite loops with interceptor
     });
     
     if (response.data && response.data.accessToken) {
       accessToken = response.data.accessToken;
       console.log('Access token refreshed successfully');
       
-      // Set up the next refresh
       setupRefreshTimer(accessToken);
       
       return accessToken;
@@ -124,7 +119,7 @@ const refreshAccessToken = async () => {
   }
 };
 
-// Initialize token from cookies when module loads
+// --- IMPORTANT FIX: Move the definition of initializeTokenFromCookies above its call ---
 const initializeTokenFromCookies = () => {
   const token = getCookie('jwt');
   if (token) {
@@ -132,8 +127,9 @@ const initializeTokenFromCookies = () => {
     setupRefreshTimer(token);
   }
 };
+// --- END FIX ---
 
-// Call initialization
+// Call initialization (now defined above)
 initializeTokenFromCookies();
 
 // Attach JWT token from in-memory storage to each request
@@ -182,7 +178,7 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
 
     // Don't retry refresh token requests to avoid loops
-    if (originalRequest.url === '/refresh-token') {
+    if (originalRequest.url === '/refresh-token' || originalRequest.skipAuthRefresh) {
       return Promise.reject(error);
     }
 
@@ -248,8 +244,7 @@ export const authService = {
   async register(userData) {
     try {
       const response = await apiClient.post('/register', userData);
-      // Backend returns user data, not tokens, so no need to set accessToken
-      return response.data; // Return user data (e.g., { Email, Id, Role })
+      return response.data;
     } catch (error) {
       throw handleError(error);
     }
@@ -362,11 +357,35 @@ export const authService = {
 function handleError(error) {
   console.error('API Error:', error);
   if (error.response) {
+    // Check for ModelState errors (usually 400 Bad Request)
+    if (error.response.status === 400 && error.response.data && typeof error.response.data === 'object' && !Array.isArray(error.response.data)) {
+      let errorMessage = '';
+      for (const key in error.response.data) {
+        // Concatenate all messages under a key, then all keys
+        if (Array.isArray(error.response.data[key])) {
+          errorMessage += error.response.data[key].join(' ') + ' ';
+        } else if (typeof error.response.data[key] === 'string') {
+          // This covers general messages from BadRequest("Some message")
+          errorMessage += error.response.data[key] + ' ';
+        } else if (typeof error.response.data.errors === 'object') {
+          // This handles the structure for Identity errors in ASP.NET Core (common on registration failures)
+          for (const errorKey in error.response.data.errors) {
+            if (Array.isArray(error.response.data.errors[errorKey])) {
+              errorMessage += error.response.data.errors[errorKey].join(' ') + ' ';
+            }
+          }
+        }
+      }
+      return new Error(errorMessage.trim() || 'Validation error.');
+    }
+    // For other errors (e.g., 401 unauthorized, 500 internal server error), use the message from data or status text
     return new Error(error.response.data?.message || error.response.statusText);
   } else if (error.request) {
-    return new Error('No response from server');
+    // The request was made but no response was received (e.g., network error)
+    return new Error('No response from server. Please check your network connection.');
   } else {
-    return new Error(error.message || 'API request failed');
+    // Something happened in setting up the request that triggered an Error
+    return new Error(error.message || 'An unexpected error occurred.');
   }
 }
 
