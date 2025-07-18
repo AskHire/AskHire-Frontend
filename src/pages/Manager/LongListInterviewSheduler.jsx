@@ -212,19 +212,24 @@ const LongListInterviewScheduler = () => {
       const candidatesArray = Array.isArray(candidates) ? candidates : [];
       
       // Normalize candidate data structure
-      const normalizedCandidates = candidatesArray.map(candidate => ({
-        applicationId: candidate.applicationId || candidate.id,
-        candidateId: candidate.candidateId || candidate.userId,
-        firstName: candidate.firstName || candidate.user?.firstName || candidate.candidate?.firstName || 'Unknown',
-        lastName: candidate.lastName || candidate.user?.lastName || candidate.candidate?.lastName || 'Name',
-        email: candidate.email || candidate.user?.email || candidate.candidate?.email || 'No email',
-        phone: candidate.phone || candidate.user?.phone || candidate.candidate?.phone || '',
-        applicationStatus: candidate.applicationStatus || candidate.status || 'Applied',
-        appliedDate: candidate.appliedDate || candidate.createdAt || new Date().toISOString()
-      }));
-      
-      console.log("Normalized candidates:", normalizedCandidates);
-      
+      const normalizedCandidates = candidatesArray.map(candidate => {
+        console.log('Candidate object:', candidate); // DEBUG: See what fields are present
+        const cvMark = Number(candidate.cvMark || candidate.cV_Mark || 0);
+        const prescreenMark = Number(
+          candidate.pre_Screen_PassMark ||
+          candidate.Pre_Screen_PassMark ||
+          candidate.preScreenPassMark ||
+          candidate.pre_screen_pass_mark ||
+          candidate.prescreenMark ||
+          candidate.prescreenTestMark ||
+          candidate.prescreen ||
+          0
+        );
+        const totalMark = (cvMark * 0.5) + (prescreenMark * 0.5);
+        return { ...candidate, totalMark, cvMark, prescreenMark };
+      });
+      // Sort by totalMark descending
+      normalizedCandidates.sort((a, b) => b.totalMark - a.totalMark);
       setUnscheduledCandidates(normalizedCandidates);
       setIsLoading(false);
       
@@ -754,7 +759,9 @@ const SuccessView = () => {
                       {unscheduledCandidates.map(candidate => (
                         <li key={candidate.applicationId} className="flex justify-between">
                           <span className="font-medium">{candidate.firstName} {candidate.lastName}</span>
-                          <span className="text-gray-500">{candidate.email}</span>
+                          <span className="ml-2 text-purple-700">CV: {candidate.cvMark || candidate.cV_Mark || 0}%</span>
+                          <span className="ml-2 text-yellow-700">Prescreen: {candidate.prescreenMark}%</span>
+                          <span className="ml-2 text-blue-700 font-bold">Total: {candidate.totalMark ? candidate.totalMark.toFixed(2) : 'N/A'}%</span>
                         </li>
                       ))}
                     </ul>

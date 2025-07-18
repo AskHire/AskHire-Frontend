@@ -265,7 +265,27 @@ const View_LongList = () => {
         })
       );
 
-      setCandidatesData(candidatesWithInterviews);
+      // After fetching and preparing candidatesWithInterviews, calculate totalMark and sort by it
+      // Add this before setCandidatesData(candidatesWithInterviews);
+      // Calculate totalMark for each candidate
+      const candidatesWithTotalMark = candidatesWithInterviews.map(candidate => {
+        // Try to get CV and prescreen marks from possible fields
+        const cvMark = Number(candidate.cvMark || candidate.cV_Mark || 0);
+        const prescreenMark = Number(
+          candidate.pre_Screen_PassMark ||
+          candidate.Pre_Screen_PassMark ||
+          candidate.prescreenMark ||
+          candidate.prescreenTestMark ||
+          candidate.prescreen ||
+          0
+        );
+        const totalMark = (cvMark * 0.5) + (prescreenMark * 0.5);
+        
+        return { ...candidate, totalMark, cvMark, prescreenMark };
+      });
+      // Sort by totalMark descending
+      candidatesWithTotalMark.sort((a, b) => b.totalMark - a.totalMark);
+      setCandidatesData(candidatesWithTotalMark);
 
       // After setting candidatesWithInterviews, add a fallback redirect if no candidates and vacancy param is present
       if (!viewAll && selectedVacancy && candidatesWithInterviews.length === 0) {
@@ -549,8 +569,18 @@ const View_LongList = () => {
          'N/A'}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          {candidate.cvMark || candidate.cV_Mark || 'N/A'}%
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+          {candidate.cvMark || candidate.cV_Mark || 0}%
+        </span>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+          {candidate.pre_Screen_PassMark || candidate.Pre_Screen_PassMark || candidate.prescreenMark || candidate.prescreenTestMark || candidate.prescreen || 0}%
+        </span>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          {candidate.totalMark ? candidate.totalMark.toFixed(2) : 'N/A'}%
         </span>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -729,7 +759,9 @@ const View_LongList = () => {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profile</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job Title</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Marks</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CV Mark</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prescreen Mark</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Marks</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View Details</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interview</th>
                       </tr>
