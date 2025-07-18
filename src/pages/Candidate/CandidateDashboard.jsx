@@ -58,6 +58,7 @@ const CandidateDashboard = () => {
     } catch (err) {
       console.error("Error fetching candidate dashboard:", err);
       setApplications([]);
+      // This will now only trigger for actual errors (like network issues, or if the backend returns a true 404 for a missing user, not just no applications)
       setError("Failed to load your applications. Please try again.");
     } finally {
       setLoading(false);
