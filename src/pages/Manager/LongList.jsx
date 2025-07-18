@@ -9,6 +9,11 @@ const LongList = () => {
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
   const [vacancies, setVacancies] = useState([]);
   const [filteredVacancies, setFilteredVacancies] = useState([]);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -109,7 +114,22 @@ const LongList = () => {
     }
     
     setFilteredVacancies(sortedList);
+    // Reset to first page when filters change
+    setCurrentPage(1);
   }, [searchTerm, selectedVacancy, vacancies, sortBy]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredVacancies.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentVacancies = filteredVacancies.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    // Scroll to top of the table
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Handle view long-list navigation - FIXED
   const handleViewLongList = (vacancyTitle) => {
@@ -150,6 +170,84 @@ const LongList = () => {
   const handleClearFilters = () => {
     setSearchTerm('');
     setSelectedVacancy('');
+    setCurrentPage(1);
+  };
+
+  // Pagination component
+  const PaginationControls = () => {
+    if (totalPages <= 1) return null;
+
+    const getVisiblePages = () => {
+      const pages = [];
+      const maxVisible = 3; // Show max 3 page numbers like in the image
+      
+      if (totalPages <= maxVisible) {
+        for (let i = 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        if (currentPage <= 2) {
+          for (let i = 1; i <= Math.min(maxVisible, totalPages); i++) {
+            pages.push(i);
+          }
+        } else if (currentPage >= totalPages - 1) {
+          for (let i = totalPages - maxVisible + 1; i <= totalPages; i++) {
+            pages.push(i);
+          }
+        } else {
+          pages.push(currentPage - 1);
+          pages.push(currentPage);
+          pages.push(currentPage + 1);
+        }
+      }
+      
+      return pages;
+    };
+
+    return (
+      <div className="flex justify-center items-center mt-6 space-x-1">
+        {/* Previous Button */}
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className={`px-4 py-2 font-medium transition-colors min-w-[80px] ${
+            currentPage === 1
+              ? 'text-gray-400 cursor-not-allowed'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          Prev
+        </button>
+
+        {/* Page Numbers */}
+        {getVisiblePages().map((page) => (
+          <button
+            key={page}
+            onClick={() => handlePageChange(page)}
+            className={`w-10 h-10 rounded-full font-medium transition-colors ${
+              currentPage === page
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+
+        {/* Next Button */}
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className={`px-4 py-2 font-medium transition-colors min-w-[80px] ${
+            currentPage === totalPages
+              ? 'text-gray-400 cursor-not-allowed'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          Next
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -218,13 +316,20 @@ const LongList = () => {
             </div>
           )}
 
+          {/* Pagination Info */}
+          {filteredVacancies.length > 0 && (
+            <div className="mb-4 text-sm text-gray-600">
+              Showing {startIndex + 1} to {Math.min(endIndex, filteredVacancies.length)} of {filteredVacancies.length} entries
+            </div>
+          )}
+
           {isMobileView ? (
             <div className="space-y-4">
-              {filteredVacancies.length > 0 ? (
-                filteredVacancies.map((vacancy, index) => (
+              {currentVacancies.length > 0 ? (
+                currentVacancies.map((vacancy, index) => (
                   <div key={vacancy.id} className="bg-white shadow-md border border-gray-300 rounded-lg p-4">
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-sm font-medium text-gray-700">#{index + 1}</span>
+                      <span className="text-sm font-medium text-gray-700">#{startIndex + index + 1}</span>
                       <button 
                         className="p-2 bg-red-100 text-red-600 rounded-full"
                         onClick={() => handleDelete(vacancy.id)}
@@ -242,7 +347,6 @@ const LongList = () => {
                       >
                         View Long-List
                       </button>
-                      {/* FIXED: Corrected the URL path and spelling */}
                       <Link to={`/manager/LongListInterviewScheduler?vacancy=${encodeURIComponent(vacancy.title)}`} className="block">
                         <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-full shadow-md w-full">
                           Schedule Long-List Interviews
@@ -268,10 +372,10 @@ const LongList = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredVacancies.length > 0 ? (
-                    filteredVacancies.map((vacancy, index) => (
+                  {currentVacancies.length > 0 ? (
+                    currentVacancies.map((vacancy, index) => (
                       <tr key={vacancy.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{index + 1}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{startIndex + index + 1}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{vacancy.title}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button
@@ -282,8 +386,7 @@ const LongList = () => {
                           </button>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          {/* FIXED: Corrected the URL path and spelling */}
-                          <Link to={`/manager/LongListInterviewSheduler?vacancy=${encodeURIComponent(vacancy.title)}`}>
+                          <Link to={`/manager/LongListInterviewScheduler?vacancy=${encodeURIComponent(vacancy.title)}`}>
                             <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-full shadow-md">
                               Schedule Long-List Interviews
                             </button>
@@ -311,6 +414,9 @@ const LongList = () => {
               </table>
             </div>
           )}
+
+          {/* Pagination Controls */}
+          <PaginationControls />
         </div>
       </main>
     </div>

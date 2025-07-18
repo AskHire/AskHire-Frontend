@@ -14,6 +14,10 @@ const View_LongList = () => {
   const [notification, setNotification] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
+  // Pagination state - 5 items per page
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+  
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -29,6 +33,28 @@ const View_LongList = () => {
       vacancy.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [vacancies, searchTerm]);
+
+  // FIXED: Calculate pagination correctly - only paginate the displayed data
+  // Remove this old calculation:
+  // const totalPages = Math.ceil(candidatesData.length / itemsPerPage);
+  // const startIndex = (currentPage - 1) * itemsPerPage;
+  // const endIndex = startIndex + itemsPerPage;
+  // const currentCandidates = candidatesData.slice(startIndex, endIndex);
+
+  // New: Calculate pagination after candidatesData is ready
+  const totalPages = Math.ceil(candidatesData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentCandidates = useMemo(() => {
+    return candidatesData.slice(startIndex, endIndex);
+  }, [candidatesData, startIndex, endIndex]);
+
+  // Handle page change
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    // Scroll to top of the table
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Helper function to create cache-busted URLs
   const createCacheBustedUrl = useCallback((baseUrl) => {
@@ -85,6 +111,11 @@ const View_LongList = () => {
     }
   }, [location.search]);
 
+  // Reset to first page when candidates data changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [candidatesData]);
+
   // Fetch vacancies using the same endpoint as LongList.js
   const fetchVacancies = useCallback(async () => {
     try {
@@ -137,7 +168,7 @@ const View_LongList = () => {
     }
   }, [createCacheBustedUrl]);
 
-  // FIXED: Improved candidate fetching with proper vacancy filtering
+  // Improved candidate fetching with proper vacancy filtering and duplicate removal
   const fetchCandidates = useCallback(async () => {
     if (!viewAll && !selectedVacancy) {
       setCandidatesData([]);
@@ -176,7 +207,7 @@ const View_LongList = () => {
         return;
       }
 
-      // FIXED: Improved filtering logic
+      // Filter candidates based on longlist status and vacancy selection
       data = data.filter(candidate => {
         // First check if candidate has longlist status
         const status = (candidate.status || candidate.Status || "").toLowerCase();
@@ -214,14 +245,16 @@ const View_LongList = () => {
         }
         return true;
       });
-      // Remove duplicates based on applicationId
+
+      // Remove duplicates based on applicationId - THIS IS THE KEY FIX
       const uniqueCandidates = new Map();
       data.forEach(candidate => {
-        if (!uniqueCandidates.has(candidate.applicationId)) {
+        if (candidate.applicationId && !uniqueCandidates.has(candidate.applicationId)) {
           uniqueCandidates.set(candidate.applicationId, candidate);
         }
       });
       const uniqueCandidatesArray = Array.from(uniqueCandidates.values());
+
       // Fetch interview data for each candidate
       const candidatesWithInterviews = await Promise.all(
         uniqueCandidatesArray.map(async (candidate) => {
@@ -231,7 +264,9 @@ const View_LongList = () => {
           return { ...candidate, interview };
         })
       );
+
       setCandidatesData(candidatesWithInterviews);
+
       // After setting candidatesWithInterviews, add a fallback redirect if no candidates and vacancy param is present
       if (!viewAll && selectedVacancy && candidatesWithInterviews.length === 0) {
         // Redirect to View All Candidates if no candidates found for the selected vacancy
@@ -332,6 +367,83 @@ const View_LongList = () => {
     }
   }, []);
 
+  // Pagination component
+  const PaginationControls = () => {
+    if (totalPages <= 1) return null;
+
+    const getVisiblePages = () => {
+      const pages = [];
+      const maxVisible = 3; // Show max 3 page numbers
+      
+      if (totalPages <= maxVisible) {
+        for (let i = 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        if (currentPage <= 2) {
+          for (let i = 1; i <= Math.min(maxVisible, totalPages); i++) {
+            pages.push(i);
+          }
+        } else if (currentPage >= totalPages - 1) {
+          for (let i = totalPages - maxVisible + 1; i <= totalPages; i++) {
+            pages.push(i);
+          }
+        } else {
+          pages.push(currentPage - 1);
+          pages.push(currentPage);
+          pages.push(currentPage + 1);
+        }
+      }
+      
+      return pages;
+    };
+
+    return (
+      <div className="flex justify-center items-center mt-6 space-x-1">
+        {/* Previous Button */}
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className={`px-4 py-2 font-medium transition-colors min-w-[80px] ${
+            currentPage === 1
+              ? 'text-gray-400 cursor-not-allowed'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          Prev
+        </button>
+
+        {/* Page Numbers */}
+        {getVisiblePages().map((page) => (
+          <button
+            key={page}
+            onClick={() => handlePageChange(page)}
+            className={`w-10 h-10 rounded-full font-medium transition-colors ${
+              currentPage === page
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+
+        {/* Next Button */}
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className={`px-4 py-2 font-medium transition-colors min-w-[80px] ${
+            currentPage === totalPages
+              ? 'text-gray-400 cursor-not-allowed'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          Next
+        </button>
+      </div>
+    );
+  };
+
   // Render methods for better organization
   const renderNotification = () => {
     if (!notification) return null;
@@ -416,9 +528,10 @@ const View_LongList = () => {
     </div>
   );
 
+  // FIXED: Render candidate row - uses correct index calculation for pagination
   const renderCandidateRow = (candidate, index) => (
     <tr key={candidate.applicationId} className="hover:bg-gray-50">
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{startIndex + index + 1}</td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="h-10 w-10 rounded-full bg-purple-200 flex items-center justify-center text-purple-800 font-medium">
           {candidate.user?.firstName?.charAt(0) || '?'}{candidate.user?.lastName?.charAt(0) || '?'}
@@ -484,90 +597,6 @@ const View_LongList = () => {
     </tr>
   );
 
-  // Add this alternative fetch strategy
-const fetchCandidatesWithFallback = useCallback(async () => {
-  if (!viewAll && !selectedVacancy) {
-    setCandidatesData([]);
-    return;
-  }
-
-  try {
-    setIsLoading(true);
-    setError(null);
-    
-    // Try the primary endpoint first
-    let data;
-    try {
-      const primaryUrl = `${API_BASE_URL}/ManagerCandidates`;
-      const response = await fetch(createCacheBustedUrl(primaryUrl), {
-        timeout: 10000, // 10 second timeout
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      data = await response.json();
-    } catch (primaryError) {
-      console.warn('Primary endpoint failed, trying alternative approaches:', primaryError);
-      
-      // Try alternative endpoint or approach
-      try {
-        // Option 1: Try with different parameters
-        const altUrl = `${API_BASE_URL}/ManagerCandidates?status=longlist`;
-        const altResponse = await fetch(createCacheBustedUrl(altUrl));
-        
-        if (altResponse.ok) {
-          data = await altResponse.json();
-        } else {
-          throw new Error('Alternative endpoint also failed');
-        }
-      } catch (altError) {
-        // Option 2: Try paginated approach
-        try {
-          const pagedUrl = `${API_BASE_URL}/ManagerCandidates?page=1&limit=50`;
-          const pagedResponse = await fetch(createCacheBustedUrl(pagedUrl));
-          
-          if (pagedResponse.ok) {
-            data = await pagedResponse.json();
-          } else {
-            throw primaryError; // Throw the original error
-          }
-        } catch (pagedError) {
-          throw primaryError; // Throw the original error
-        }
-      }
-    }
-    
-    console.log("Raw candidates data:", data);
-    
-    // Validate data structure
-    if (!Array.isArray(data)) {
-      // Handle case where data might be wrapped in an object
-      if (data && data.candidates && Array.isArray(data.candidates)) {
-        data = data.candidates;
-      } else if (data && data.data && Array.isArray(data.data)) {
-        data = data.data;
-      } else {
-        throw new Error('Expected array of candidates, got: ' + typeof data);
-      }
-    }
-    
-    // Rest of your filtering logic remains the same...
-    
-  } catch (error) {
-    console.error('All fallback attempts failed:', error);
-    handleApiError(error, 'fetch candidates');
-    setCandidatesData([]);
-  } finally {
-    setIsLoading(false);
-  }
-}, [selectedVacancy, viewAll, refreshTrigger, createCacheBustedUrl, fetchInterviewForCandidate, handleApiError]);
-
   return (
     <div className="bg-blue-50 min-h-screen">
       <ManagerTopbar />
@@ -631,6 +660,8 @@ const fetchCandidatesWithFallback = useCallback(async () => {
               </div>
             )}
           </div>
+          
+          
           
           {/* Search Input */}
           <div className="relative">
@@ -704,15 +735,19 @@ const fetchCandidatesWithFallback = useCallback(async () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {candidatesData.map((candidate, index) => 
+                      {currentCandidates.map((candidate, index) => 
                         renderCandidateRow(candidate, index)
                       )}
                     </tbody>
                   </table>
+                  {/* Pagination Controls */}
+          <PaginationControls />
                 </div>
               )}
             </>
           )}
+
+          
           
           {/* Schedule Long-List Interviews button */}
           {candidatesData.length > 0 && (
