@@ -347,7 +347,7 @@ const LongList = () => {
                       >
                         View Long-List
                       </button>
-                      <Link to={`/manager/LongListInterviewScheduler?vacancy=${encodeURIComponent(vacancy.title)}`} className="block">
+                      <Link to={`/manager/LongListInterviewSheduler?vacancy=${encodeURIComponent(vacancy.title)}`} className="block">
                         <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-full shadow-md w-full">
                           Schedule Long-List Interviews
                         </button>
@@ -386,7 +386,7 @@ const LongList = () => {
                           </button>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <Link to={`/manager/LongListInterviewScheduler?vacancy=${encodeURIComponent(vacancy.title)}`}>
+                          <Link to={`/manager/LongListInterviewSheduler?vacancy=${encodeURIComponent(vacancy.title)}`}>
                             <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-full shadow-md">
                               Schedule Long-List Interviews
                             </button>
