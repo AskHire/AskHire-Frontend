@@ -226,6 +226,11 @@ const ViewDetails = () => {
     }
   }
 
+  // Calculate marks for display
+  const cvMark = Number(candidateData.cV_Mark || candidateData.cvMark || 0);
+  const prescreenMark = Number(candidateData.pre_Screen_PassMark || candidateData.prescreenMark || candidateData.prescreenTestMark || candidateData.prescreen || 0);
+  const totalMark = (cvMark * 0.5) + (prescreenMark * 0.5);
+
   return (
     <div className="bg-gray-100 flex-auto min-h-screen">
       <ManagerTopbar />
@@ -280,14 +285,16 @@ const ViewDetails = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
               <p className="text-sm text-gray-500">CV Tally Mark</p>
-              <p className="font-bold">{candidateData.cV_Mark || 0}%</p>
+              <p className="font-bold">{cvMark}%</p>
             </div>
-
             <div>
               <p className="text-sm text-gray-500">Pre-Screen Test Mark</p>
-              <p className="font-bold">{candidateData.pre_Screen_PassMark || 0}%</p>
+              <p className="font-bold">{prescreenMark}%</p>
             </div>
-
+            <div>
+              <p className="text-sm text-gray-500">Total Marks (CV 50% + Prescreen 50%)</p>
+              <p className="font-bold">{totalMark.toFixed(2)}%</p>
+            </div>
             <div>
               <p className="text-sm text-gray-500">Application Status</p>
               <p className="font-bold">{candidateData.status || 'N/A'}</p>

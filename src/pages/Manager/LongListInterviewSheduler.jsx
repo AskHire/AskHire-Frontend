@@ -212,19 +212,24 @@ const LongListInterviewScheduler = () => {
       const candidatesArray = Array.isArray(candidates) ? candidates : [];
       
       // Normalize candidate data structure
-      const normalizedCandidates = candidatesArray.map(candidate => ({
-        applicationId: candidate.applicationId || candidate.id,
-        candidateId: candidate.candidateId || candidate.userId,
-        firstName: candidate.firstName || candidate.user?.firstName || candidate.candidate?.firstName || 'Unknown',
-        lastName: candidate.lastName || candidate.user?.lastName || candidate.candidate?.lastName || 'Name',
-        email: candidate.email || candidate.user?.email || candidate.candidate?.email || 'No email',
-        phone: candidate.phone || candidate.user?.phone || candidate.candidate?.phone || '',
-        applicationStatus: candidate.applicationStatus || candidate.status || 'Applied',
-        appliedDate: candidate.appliedDate || candidate.createdAt || new Date().toISOString()
-      }));
-      
-      console.log("Normalized candidates:", normalizedCandidates);
-      
+      const normalizedCandidates = candidatesArray.map(candidate => {
+        console.log('Candidate object:', candidate); // DEBUG: See what fields are present
+        const cvMark = Number(candidate.cvMark || candidate.cV_Mark || 0);
+        const prescreenMark = Number(
+          candidate.pre_Screen_PassMark ||
+          candidate.Pre_Screen_PassMark ||
+          candidate.preScreenPassMark ||
+          candidate.pre_screen_pass_mark ||
+          candidate.prescreenMark ||
+          candidate.prescreenTestMark ||
+          candidate.prescreen ||
+          0
+        );
+        const totalMark = (cvMark * 0.5) + (prescreenMark * 0.5);
+        return { ...candidate, totalMark, cvMark, prescreenMark };
+      });
+      // Sort by totalMark descending
+      normalizedCandidates.sort((a, b) => b.totalMark - a.totalMark);
       setUnscheduledCandidates(normalizedCandidates);
       setIsLoading(false);
       
@@ -350,174 +355,209 @@ const LongListInterviewScheduler = () => {
   };
 
   // Handle form submission with automatic scheduling - FIXED VERSION
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Clear any previous errors
+  // Handle form submission with automatic scheduling - CORRECTED VERSION
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  // Clear any previous errors
+  setError(null);
+  
+  // Enhanced validation with better error messages
+  if (!vacancyId || vacancyId.trim() === '') {
+    setError('Vacancy ID is missing. Please try refreshing the page or go back and select the vacancy again.');
+    return;
+  }
+  
+  if (!date || date.trim() === '') {
+    setError('Please select a date for the interviews');
+    return;
+  }
+  
+  if (!startTime || startTime.trim() === '') {
+    setError('Please set the start time for interviews');
+    return;
+  }
+  
+  if (!endTime || endTime.trim() === '') {
+    setError('Please set the end time for interviews');
+    return;
+  }
+  
+  if (!interviewInstructions || interviewInstructions.trim() === '') {
+    setError('Please provide interview instructions');
+    return;
+  }
+  
+  if (possibleInterviews <= 0) {
+    setError('Please set a valid time range and duration that allows for at least one interview');
+    return;
+  }
+  
+  if (selectedCandidates.length === 0) {
+    setError('Please select at least one candidate to schedule interviews. If no candidates are available, try refreshing the candidates list.');
+    return;
+  }
+
+  const selectedDateTime = new Date(`${date}T${startTime}`);
+  const now = new Date();
+  if (selectedDateTime < now) {
+    setError('Cannot schedule interviews in the past. Please select a valid date and time.');
+    return;
+  }
+  
+  try {
+    setIsSubmitting(true);
     setError(null);
     
-    // Enhanced validation with better error messages
-    if (!vacancyId || vacancyId.trim() === '') {
-      setError('Vacancy ID is missing. Please try refreshing the page or go back and select the vacancy again.');
+    console.log("Starting interview scheduling with vacancy ID:", vacancyId);
+    
+    // Generate the automatic interview schedule
+    const interviewSchedule = generateInterviewSchedule();
+    
+    if (interviewSchedule.length === 0) {
+      setError('No interviews could be scheduled with the current time constraints');
+      setIsSubmitting(false);
       return;
     }
     
-    if (!date || date.trim() === '') {
-      setError('Please select a date for the interviews');
-      return;
-    }
+    console.log("Generated interview schedule:", interviewSchedule);
     
-    if (!startTime || startTime.trim() === '') {
-      setError('Please set the start time for interviews');
-      return;
-    }
+    // Create individual interview requests - CORRECTED LOGIC
+    const scheduledInterviews = [];
+    const failedInterviews = [];
     
-    if (!endTime || endTime.trim() === '') {
-      setError('Please set the end time for interviews');
-      return;
-    }
+    console.log("Total interviews to schedule:", interviewSchedule.length);
     
-    if (!interviewInstructions || interviewInstructions.trim() === '') {
-      setError('Please provide interview instructions');
-      return;
-    }
-    
-    if (possibleInterviews <= 0) {
-      setError('Please set a valid time range and duration that allows for at least one interview');
-      return;
-    }
-    
-    if (selectedCandidates.length === 0) {
-      setError('Please select at least one candidate to schedule interviews. If no candidates are available, try refreshing the candidates list.');
-      return;
-    }
-
-    const selectedDateTime = new Date(`${date}T${startTime}`);
-    const now = new Date();
-    if (selectedDateTime < now) {
-      setError('Cannot schedule interviews in the past. Please select a valid date and time.');
-      return;
-    }
-    
-    try {
-      setIsSubmitting(true);
-      setError(null);
-      
-      console.log("Starting interview scheduling with vacancy ID:", vacancyId);
-      
-      // Generate the automatic interview schedule
-      const interviewSchedule = generateInterviewSchedule();
-      
-      if (interviewSchedule.length === 0) {
-        setError('No interviews could be scheduled with the current time constraints');
-        setIsSubmitting(false);
-        return;
-      }
-      
-      console.log("Generated interview schedule:", interviewSchedule);
-      
-      // Create individual interview requests - FIXED LOGIC
-      const scheduledInterviews = [];
-      const failedInterviews = [];
-      
-      console.log("Total interviews to schedule:", interviewSchedule.length);
-      
-      for (const interview of interviewSchedule) {
-        try {
-          const interviewData = {
-            applicationId: interview.applicationId,
-            date: interview.date,
-            time: interview.startTime,
-            duration: interviewDuration,
-            Interview_Instructions: interviewInstructions
-          };
-          
-          console.log("Creating interview for:", interview.candidateName, "Data:", interviewData);
-          
-          const response = await fetch('http://localhost:5190/api/ManagerInterview', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(interviewData)
-          });
-          
-          const responseText = await response.text();
-          console.log(`API response for ${interview.candidateName}: status=`, response.status, 'body=', responseText);
-          
-          if (response.ok) {
-            // Try to parse JSON if possible
-            let result = null;
-            try { result = JSON.parse(responseText); } catch {}
-            console.log("✅ Interview created successfully for:", interview.candidateName, result);
-            scheduledInterviews.push(interview); // SUCCESS: Add to scheduled
-          } else {
-            console.error("❌ Failed to create interview for:", interview.candidateName, "Error:", responseText);
-            failedInterviews.push(interview); // FAILURE: Add to failed
-          }
-        } catch (error) {
-          console.error("❌ Exception creating interview for:", interview.candidateName, "Error:", error);
-          failedInterviews.push(interview); // EXCEPTION: Add to failed
-        }
-      }
-
-      // Add a short delay to allow backend to update
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // After scheduling, fetch all candidates for the vacancy and count scheduled/unscheduled
-      let allCandidates = [];
+    for (const interview of interviewSchedule) {
       try {
+        const interviewData = {
+          applicationId: interview.applicationId,
+          date: interview.date,
+          time: interview.startTime,
+          duration: interviewDuration,
+          Interview_Instructions: interviewInstructions
+        };
+        
+        console.log("Creating interview for:", interview.candidateName, "Data:", interviewData);
+        
+        const response = await fetch('http://localhost:5190/api/ManagerInterview', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(interviewData)
+        });
+        
+        const responseText = await response.text();
+        console.log(`API response for ${interview.candidateName}: status=`, response.status, 'body=', responseText);
+        
+        if (response.ok) {
+          // Try to parse JSON if possible
+          let result = null;
+          try { result = JSON.parse(responseText); } catch {}
+          console.log("✅ Interview created successfully for:", interview.candidateName, result);
+          scheduledInterviews.push(interview); // SUCCESS: Add to scheduled
+        } else {
+          console.error("❌ Failed to create interview for:", interview.candidateName, "Error:", responseText);
+          failedInterviews.push(interview); // FAILURE: Add to failed
+        }
+      } catch (error) {
+        console.error("❌ Exception creating interview for:", interview.candidateName, "Error:", error);
+        failedInterviews.push(interview); // EXCEPTION: Add to failed
+      }
+    }
+
+    // Wait a bit for backend to process
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // CORRECTED: Get accurate counts by fetching fresh unscheduled candidates
+    console.log("Fetching updated unscheduled candidates to get accurate counts...");
+    
+    let remainingUnscheduledCandidates = [];
+    try {
+      // Fetch fresh unscheduled candidates from backend
+      const unscheduledResponse = await fetch(
+        `http://localhost:5190/api/ManagerLongListInterviewScheduler/unscheduled-candidates/${vacancyId}`
+      );
+      
+      if (unscheduledResponse.ok) {
+        remainingUnscheduledCandidates = await unscheduledResponse.json();
+      } else {
+        // Fallback: try to get all applications and filter
         const allApplicationsResponse = await fetch(
           `http://localhost:5190/api/ManagerLonglistVacancy/applications/${vacancyId}`
         );
+        
         if (allApplicationsResponse.ok) {
-          allCandidates = await allApplicationsResponse.json();
-        }
-      } catch (e) {
-        // fallback: leave allCandidates empty
-      }
-      let scheduledCount = 0;
-      let notScheduledCount = 0;
-      const candidateStatusLog = [];
-      for (const candidate of allCandidates) {
-        try {
-          const statusResp = await fetch(`http://localhost:5190/api/ManagerInterview/application/${candidate.applicationId}`);
-          if (statusResp.ok) {
-            const interviewData = await statusResp.json();
-            if (interviewData && interviewData.date) {
-              scheduledCount++;
-              candidateStatusLog.push({ id: candidate.applicationId, status: 'scheduled' });
-            } else {
-              notScheduledCount++;
-              candidateStatusLog.push({ id: candidate.applicationId, status: 'not scheduled' });
+          const allApplications = await allApplicationsResponse.json();
+          
+          // Filter for unscheduled candidates
+          const unscheduledPromises = allApplications.map(async (app) => {
+            try {
+              const interviewResponse = await fetch(
+                `http://localhost:5190/api/ManagerInterview/application/${app.applicationId}`
+              );
+              
+              if (interviewResponse.ok) {
+                const interviewData = await interviewResponse.json();
+                // If no interview data or no date, consider unscheduled
+                return !interviewData || !interviewData.date ? app : null;
+              } else {
+                // If API call fails, consider unscheduled
+                return app;
+              }
+            } catch (error) {
+              console.error(`Error checking interview status for application ${app.applicationId}:`, error);
+              return app; // If error, consider unscheduled
             }
-          } else {
-            notScheduledCount++;
-            candidateStatusLog.push({ id: candidate.applicationId, status: 'not scheduled' });
-          }
-        } catch (e) {
-          notScheduledCount++;
-          candidateStatusLog.push({ id: candidate.applicationId, status: 'not scheduled' });
+          });
+          
+          const unscheduledResults = await Promise.all(unscheduledPromises);
+          remainingUnscheduledCandidates = unscheduledResults.filter(app => app !== null);
         }
       }
-      console.log('Candidate interview status for this vacancy:', candidateStatusLog);
-      setScheduledResults({
-        scheduledCount,
-        notScheduledCount
-      });
-      const successMsg = `Successfully scheduled ${scheduledCount} interviews for this vacancy.${
-        notScheduledCount > 0 ? ` ${notScheduledCount} candidates are still unscheduled.` : ''
-      }${sendEmail ? ' Email invitations have been sent.' : ''}`;
-      setSuccessMessage(successMsg);
-      setShowSuccessView(true);
-      setIsSubmitting(false);
-      
     } catch (error) {
-      console.error("Error during submission:", error);
-      setError(`Error scheduling interviews: ${error.message}`);
-      setIsSubmitting(false);
+      console.error("Error fetching updated unscheduled candidates:", error);
+      // Use fallback calculation
+      remainingUnscheduledCandidates = unscheduledCandidates.filter(
+        candidate => !scheduledInterviews.some(scheduled => 
+          scheduled.applicationId === candidate.applicationId
+        )
+      );
     }
-  };
+    
+    // Calculate accurate counts
+    const actualScheduledCount = scheduledInterviews.length;
+    const actualUnscheduledCount = remainingUnscheduledCandidates.length;
+    
+    console.log("FINAL COUNTS:");
+    console.log("- Successfully scheduled:", actualScheduledCount);
+    console.log("- Remaining unscheduled:", actualUnscheduledCount);
+    console.log("- Failed to schedule:", failedInterviews.length);
+    
+    // Update state with accurate counts
+    setScheduledResults({
+      scheduledCount: actualScheduledCount,
+      notScheduledCount: actualUnscheduledCount
+    });
+    
+    // Create success message
+    const successMsg = `Successfully scheduled ${actualScheduledCount} interview${actualScheduledCount !== 1 ? 's' : ''} for this vacancy.${
+      actualUnscheduledCount > 0 ? ` ${actualUnscheduledCount} candidate${actualUnscheduledCount !== 1 ? 's are' : ' is'} still unscheduled.` : ''
+    }${failedInterviews.length > 0 ? ` ${failedInterviews.length} interview${failedInterviews.length !== 1 ? 's' : ''} failed to schedule.` : ''}${
+      sendEmail ? ' Email invitations have been sent.' : ''
+    }`;
+    
+    setSuccessMessage(successMsg);
+    setShowSuccessView(true);
+    setIsSubmitting(false);
+    
+  } catch (error) {
+    console.error("Error during submission:", error);
+    setError(`Error scheduling interviews: ${error.message}`);
+    setIsSubmitting(false);
+  }
+};
 
   // Handle cancel
   const handleCancel = () => {
@@ -565,46 +605,82 @@ const LongListInterviewScheduler = () => {
     }
   };
 
-  // Success view component
-  const SuccessView = () => {
-    console.log("SuccessView - scheduledResults:", scheduledResults);
-    console.log("SuccessView - successMessage:", successMessage);
+// Success view component - Updated to show scheduled and unscheduled quantities
+const SuccessView = () => {
+  console.log("SuccessView - scheduledResults:", scheduledResults);
+  console.log("SuccessView - successMessage:", successMessage);
 
-    return (
-      <div className="bg-white rounded-lg shadow-md p-6 text-center">
-        {/* big green check */}
-        <div className="flex justify-center mb-6">
-          <div className="bg-green-100 rounded-full p-3">
-            <svg className="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-            </svg>
+  return (
+    <div className="bg-white rounded-lg shadow-md p-6 text-center">
+      {/* Big green check */}
+      <div className="flex justify-center mb-6">
+        <div className="bg-green-100 rounded-full p-3">
+          <svg className="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      </div>
+
+      <h3 className="text-2xl font-bold text-gray-800 mb-4">
+        Interviews Scheduled Successfully!
+      </h3>
+
+      {/* Success Statistics */}
+      <div className="mb-6">
+        <div className="flex justify-center space-x-6 mb-4">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 min-w-32">
+            <div className="text-3xl font-bold text-green-600">
+              {scheduledResults.scheduledCount}
+            </div>
+            <div className="text-sm text-green-700 font-medium">
+              Interviews Scheduled
+            </div>
+          </div>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 min-w-32">
+            <div className="text-3xl font-bold text-blue-600">
+              {scheduledResults.notScheduledCount}
+            </div>
+            <div className="text-sm text-blue-700 font-medium">
+              Still Unscheduled
+            </div>
           </div>
         </div>
 
-        <h3 className="text-2xl font-bold text-gray-800 mb-4">
-          Interviews Scheduled Successfully!
-        </h3>
+        {/* Success message */}
+        <p className="text-gray-600 mb-4">
+          {successMessage}
+        </p>
 
-        
-
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <button
-            onClick={handleScheduleMore}
-            className="px-6 py-3 bg-white border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors"
-          >
-            Schedule More Interviews
-          </button>
-
-          <button
-            onClick={handleReturnToListing}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          >
-            Return to Long List
-          </button>
-        </div>
+        {/* Additional context if there are unscheduled candidates */}
+        {scheduledResults.notScheduledCount > 0 && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+            <p className="text-sm text-yellow-800">
+              <strong>Note:</strong> {scheduledResults.notScheduledCount} candidate(s) could not be scheduled due to time constraints. 
+              You can schedule more interviews for them by clicking "Schedule More Interviews" below.
+            </p>
+          </div>
+        )}
       </div>
-    );
-  };
+
+      <div className="flex flex-col sm:flex-row justify-center gap-4">
+        <button
+          onClick={handleScheduleMore}
+          className="px-6 py-3 bg-white border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors"
+        >
+          Schedule More Interviews
+        </button>
+
+        <button
+          onClick={handleReturnToListing}
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+        >
+          Return to Long List
+        </button>
+      </div>
+    </div>
+  );
+};
 
   return (
     <div className="bg-blue-50 flex-auto min-h-screen">
@@ -683,7 +759,9 @@ const LongListInterviewScheduler = () => {
                       {unscheduledCandidates.map(candidate => (
                         <li key={candidate.applicationId} className="flex justify-between">
                           <span className="font-medium">{candidate.firstName} {candidate.lastName}</span>
-                          <span className="text-gray-500">{candidate.email}</span>
+                          <span className="ml-2 text-purple-700">CV: {candidate.cvMark || candidate.cV_Mark || 0}%</span>
+                          <span className="ml-2 text-yellow-700">Prescreen: {candidate.prescreenMark}%</span>
+                          <span className="ml-2 text-blue-700 font-bold">Total: {candidate.totalMark ? candidate.totalMark.toFixed(2) : 'N/A'}%</span>
                         </li>
                       ))}
                     </ul>
