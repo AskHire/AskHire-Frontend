@@ -53,6 +53,10 @@ import Interview from "../pages/Candidate/Interview";
 import CVUpload from "../pages/Candidate/CVUpload";
 import CongratulationsCard2 from "../components/CandidateComponants/CongratulationCard2";
 
+import LongListInterviewScheduler from "../pages/Manager/LongListInterviewSheduler";
+import SupportHelpPage from "../pages/Common/SupportHelpPage";
+
+
 const router = createBrowserRouter([
   // Public Routes
   {
@@ -81,20 +85,68 @@ const router = createBrowserRouter([
       </AuthProvider>
     ),
     children: [
-      { path: "", element: <ManagerDashboard /> },
-      { path: "dashboard", element: <ManagerDashboard /> },
-      { path: "CreateQuestions", element: <CreateQuestions /> },
-      { path: "ManageQuestions", element: <ManageQuestions /> },
-      { path: "SetupVacancy", element: <SetupVacancy /> },
-      { path: "ManageVacancy", element: <ManageVacancy /> },
-      { path: "LongList", element: <LongList /> },
-      { path: "View_LongList", element: <View_LongList /> },
-      { path: "ViewDetails/:id", element: <ViewDetails /> },
-      { path: "NotifyCandidates", element: <NotifyCandidates /> },
-      { path: "LongListInterviewSheduler", element: <LongListInterviewScheduler /> },
-      { path: "InterviewScheduler/:applicationId", element: <InterviewScheduler /> },
-      { path: "AutomatedInterviews", element: <AutomatedInterviews /> },
-      { path: "ManualInterviews", element: <ManualInterviews /> },
+
+      {
+        path: "",
+        element: <ManagerDashboard />,
+      },
+      {
+        path: "dashboard",
+        element: <ManagerDashboard />,
+      },
+      {
+        path: "CreateQuestions",
+        element: <CreateQuestions />,
+      },
+      {
+        path: "ManageQuestions",
+        element: <ManageQuestions />,
+      },
+      {
+        path: "SetupVacancy",
+        element: <SetupVacancy />,
+      },
+      {
+        path: "ManageVacancy",
+        element: <ManageVacancy />,
+      },
+      {
+        path: "LongList",
+        element: <LongList />,
+      },
+      {
+        path: "View_LongList",
+        element: <View_LongList />,
+      },
+      {
+        path: "ViewDetails/:id",
+        element: <ViewDetails />,
+      },
+      {
+        path: "NotifyCandidates",
+        element: <NotifyCandidates />,
+      },
+      {
+        path: "LongListInterviewSheduler",
+        element: <LongListInterviewScheduler />,
+      },
+      {
+        path: "InterviewScheduler/:applicationId",
+        element: <InterviewScheduler />,
+      },
+      {
+        path: "AutomatedInterviews",
+        element: <AutomatedInterviews />,
+      },
+      {
+        path: "ManualInterviews",
+        element: <ManualInterviews />,
+      },
+      {
+        path: "Support",
+        element: <SupportHelpPage/>
+      },
+
     ],
   },
 
@@ -109,15 +161,45 @@ const router = createBrowserRouter([
       </AuthProvider>
     ),
     children: [
-      { path: "", element: <AdminDashboard /> },
-      { path: "dashboard", element: <AdminDashboard /> },
-      { path: "CreateJobs", element: <CreateJobs /> },
-      { path: "ManageUserRoles", element: <UserRoles /> },
-      { path: "ManageAdmin", element: <ManageAdmin /> },
-      { path: "ManageManager", element: <ManageManager /> },
-      { path: "ManageCandidate", element: <ManageCandidate /> },
-      { path: "SystemNotification", element: <SystemNotification /> },
-    ],
+
+      {
+        path: "",
+        element: <AdminDashboard />
+      },
+      {
+        path: "dashboard",
+        element: <AdminDashboard />
+      },
+      {
+        path: "CreateJobs",
+        element: <CreateJobs />
+      },
+      {
+        path: "ManageUserRoles",
+        element: <UserRoles />
+      },
+      {
+        path: "ManageAdmin",
+        element: <ManageAdmin />
+      },
+      {
+        path: "ManageManager",
+        element: <ManageManager />
+      },
+      {
+        path: "ManageCandidate",
+        element: <ManageCandidate />
+      },
+      {
+        path: "SystemNotification",
+        element: <SystemNotification />
+      },
+      {
+        path: "Support",
+        element: <SupportHelpPage/>
+      }
+    ]
+
   },
 
   // Candidate Routes

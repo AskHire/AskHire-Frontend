@@ -38,11 +38,11 @@ const Prescreen = () => {
         You'll have <strong>{testInfo?.duration ?? '...'} minutes</strong> to complete <strong>{testInfo?.questionCount ?? '...'} questions</strong>.
       </p>
       <div className="flex justify-center space-x-4 mb-8">
-        <div className="bg-blue-50 p-4 rounded-lg flex items-center">
+        <div className="bg-blue-100 p-4 rounded-lg flex items-center">
           <FaClock className="mr-2 text-blue-600" />
           <span>Time Limit: {testInfo?.duration ?? '...'} minutes</span>
         </div>
-        <div className="bg-green-50 p-4 rounded-lg flex items-center">
+        <div className="bg-green-100 p-4 rounded-lg flex items-center">
           <FaQuestionCircle className="mr-2 text-green-600" />
           <span>Number of Questions: {testInfo?.questionCount ?? '...'} Questions</span>
         </div>
@@ -54,12 +54,12 @@ const Prescreen = () => {
         >
           <FaPlay className="mr-2" /> Start Text Assessment
         </button>
-        <button
+        {/* <button
           onClick={() => navigate(`/candidate/VoiceAssessment/${applicationId}`)}
           className="bg-green-600 text-white px-6 py-3 rounded-lg flex items-center"
         >
           <FaMicrophone className="mr-2" /> Start Voice Assessment
-        </button>
+        </button> */}
       </div>
     </div>
   );
