@@ -9,7 +9,7 @@ export default function UserRoleBadge({ role, onClick }) {
 
   return (
     <button
-      className={`text-sm px-5 py-1 rounded-full text-white ${color}`}
+      className={`text-sm px-5 py-1 rounded-full text-white ${color} w-24`}
       onClick={onClick}
     >
       {role}

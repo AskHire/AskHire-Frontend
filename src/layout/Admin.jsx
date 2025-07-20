@@ -2,6 +2,7 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 import Footer from "../components/Footer";
 import AdminSidebar from "../components/Admin/AdminSidebar";
+import AdminHeader from "../components/Admin/AdminHeader";
 
 
 const Admin = () => {
@@ -14,9 +15,13 @@ const Admin = () => {
         {/* Sidebar will be rendered by the customized SidebarManager */}
         <AdminSidebar/>
         
-        {/* Main Content - taking remaining space */}
-        <div className="flex-1 overflow-auto">
-          <Outlet />
+        {/* Main Content with Header */}
+        <div className="flex-1 overflow-auto ">
+          {/* Move AdminHeader here */}
+          <AdminHeader />
+          <div className="p-4 md:p-6">
+            <Outlet />
+          </div>
         </div>
       </div>
       

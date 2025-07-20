@@ -6,33 +6,43 @@ import { useAuth } from '../../context/AuthContext';
 const JobShow = () => {
     const { id } = useParams(); // This is the vacancyId
     const navigate = useNavigate();
-    const { currentUser } = useAuth(); // Get the current user from AuthContext
+    const { currentUser, loading: authLoading } = useAuth(); // Get the current user and auth loading state
 
     const [jobData, setJobData] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loadingJob, setLoadingJob] = useState(true); // Separate loading for job details
     const [error, setError] = useState(null);
     const [applicationStatus, setApplicationStatus] = useState('pending'); // 'pending', 'can_apply', 'applied', 'not_found'
 
     useEffect(() => {
-        if (!id || !currentUser) {
-            if (!currentUser) {
-                setLoading(true);
-            }
+        if (!id) {
+            setLoadingJob(false); // No ID, nothing to load
             return;
         }
 
         const fetchJobDetails = async () => {
             try {
-                setLoading(true);
-                const response = await fetch(`http://localhost:5190/api/CandidateVacancy/${id}?userId=${currentUser.id}`);
+                setLoadingJob(true);
+                setError(null); // Clear previous errors
+
+                // Construct URL based on whether a user is logged in
+                const url = currentUser
+                    ? `http://localhost:5190/api/CandidateVacancy/${id}?userId=${currentUser.id}`
+                    : `http://localhost:5190/api/CandidateVacancy/${id}`; // For unauthenticated users, userId is optional
+
+                const response = await fetch(url);
 
                 if (response.ok) {
                     const data = await response.json();
                     setJobData(data);
-                    setApplicationStatus('can_apply');
-                } else if (response.status === 409) { // Status 409: User has already applied
+                    // Determine application status only if a user is authenticated
+                    if (currentUser) {
+                        setApplicationStatus('can_apply'); // Default for authenticated, not yet applied
+                    } else {
+                        setApplicationStatus('pending'); // For unauthenticated, we can't tell if they applied
+                    }
+                } else if (response.status === 409 && currentUser) { // Status 409 for already applied, only if authenticated
                     const errorData = await response.json();
-                    setError(errorData.message); // Set the error message from backend
+                    setError(errorData.message);
                     setApplicationStatus('applied');
                 } else if (response.status === 404) {
                     setError("The job you are looking for does not exist or has expired.");
@@ -43,13 +53,14 @@ const JobShow = () => {
             } catch (error) {
                 console.error("Failed to fetch job data:", error);
                 setError(error.message);
+                setApplicationStatus('pending'); // Reset status on error
             } finally {
-                setLoading(false);
+                setLoadingJob(false);
             }
         };
 
         fetchJobDetails();
-    }, [id, currentUser]);
+    }, [id, currentUser]); // Re-run effect if ID or currentUser changes
 
     const calculateDaysRemaining = (endDate) => {
         if (!endDate) return null;
@@ -62,12 +73,17 @@ const JobShow = () => {
 
     const goBack = () => navigate(-1);
 
-    // NEW: Function to navigate to the candidate's dashboard
     const handleGoToDashboard = () => {
-        navigate('/candidate'); // Adjust this path if your dashboard route is different
+        navigate('/candidate');
     };
 
     const handleApply = () => {
+        if (!currentUser) {
+            // Unauthenticated user clicked apply, redirect to login with a message
+            navigate('/login', { state: { message: 'Please log in to apply for this job.' } });
+            return;
+        }
+
         if (id) {
             navigate(`/candidate/CVupload/${id}`);
         } else {
@@ -75,11 +91,14 @@ const JobShow = () => {
         }
     };
 
-    if (loading) return <div className="p-6 text-center">Loading...</div>;
+    // Show loading spinner if either auth is loading or job data is loading
+    if (authLoading || loadingJob) {
+        return <div className="p-6 text-center">Loading...</div>;
+    }
 
-    // MODIFIED: This block now handles the 'Already Applied' case specifically
+    // If there's an error and no job data (e.g., 404 or general fetch error)
     if (error && !jobData) {
-        // If user has already applied, show a special message and dashboard button
+        // Special message for "Already Applied" if authenticated
         if (applicationStatus === 'applied') {
             return (
                 <div className="max-w-5xl mx-auto p-6 text-center">
@@ -113,10 +132,14 @@ const JobShow = () => {
             </div>
         );
     }
-    
-    if (!jobData) return null; // Safeguard
+
+    if (!jobData) return null; // Safeguard if jobData is still null after loading
 
     const daysRemaining = calculateDaysRemaining(jobData.endDate);
+
+    // Button state depends on authentication and application status
+    const isApplyButtonDisabled = currentUser && applicationStatus === 'applied';
+    const applyButtonText = currentUser && applicationStatus === 'applied' ? 'Already Applied' : 'Apply Now';
 
     return (
         <div className="max-w-5xl mx-auto p-6">
@@ -129,7 +152,9 @@ const JobShow = () => {
                 <div className="flex justify-between items-start mb-4">
                     <h1 className="text-2xl font-bold">{jobData.vacancyName}</h1>
                     {daysRemaining !== null && (
-                        <div className="text-red-500 font-medium">End in {daysRemaining} days</div>
+                        <div className="text-red-500 font-medium">
+                            {daysRemaining > 0 ? `Ends in ${daysRemaining} days` : 'Expired'}
+                        </div>
                     )}
                 </div>
 
@@ -159,14 +184,14 @@ const JobShow = () => {
 
                 <button
                     onClick={handleApply}
-                    disabled={applicationStatus === 'applied'}
+                    disabled={isApplyButtonDisabled}
                     className={`mt-auto text-white py-2 rounded-md text-center w-full ${
-                        applicationStatus === 'applied'
+                        isApplyButtonDisabled
                             ? 'bg-gray-400 cursor-not-allowed'
                             : 'bg-blue-500 hover:bg-blue-600'
                     }`}
                 >
-                    {applicationStatus === 'applied' ? 'Already Applied' : 'Apply Now'}
+                    {applyButtonText}
                 </button>
             </div>
         </div>

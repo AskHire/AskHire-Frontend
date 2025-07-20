@@ -5,20 +5,42 @@ import { useAuth } from '../../context/AuthContext';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [statusMessage, setStatusMessage] = useState('');
+  const [error, setError] = useState(''); // Local error state for form
+  const [statusMessage, setStatusMessage] = useState(''); // For messages like "Registration successful"
   const [isLoading, setIsLoading] = useState(false);
-  const { login, loading: authLoading } = useAuth();
+  const { login, loading: authLoading } = useAuth(); // AuthContext's login function and loading state
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Effect to display messages from navigation state (e.g., after successful registration)
   useEffect(() => {
     if (location.state?.message) {
       setStatusMessage(location.state.message);
+      // Clear the message from history state to prevent it from reappearing on back/forward
       window.history.replaceState({}, document.title);
     }
   }, [location]);
 
+  // Client-side validation for login inputs
+  const validateLoginInputs = () => {
+    if (!email) {
+      setError('Email is required.');
+      return false;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setError('Please enter a valid email address.');
+      return false;
+    }
+    if (!password) {
+      setError('Password is required.');
+      return false;
+    }
+    // Clear error if all client-side validations pass
+    setError('');
+    return true;
+  };
+
+  // Helper to determine default redirect path based on user role
   const getDefaultPath = (role) => {
     switch (role) {
       case 'Admin':
@@ -28,30 +50,42 @@ const Login = () => {
       case 'Candidate':
         return '/candidate';
       default:
-        return '/unauthorized';
+        return '/unauthorized'; // Fallback for undefined roles
     }
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setStatusMessage('');
-    setIsLoading(true);
+    setError(''); // Clear any existing errors at the start of submission
+    setStatusMessage(''); // Clear any status messages
+
+    // Run client-side validation first
+    if (!validateLoginInputs()) {
+      return; // Stop if client-side validation fails (error message is already set)
+    }
+
+    setIsLoading(true); // Indicate loading state
 
     try {
+      // Call the login function from AuthContext
       const user = await login(email, password);
       console.log('Login successful for user:', user?.email);
       
+      // Redirect based on user role or previous location
       const defaultPath = getDefaultPath(user.role);
       const redirectPath = location.state?.from?.pathname || defaultPath;
       navigate(redirectPath);
     } catch (err) {
+      // Catch errors from authService (including backend validation errors)
+      // The err.message is already formatted by authService.js's handleError function
       setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // End loading state
     }
   };
 
+  // Handler for the home button
   const handleHomeClick = () => {
     navigate('/');
   };

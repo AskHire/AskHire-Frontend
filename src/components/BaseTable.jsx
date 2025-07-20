@@ -3,13 +3,17 @@ import { useState, useMemo } from 'react';
 export default function BaseTable({
   title,
   headers,
-  rows,
+  rows = [],           // default to empty array to avoid undefined errors
   renderRow,
   searchKey = '',
   sortOptions = [],
+  onEdit,
+  onDelete,
+  currentPage,
+  itemsPerPage,
 }) {
   const [search, setSearch] = useState('');
-  const [sortOrder, setSortOrder] = useState(''); 
+  const [sortOrder, setSortOrder] = useState('');
 
   const sortKeyExists = (val) => {
     if (!val.includes(':')) return false;
@@ -20,21 +24,18 @@ export default function BaseTable({
   const filteredRows = useMemo(() => {
     let result = [...rows];
 
-    // 🔍 Filter by search
     if (search && searchKey) {
       result = result.filter((row) =>
         row[searchKey]?.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    // ⬇️ Sort if selected
     if (sortOrder && sortKeyExists(sortOrder)) {
       const [key, direction] = sortOrder.split(':');
       result.sort((a, b) => {
         const valA = a[key];
         const valB = b[key];
 
-        // Handle dates or strings
         if (!isNaN(new Date(valA)) && !isNaN(new Date(valB))) {
           return direction === 'desc'
             ? new Date(valB) - new Date(valA)
@@ -51,44 +52,17 @@ export default function BaseTable({
   }, [rows, search, sortOrder, searchKey]);
 
   return (
-    <div className="p-6 bg-white shadow-md rounded-xl">
+    <div className="p-4 overflow-x-auto bg-white shadow-md rounded-xl">
       {/* Title and Controls */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
-        <div className="flex items-center space-x-2">
-          {/* Search Input */}
-          {searchKey && (
-            <input
-              type="text"
-              placeholder=" Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="px-4 py-2 text-sm bg-gray-100 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200"
-            />
-          )}
+      <div className="flex flex-col items-start gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-xl font-bold text-gray-800 sm:text-2xl">{title}</h2>
 
-          {/* Sort Dropdown */}
-          {sortOptions.length > 0 && (
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-              className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md"
-            >
-              <option value="" disabled>
-                Sort by
-              </option>
-              {sortOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          )}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         </div>
       </div>
 
       {/* Table Header */}
-      <div className="grid grid-cols-12 px-4 py-3 text-sm font-semibold text-gray-600 border-b bg-gray-50 rounded-t-md">
+      <div className="min-w-[768px] grid grid-cols-12 px-4 py-3 text-sm font-semibold text-gray-600 bg-gray-50 border-b rounded-t-md">
         {headers.map((header, idx) => (
           <span
             key={idx}
@@ -100,11 +74,11 @@ export default function BaseTable({
       </div>
 
       {/* Table Rows */}
-      <div className="divide-y">
+      <div className="min-w-[768px] divide-y">
         {filteredRows.length > 0 ? (
           filteredRows.map((row, idx) => (
             <div
-              key={idx}
+              key={row.jobId || idx}
               className="grid grid-cols-12 px-4 py-3 text-sm transition bg-white hover:bg-gray-50"
             >
               {renderRow(row, idx)}
