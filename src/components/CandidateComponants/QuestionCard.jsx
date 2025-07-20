@@ -17,9 +17,7 @@ const QuestionCard = ({ question, onSelectAnswer }) => {
           >
             <div className="flex justify-between items-center">
               <span>{option.text}</span>
-              {question.selectedAnswer === option.id && (
-                <FiCheckCircle className="text-green-600" />
-              )}
+              {question.selectedAnswer === option.id}
             </div>
           </button>
         ))}

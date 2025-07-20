@@ -41,6 +41,7 @@ import PrivateRoute from "../context/PrivateRoute";
 import Unauthorized from "../pages/Common/Unauthorized";
 import CongratulationsCard2 from "../components/CandidateComponants/CongratulationCard2";
 import LongListInterviewScheduler from "../pages/Manager/LongListInterviewSheduler";
+import SupportHelpPage from "../pages/Common/SupportHelpPage";
 
 
 
@@ -135,6 +136,10 @@ const router = createBrowserRouter([
         path: "ManualInterviews",
         element: <ManualInterviews />,
       },
+      {
+        path: "Support",
+        element: <SupportHelpPage/>
+      },
     ],
   },
   {
@@ -177,6 +182,10 @@ const router = createBrowserRouter([
       {
         path: "SystemNotification",
         element: <SystemNotification />
+      },
+      {
+        path: "Support",
+        element: <SupportHelpPage/>
       }
     ]
   },
