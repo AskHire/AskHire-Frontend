@@ -53,7 +53,6 @@ import Interview from "../pages/Candidate/Interview";
 import CVUpload from "../pages/Candidate/CVUpload";
 import CongratulationsCard2 from "../components/CandidateComponants/CongratulationCard2";
 
-import LongListInterviewScheduler from "../pages/Manager/LongListInterviewSheduler";
 import SupportHelpPage from "../pages/Common/SupportHelpPage";
 
 
