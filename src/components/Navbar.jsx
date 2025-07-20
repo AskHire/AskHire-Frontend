@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
 import ProfileModal from './ProfileModal';
-
+import CandidateNotification from '../components/CandidateComponants/CandidateNotification';
 
 const Navbar = () => {
   const { currentUser, logout, isAuthenticated } = useAuth();

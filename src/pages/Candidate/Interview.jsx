@@ -124,10 +124,6 @@ const Interview = () => {
               {interview.interviewTime || 'Time not specified'}
             </div>
           </div>
-
-          <button className="w-full bg-blue-600 text-white py-2 rounded-md font-medium hover:bg-blue-700 transition-colors">
-            Join Meeting
-          </button>
         </div>
       ))}
     </div>
