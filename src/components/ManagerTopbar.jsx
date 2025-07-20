@@ -1,27 +1,79 @@
-import { AiOutlineSearch, AiOutlineBell, AiOutlineUser } from 'react-icons/ai';
+import React, { useState, useEffect } from "react";
+import { AiOutlineSearch, AiOutlineBell } from "react-icons/ai";
+import { FaBars } from "react-icons/fa"; // Import FaBars for the toggle button
+import axios from "axios";
+import ProfileModal from "../components/ProfileModal"; // Assuming ProfileModal is in the same relative path
 
 const ManagerTopbar = () => {
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [userFirstLetter, setUserFirstLetter] = useState("U"); // Default to U if firstName missing
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:5190/api/profile", { withCredentials: true })
+      .then((res) => {
+        setProfilePicture(res.data.profilePictureUrl);
+        setUserFirstLetter(res.data.firstName?.charAt(0).toUpperCase() || "U");
+      })
+      .catch((err) => console.error("Failed to fetch profile", err));
+  }, []);
+
+  const handleAvatarChange = (newAvatarUrl) => {
+    setProfilePicture(newAvatarUrl);
+  };
+
   return (
-    <div>
-      {/* Logo and topbar container */}
-      <div className="flex items-center">
-        
-        {/* Search and icons section - right side */}
-        <div className="flex items-center justify-end flex-1 h-16 px-4">
-          
-          {/* Notification and profile icons */}
-          <div className="flex items-center">
-            <button className="p-2 text-gray-700 hover:text-gray-900">
-              <AiOutlineBell size={22} />
-            </button>
-            <button className="p-2 ml-2 text-gray-700 hover:text-gray-900">
-              <div className="flex items-center justify-center w-8 h-8 bg-white border border-gray-200 rounded-full">
-                <AiOutlineUser size={20} className="text-gray-600" />
-              </div>
-            </button>
-          </div>
+    <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-3">
+      {/* Left section: toggle + search bar */}
+      <div className="flex items-center flex-1 min-w-[200px] gap-2">
+        <button className="p-2 bg-white rounded shadow-md sm:hidden">
+          <FaBars />
+        </button>
+
+        <div className="relative w-full sm:max-w-md md:max-w-lg">
+          <input
+            type="text"
+            placeholder="Search jobs"
+            className="w-full p-2 pl-10 border border-gray-300 shadow-md rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <AiOutlineSearch className="absolute text-gray-600 transform -translate-y-1/2 left-3 top-1/2" />
         </div>
       </div>
+
+      {/* Right section: icons */}
+      <div className="flex items-center space-x-4 sm:space-x-6">
+        <AiOutlineBell
+          className="text-2xl text-gray-700 cursor-pointer hover:text-gray-900"
+          title="Notifications"
+        />
+
+        <button
+          onClick={() => setShowProfileModal(true)}
+          title="Profile"
+          className="focus:outline-none"
+        >
+          {profilePicture ? (
+            <img
+              src={`http://localhost:5190${profilePicture}`}
+              alt="Avatar"
+              className="object-cover w-8 h-8 border border-gray-300 rounded-full hover:border-blue-400"
+            />
+          ) : (
+            <div className="flex items-center justify-center w-8 h-8 font-semibold text-white uppercase bg-blue-500 rounded-full">
+              {userFirstLetter}
+            </div>
+          )}
+        </button>
+      </div>
+
+      {/* Profile Modal */}
+      {showProfileModal && (
+        <ProfileModal
+          onClose={() => setShowProfileModal(false)}
+          onAvatarChange={handleAvatarChange}
+        />
+      )}
     </div>
   );
 };

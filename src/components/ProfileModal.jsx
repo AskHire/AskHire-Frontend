@@ -65,7 +65,7 @@ export default function ProfileModal({ onClose, onAvatarChange }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="relative w-[90%] max-w-md max-h-screen overflow-y-auto p-6 bg-white shadow-lg rounded-xl">
+      <div className="relative w-[90%] max-w-md max-h-[80vh] overflow-y-auto p-6 bg-white shadow-lg rounded-xl">
         <button
           onClick={onClose}
           className="absolute text-2xl text-gray-500 top-2 right-4 hover:text-gray-700">
