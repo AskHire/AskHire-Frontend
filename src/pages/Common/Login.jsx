@@ -19,7 +19,15 @@ const Login = () => {
       // Clear the message from history state to prevent it from reappearing on back/forward
       window.history.replaceState({}, document.title);
     }
+    // Also clear any previous login errors when the component mounts or location changes
+    setError('');
   }, [location]);
+
+  // Clear local error when email or password inputs change
+  useEffect(() => {
+    setError('');
+  }, [email, password]);
+
 
   // Client-side validation for login inputs
   const validateLoginInputs = () => {
@@ -71,7 +79,7 @@ const Login = () => {
       // Call the login function from AuthContext
       const user = await login(email, password);
       console.log('Login successful for user:', user?.email);
-      
+
       // Redirect based on user role or previous location
       const defaultPath = getDefaultPath(user.role);
       const redirectPath = location.state?.from?.pathname || defaultPath;
@@ -79,7 +87,12 @@ const Login = () => {
     } catch (err) {
       // Catch errors from authService (including backend validation errors)
       // The err.message is already formatted by authService.js's handleError function
-      setError(err.message || 'Login failed. Please check your credentials.');
+      // Check for the specific "Email not confirmed" message
+      if (err.message && err.message.includes("Email not confirmed")) {
+        setError(err.message + " Please check your inbox for the verification link.");
+      } else {
+        setError(err.message || 'Login failed. Please check your credentials.');
+      }
     } finally {
       setIsLoading(false); // End loading state
     }
@@ -98,17 +111,17 @@ const Login = () => {
         className="absolute top-0 right-0 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 p-2 transition-all duration-200 shadow-sm hover:shadow-md z-10"
         title="Go to Home"
       >
-        <svg 
-          className="w-5 h-5" 
-          fill="none" 
-          stroke="currentColor" 
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d="M6 18L18 6M6 6l12 12" 
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
           />
         </svg>
       </button>
@@ -118,13 +131,13 @@ const Login = () => {
         <div className="w-full h-full bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 relative">
           {/* Curved shape */}
           <div className="absolute top-0 right-0 w-full h-full">
-            <svg 
-              viewBox="0 0 100 100" 
+            <svg
+              viewBox="0 0 100 100"
               className="w-full h-full"
               preserveAspectRatio="none"
             >
-              <path 
-                d="M0,0 L60,0 Q80,20 85,50 Q80,80 60,100 L0,100 Z" 
+              <path
+                d="M0,0 L60,0 Q80,20 85,50 Q80,80 60,100 L0,100 Z"
                 fill="url(#gradient)"
               />
               <defs>
@@ -136,14 +149,14 @@ const Login = () => {
               </defs>
             </svg>
           </div>
-          
+
           {/* Decorative circles */}
           <div className="absolute top-20 left-10 w-32 h-32 rounded-full bg-white bg-opacity-10"></div>
           <div className="absolute bottom-32 left-20 w-24 h-24 rounded-full bg-white bg-opacity-5"></div>
           <div className="absolute top-1/2 left-1/4 w-16 h-16 rounded-full bg-white bg-opacity-10"></div>
         </div>
       </div>
-      
+
       {/* Right Side - Login Form */}
       <div className="w-full md:w-3/5 flex items-center justify-center px-8">
         <div className="w-full max-w-md mx-auto">
@@ -151,24 +164,24 @@ const Login = () => {
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Log in</h1>
             <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-              Welcome Back 
+              Welcome Back
               <span className="text-2xl">👋</span>
             </h2>
           </div>
-          
+
           {/* Status and Error Messages */}
           {statusMessage && (
             <div className="mb-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg relative" role="alert">
               <span className="block sm:inline">{statusMessage}</span>
             </div>
           )}
-          
+
           {error && (
             <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
               <span className="block sm:inline">{error}</span>
             </div>
           )}
-          
+
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
@@ -187,7 +200,7 @@ const Login = () => {
                 required
               />
             </div>
-            
+
             {/* Password Field */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
@@ -204,12 +217,13 @@ const Login = () => {
                 required
               />
               <div className="text-right mt-2">
-                <a href="#" className="text-sm text-blue-600 hover:text-blue-700">
+                {/* Link to Forgot Password page */}
+                <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700">
                   Forgot Password?
-                </a>
+                </Link>
               </div>
             </div>
-            
+
             {/* Login Button */}
             <button
               type="submit"
@@ -218,7 +232,7 @@ const Login = () => {
             >
               {isLoading || authLoading ? 'Signing in...' : 'Log In'}
             </button>
-            
+
             {/* Sign Up Link */}
             <div className="text-center mt-6">
               <span className="text-gray-600">Don't you have an account? </span>
