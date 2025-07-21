@@ -9,9 +9,12 @@ const JobPage = () => {
   const [error, setError] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState('');
-  // A single state to handle all filter types for simplicity
-  const [activeFilter, setActiveFilter] = useState('latest'); 
-  
+
+  // Separate states for each filter/sort category
+  const [sortOrder, setSortOrder] = useState('latest'); // 'latest', 'demanded', 'a-z', 'z-a', or '' for none
+  const [workLocationFilter, setWorkLocationFilter] = useState(''); // 'Remote', 'Physical', or '' for none
+  const [workTypeFilter, setWorkTypeFilter] = useState(''); // 'Full-Time', 'Part-Time', or '' for none
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -20,24 +23,34 @@ const JobPage = () => {
       try {
         setLoading(true);
 
-        // Use URLSearchParams to build the query string cleanly
         const params = new URLSearchParams({
           pageNumber: currentPage,
           search: searchTerm,
         });
 
-        if (activeFilter === 'demanded') {
+        // Add sorting parameters
+        if (sortOrder === 'demanded') {
           params.append('isDemanded', true);
-        } else if (activeFilter === 'latest') {
+        } else if (sortOrder === 'latest') {
           params.append('isLatest', true);
-        } else if (activeFilter === 'a-z' || activeFilter === 'z-a') {
-          params.append('sortOrder', activeFilter);
+        } else if (sortOrder === 'a-z' || sortOrder === 'z-a') {
+          params.append('sortOrder', sortOrder);
         }
-        
+
+        // Add work location filter
+        if (workLocationFilter !== '') {
+          params.append('workLocation', workLocationFilter);
+        }
+
+        // Add work type filter
+        if (workTypeFilter !== '') {
+          params.append('workType', workTypeFilter);
+        }
+
         const res = await fetch(
           `http://localhost:5190/api/CandidateVacancy/JobWiseVacancies?${params.toString()}`
         );
-        
+
         if (!res.ok) throw new Error(`Status ${res.status}`);
 
         const data = await res.json();
@@ -62,12 +75,26 @@ const JobPage = () => {
       }
     };
 
+    // Include all relevant filter states in the dependency array
     fetchJobs();
-  }, [currentPage, searchTerm, activeFilter]); // 👈 Added activeFilter to dependency array
+  }, [currentPage, searchTerm, sortOrder, workLocationFilter, workTypeFilter]);
 
-  const handleFilterChange = (filter) => {
-    setActiveFilter(filter);
-    setCurrentPage(1); // Reset to the first page when filter changes
+  const handleSortChange = (newSortOrder) => {
+    // Toggle the sort order. If the same sort is clicked, unset it.
+    setSortOrder(currentSortOrder => currentSortOrder === newSortOrder ? '' : newSortOrder);
+    setCurrentPage(1); // Reset to the first page when sorting changes
+  };
+
+  const handleWorkLocationChange = (location) => {
+    // Toggle work location filter
+    setWorkLocationFilter(currentLocation => currentLocation === location ? '' : location);
+    setCurrentPage(1);
+  };
+
+  const handleWorkTypeChange = (type) => {
+    // Toggle work type filter
+    setWorkTypeFilter(currentType => currentType === type ? '' : type);
+    setCurrentPage(1);
   };
 
   const handleSearchChange = (e) => {
@@ -79,9 +106,18 @@ const JobPage = () => {
     setCurrentPage(page);
   };
 
-  // Style for the buttons to highlight the active one
-  const getButtonClass = (filter) => {
-    return activeFilter === filter
+  // Helper function to determine button class based on active filters
+  const getButtonClass = (filterCategory, filterValue) => {
+    let isActive = false;
+    if (filterCategory === 'sort') {
+      isActive = sortOrder === filterValue;
+    } else if (filterCategory === 'workLocation') {
+      isActive = workLocationFilter === filterValue;
+    } else if (filterCategory === 'workType') {
+      isActive = workTypeFilter === filterValue;
+    }
+
+    return isActive
       ? 'bg-blue-600 text-white px-4 py-2 rounded-full'
       : 'bg-blue-100 text-blue-600 px-4 py-2 rounded-full hover:bg-blue-200';
   };
@@ -103,32 +139,66 @@ const JobPage = () => {
       {/* Header and Filter */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Job Listings</h2>
-        
-        {/* 👇 All filter/sort buttons in one container */}
+
         <div className="flex items-center space-x-2 flex-wrap">
+          {/* Sort Buttons */}
           <button
-            onClick={() => handleFilterChange('latest')}
-            className={getButtonClass('latest')}
+            onClick={() => handleSortChange('latest')}
+            className={getButtonClass('sort', 'latest')}
           >
             Latest Jobs
           </button>
           <button
-            onClick={() => handleFilterChange('demanded')}
-            className={getButtonClass('demanded')}
+            onClick={() => handleSortChange('demanded')}
+            className={getButtonClass('sort', 'demanded')}
           >
             Demanded Jobs
           </button>
           <button
-            onClick={() => handleFilterChange('a-z')}
-            className={getButtonClass('a-z')}
+            onClick={() => handleSortChange('a-z')}
+            className={getButtonClass('sort', 'a-z')}
           >
             Sort A-Z
           </button>
           <button
-            onClick={() => handleFilterChange('z-a')}
-            className={getButtonClass('z-a')}
+            onClick={() => handleSortChange('z-a')}
+            className={getButtonClass('sort', 'z-a')}
           >
             Sort Z-A
+          </button>
+
+          {/* Divider */}
+          <span className="text-gray-400 px-2 select-none">|</span>
+
+          {/* Work Location Filters */}
+          <button
+            onClick={() => handleWorkLocationChange('Remote')}
+            className={getButtonClass('workLocation', 'Remote')}
+          >
+            Remote
+          </button>
+          <button
+            onClick={() => handleWorkLocationChange('Physical')}
+            className={getButtonClass('workLocation', 'Physical')}
+          >
+            Physical
+          </button>
+
+          {/* Divider */}
+          <span className="text-gray-400 px-2 select-none">|</span>
+
+          {/* Work Type Filters */}
+          <button
+            onClick={() => handleWorkTypeChange('Full-Time')}
+            className={getButtonClass('workType', 'Full-Time')}
+          >
+            Full-Time
+          </button>
+          <button
+            onClick={() => handleWorkTypeChange('Part-Time')}
+            className={getButtonClass('workType', 'Part-Time')}
+          >
+            Part-Time
           </button>
         </div>
       </div>
