@@ -1,35 +1,32 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import ManagerTopbar from '../../components/ManagerTopbar';
 
 const API_URL = 'http://localhost:5190/api/managernotification';
 
-// Success Message Modal Component
-function SuccessModal({ message, onClose }) {
-  if (!message) return null;
-  
+// Green Success Popup Component
+function GreenSuccessPopup({ message, isVisible, onClose }) {
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 3000); // Hide after 3 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, onClose]);
+
+  if (!isVisible) return null;
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl mx-4">
-        <div className="flex items-center mb-4">
-          <div className="flex-shrink-0">
-            <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-          </div>
-          <div className="ml-3">
-            <h3 className="text-lg font-semibold text-gray-900">Success!</h3>
-          </div>
-        </div>
-        <p className="text-gray-700 mb-6">{message}</p>
-        <div className="flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          >
-            OK
-          </button>
-        </div>
+    <div className="flex justify-center mb-4">
+      <div className="bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-md shadow-sm flex items-center space-x-2 max-w-md">
+        <span className="text-sm font-medium">{message}</span>
+        <button 
+          onClick={onClose}
+          className="text-green-600 hover:text-green-800 font-bold text-lg leading-none"
+        >
+          ×
+        </button>
       </div>
     </div>
   );
@@ -41,18 +38,17 @@ function ManagerNotificationForm({ onNotify }) {
   const [type, setType] = useState('Normal');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [success, setSuccess] = useState('');
+  const [showGreenPopup, setShowGreenPopup] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setSuccessMessage('');
-    
+    setSuccess('');
     if (!subject || !message) {
       setError('Please fill in both subject and message.');
       return;
     }
-    
     setLoading(true);
     try {
       const res = await fetch(API_URL, {
@@ -60,10 +56,10 @@ function ManagerNotificationForm({ onNotify }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subject, message, type, time: new Date().toISOString() })
       });
-      
       if (!res.ok) throw new Error('Failed to send notification');
       
-      setSuccessMessage('Notification sent successfully!');
+      // Show green popup instead of regular success message
+      setShowGreenPopup(true);
       setSubject('');
       setMessage('');
       setType('Normal');
@@ -77,10 +73,17 @@ function ManagerNotificationForm({ onNotify }) {
 
   return (
     <>
+      <GreenSuccessPopup 
+        message="Notification sent successfully!"
+        isVisible={showGreenPopup}
+        onClose={() => setShowGreenPopup(false)}
+      />
+      
       <div className="flex justify-center">
         <form onSubmit={handleSubmit} className="bg-white border border-blue-200 rounded-lg shadow-sm p-5 mb-8 max-w-2xl w-full">
           <h2 className="text-lg font-bold mb-4">Send Notification</h2>
           {error && <div className="mb-2 text-red-600">{error}</div>}
+          {success && <div className="mb-2 text-green-600">{success}</div>}
           <div className="mb-4">
             <label className="block mb-2 font-medium text-gray-700">Subject</label>
             <input
@@ -124,27 +127,13 @@ function ManagerNotificationForm({ onNotify }) {
             <button
               type="submit"
               disabled={loading}
-              className={`px-6 py-2 rounded-full font-medium text-white flex items-center justify-center ${
-                loading ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-              }`}
+              className={`px-6 py-2 rounded-full font-medium text-white ${loading ? 'bg-blue-300' : 'bg-blue-600 hover:bg-blue-700'}`}
             >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-                  Sending...
-                </>
-              ) : (
-                'Send Notification'
-              )}
+              {loading ? 'Sending...' : 'Send Notification'}
             </button>
           </div>
         </form>
       </div>
-      
-      <SuccessModal 
-        message={successMessage} 
-        onClose={() => setSuccessMessage('')} 
-      />
     </>
   );
 }
@@ -169,27 +158,11 @@ export default function ManagerSystemNotification() {
   const [selectedNotification, setSelectedNotification] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
-  const [urlSuccessMessage, setUrlSuccessMessage] = useState('');
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     fetchNotifications();
-    
-    // Check for success message in URL parameters
-    const params = new URLSearchParams(location.search);
-    const message = params.get('message');
-    if (message) {
-      setUrlSuccessMessage(decodeURIComponent(message));
-      // Clean up the URL by removing the message parameter
-      const newParams = new URLSearchParams(location.search);
-      newParams.delete('message');
-      const newUrl = newParams.toString() 
-        ? `${location.pathname}?${newParams.toString()}`
-        : location.pathname;
-      window.history.replaceState({}, '', newUrl);
-    }
-  }, [location.search]);
+  }, []);
 
   const fetchNotifications = async () => {
     try {
@@ -280,72 +253,67 @@ export default function ManagerSystemNotification() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         <h2 className="text-2xl font-bold mb-6">Manager Notifications</h2>
 
-        <ManagerNotificationForm onNotify={fetchNotifications} />
+      <ManagerNotificationForm onNotify={fetchNotifications} />
 
-        <button
-          onClick={() => navigate('/manager/NotifyCandidates')}
-          className="mt-6 mb-8 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
-        >
-          Go to Notify Candidates
-        </button>
+      <button
+        onClick={() => navigate('/manager/NotifyCandidates')}
+        className="mt-6 mb-8 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+      >
+        Go to Notify Candidates
+      </button>
 
-        <div className="mt-10">
-          <h2 className="text-lg font-bold mb-4">Recent Notifications</h2>
-          <div className="overflow-x-auto bg-white rounded-lg shadow-md border border-blue-200">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {currentNotifications.length > 0 ? (
-                  currentNotifications.map((n, idx) => (
-                    <tr key={n.id || n.notificationId}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{startIndex + idx + 1}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{n.subject}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 max-w-xs truncate">{n.message}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-700">{n.type}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(n.time).toLocaleString()}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => setSelectedNotification(n)}
-                          className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">No notifications found</td>
+      <div className="mt-10">
+        <h2 className="text-lg font-bold mb-4">Recent Notifications</h2>
+        <div className="overflow-x-auto bg-white rounded-lg shadow-md border border-blue-200">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {currentNotifications.length > 0 ? (
+                currentNotifications.map((n, idx) => (
+                  <tr key={n.id || n.notificationId}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{startIndex + idx + 1}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{n.subject}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 max-w-xs truncate">{n.message}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-700">{n.type}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(n.time).toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        onClick={() => setSelectedNotification(n)}
+                        className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded"
+                      >
+                        View
+                      </button>
+                    </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          <PaginationControls />
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">No notifications found</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
+        <PaginationControls />
+      </div>
 
-        {selectedNotification && (
-          <NotificationModal
-            notification={selectedNotification}
-            onClose={() => setSelectedNotification(null)}
-          />
-        )}
-
-        {/* Success message from URL parameters (if navigated from another page) */}
-        <SuccessModal 
-          message={urlSuccessMessage} 
-          onClose={() => setUrlSuccessMessage('')} 
+      {selectedNotification && (
+        <NotificationModal
+          notification={selectedNotification}
+          onClose={() => setSelectedNotification(null)}
         />
+      )}
       </main>
     </div>
+    
   );
 }

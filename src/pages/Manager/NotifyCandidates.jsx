@@ -1,8 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import ManagerTopbar from '../../components/ManagerTopbar';
+import { useNavigate } from 'react-router-dom';
+
+// Add: For vacancy search/filter
+const fetchAllVacancies = async () => {
+  try {
+    const response = await axios.get('http://localhost:5190/api/Vacancy');
+    return response.data || [];
+  } catch (error) {
+    console.error('Failed to fetch vacancies:', error);
+    return [];
+  }
+};
 
 const NotifyCandidates = () => {
+  const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState('Longlist'); // Default tab is Longlist
   const [candidatesByStatus, setCandidatesByStatus] = useState({ Longlist: [], Rejected: [], Pending: [] });
   const [subject, setSubject] = useState('');
@@ -17,6 +30,19 @@ const NotifyCandidates = () => {
   // Define CV qualification threshold
   const CV_QUALIFICATION_THRESHOLD = 70; // Minimum CV mark to be qualified
   
+  // Vacancy search/filter state
+  const [vacancies, setVacancies] = useState([]);
+  const [selectedVacancy, setSelectedVacancy] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+
+  // Selection state - only selectAll needed now
+  const [selectAll, setSelectAll] = useState(false);
+
   // Fetch statistics from the API
   const fetchStatistics = useCallback(async () => {
     try {
@@ -82,6 +108,41 @@ const NotifyCandidates = () => {
   useEffect(() => {
     fetchCandidates();
   }, [fetchCandidates]);
+
+  // Fetch all vacancies on mount
+  useEffect(() => {
+    fetchAllVacancies().then(data => {
+      // Normalize vacancy title
+      setVacancies(
+        data.map(v => ({
+          id: v.vacancyId || v.id,
+          title: v.vacancyName || v.title || v.name,
+        }))
+      );
+    });
+  }, []);
+
+  // Filtered vacancies for search suggestions
+  const filteredVacancies = searchTerm
+    ? vacancies.filter(v => v.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    : vacancies;
+
+  // Filter candidates by selected vacancy
+  const filterByVacancy = (candidates) => {
+    if (!selectedVacancy) return candidates;
+    return candidates.filter(c => {
+      const candidateVacancy =
+        c.vacancy?.vacancyName ||
+        c.vacancy?.name ||
+        c.vacancy?.title ||
+        c.jobRole?.jobTitle ||
+        c.jobRole?.title ||
+        c.jobTitle ||
+        c.vacancyName ||
+        '';
+      return candidateVacancy.toLowerCase() === selectedVacancy.toLowerCase();
+    });
+  };
 
   // Set up auto-refresh polling (every 30 seconds)
   useEffect(() => {
@@ -194,18 +255,142 @@ const NotifyCandidates = () => {
     { id: 'Pending', label: 'Pending', icon: '⌛', count: statistics.Pending }
   ];
 
-  const candidates = candidatesByStatus[selectedTab] || [];
+  // Filter candidates by selected vacancy
+  const candidates = filterByVacancy(candidatesByStatus[selectedTab] || []);
 
-  // No more manual refresh button
+  // Pagination logic for candidates
+  const totalPages = Math.ceil(candidates.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentCandidates = candidates.slice(startIndex, endIndex);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handle select all - now selects ALL candidates in current tab, not just current page
+  const handleSelectAll = () => {
+    setSelectAll(!selectAll);
+  };
+
+  // Reset selectAll when tab changes
+  useEffect(() => {
+    setSelectAll(false);
+  }, [selectedTab, selectedVacancy]);
+
+  // Handle Next button click
+  const handleNext = () => {
+    if (!selectAll) {
+      setNotification({
+        show: true,
+        message: 'Please select candidates to proceed.',
+        type: 'error'
+      });
+      setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
+      return;
+    }
+
+    // Navigate to ManagerSystemNotification with ALL candidates from current tab
+    navigate('/manager/ManagerSystemNotification', { 
+      state: { 
+        selectedCandidates: candidates, // Send all candidates from current filtered tab
+        selectedTab: selectedTab 
+      } 
+    });
+  };
+
+  // Pagination controls (like LongList)
+  const PaginationControls = () => {
+    if (totalPages <= 1) return null;
+    const getVisiblePages = () => {
+      const pages = [];
+      const maxVisible = 3;
+      if (totalPages <= maxVisible) {
+        for (let i = 1; i <= totalPages; i++) pages.push(i);
+      } else {
+        if (currentPage <= 2) {
+          for (let i = 1; i <= Math.min(maxVisible, totalPages); i++) pages.push(i);
+        } else if (currentPage >= totalPages - 1) {
+          for (let i = totalPages - maxVisible + 1; i <= totalPages; i++) pages.push(i);
+        } else {
+          pages.push(currentPage - 1);
+          pages.push(currentPage);
+          pages.push(currentPage + 1);
+        }
+      }
+      return pages;
+    };
+    return (
+      <div className="flex justify-center items-center mt-6 space-x-1">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className={`px-4 py-2 font-medium transition-colors min-w-[80px] ${
+            currentPage === 1
+              ? 'text-gray-400 cursor-not-allowed'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          Prev
+        </button>
+        {getVisiblePages().map((page) => (
+          <button
+            key={page}
+            onClick={() => handlePageChange(page)}
+            className={`w-10 h-10 rounded-full font-medium transition-colors ${
+              currentPage === page
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className={`px-4 py-2 font-medium transition-colors min-w-[80px] ${
+            currentPage === totalPages
+              ? 'text-gray-400 cursor-not-allowed'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          Next
+        </button>
+      </div>
+    );
+  };
 
   // Toggle candidate details view
   const toggleCandidateDetails = (applicationId) => {
     setExpandedCandidate(expandedCandidate === applicationId ? null : applicationId);
   };
 
+  // UI: Vacancy dropdown selection
+  const renderVacancyDropdown = () => (
+    <div className="mb-6">
+      <label className="block mb-2 font-medium text-gray-700">Select Vacancy</label>
+      <select
+        className="w-full py-3 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        value={selectedVacancy}
+        onChange={e => setSelectedVacancy(e.target.value)}
+      >
+        <option value="">View All Candidates</option>
+        {vacancies.map(vacancy => (
+          <option key={vacancy.id} value={vacancy.title}>{vacancy.title}</option>
+        ))}
+      </select>
+    </div>
+  );
+
   return (
     <div className="bg-blue-50 flex-auto min-h-screen">
       <ManagerTopbar />
+      {/* Vacancy Dropdown UI */}
+      <div className="max-w-4xl mx-auto">
+        {renderVacancyDropdown()}
+      </div>
       <div className="bg-blue-50 min-h-screen p-4 md:p-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-6">
@@ -235,10 +420,20 @@ const NotifyCandidates = () => {
 
           <div className="bg-white border border-blue-200 rounded-lg shadow-sm p-5 mb-6">
             <div className="flex justify-between items-center mb-4">
-              <div className="text-gray-700">Select candidates to send notifications</div>
+              <div className="text-gray-700">Select all candidates to send notifications</div>
               <div className="flex items-center space-x-4">
-                {/* Removed Select All button */}
-                <div className="text-gray-500 text-sm">{candidates.length} candidates</div>
+                {/* Single Select All Checkbox */}
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectAll}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <span className="text-sm text-gray-600">
+                    Select All ({candidates.length} candidates)
+                  </span>
+                </label>
               </div>
             </div>
 
@@ -258,16 +453,16 @@ const NotifyCandidates = () => {
               ))}
             </div>
 
-            {/* Candidate List */}
+            {/* Candidate List - No checkboxes, just display */}
             <div className="space-y-3">
               {loading ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700"></div>
                 </div>
-              ) : candidates.length === 0 ? (
+              ) : currentCandidates.length === 0 ? (
                 <p className="text-center py-4 text-gray-500">No candidates found</p>
               ) : (
-                candidates.map(candidate => {
+                currentCandidates.map(candidate => {
                   // Get CV mark - handle different property names
                   const cvMark = candidate.cvMark || candidate.cV_Mark || 0;
                   // Get prescreening mark
@@ -288,10 +483,19 @@ const NotifyCandidates = () => {
                     'No position';
                   
                   return (
-                    <div key={candidate.applicationId} className="border border-gray-200 rounded-lg hover:border-blue-300 transition">
+                    <div key={candidate.applicationId} className={`border rounded-lg hover:border-blue-300 transition ${
+                      selectAll ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
+                    }`}>
                       <div className="p-4 flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                          {/* Removed checkbox and Send Email button */}
+                          {/* Selection indicator */}
+                          {selectAll && (
+                            <div className="w-4 h-4 bg-blue-600 rounded flex items-center justify-center">
+                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                              </svg>
+                            </div>
+                          )}
                           <div>
                             <h3 className="font-medium text-gray-800">{fullName}</h3>
                             <p className="text-gray-500 text-sm">{vacancyName}</p>
@@ -318,7 +522,6 @@ const NotifyCandidates = () => {
                         }`}>
                           {selectedTab === 'Longlist' ? 'Qualified' : selectedTab}
                         </div>
-                        {/* Removed Send Email button */}
                       </div>
                       {/* Expanded Candidate Details */}
                       {expandedCandidate === candidate.applicationId && (
@@ -370,65 +573,25 @@ const NotifyCandidates = () => {
             </div>
           </div>
 
-          {/* Notification Form */}
-          <div className="bg-white border border-blue-200 rounded-lg shadow-sm p-5">
-            <div className="mb-4">
-              <label htmlFor="subject" className="block mb-2 font-medium text-gray-700">Subject</label>
-              <input
-                type="text"
-                id="subject"
-                className="w-full p-3 border border-gray-300 rounded-md"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="Enter notification subject"
-              />
-            </div>
+          {/* Pagination Controls */}
+          <PaginationControls />
 
-            <div className="mb-4">
-              <label htmlFor="message" className="block mb-2 font-medium text-gray-700">Message</label>
-              <textarea
-                id="message"
-                rows="4"
-                className="w-full p-3 border border-gray-300 rounded-md"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Enter your message to the selected candidates"
-              ></textarea>
+          {/* Next Button and Selected Count */}
+          <div className="flex justify-between items-center mt-10">
+            <div className="text-sm text-gray-600">
+              {selectAll ? `All ${candidates.length} candidates selected` : 'No candidates selected'}
             </div>
-
-            <div className="mb-6">
-              <label className="block mb-2 font-medium text-gray-700">Type</label>
-              <div className="flex space-x-6">
-                {['Normal', 'Important'].map(t => (
-                  <div key={t} className="flex items-center">
-                    <input
-                      id={t}
-                      name="notification-type"
-                      type="radio"
-                      value={t}
-                      checked={type === t}
-                      onChange={(e) => setType(e.target.value)}
-                      className="h-4 w-4 text-blue-600"
-                    />
-                    <label htmlFor={t} className="ml-2 text-gray-700">{t}</label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                onClick={sendBulkNotification}
-                disabled={!subject || !message || loading || candidates.length === 0}
-                className={`${
-                  subject && message && candidates.length > 0 && !loading
-                    ? 'bg-blue-600 hover:bg-blue-700'
-                    : 'bg-blue-300 cursor-not-allowed'
-                } text-white py-2 px-6 rounded-full font-medium`}
-              >
-                {loading ? 'Processing...' : `Notify All (${candidates.length})`}
-              </button>
-            </div>
+            <button
+              onClick={handleNext}
+              disabled={!selectAll}
+              className={`px-8 py-3 rounded-lg font-semibold transition ${
+                !selectAll
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              Next {selectAll ? `(${candidates.length})` : '(0)'}
+            </button>
           </div>
         </div>
       </div>

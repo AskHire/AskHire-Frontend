@@ -35,18 +35,14 @@ import InterviewScheduler from "../pages/Manager/InterviewScheduler";
 import JobShow from "../pages/Candidate/JobShow";
 import CVUpload from "../pages/Candidate/CVUpload";
 import CandidateDashboard from "../pages/Candidate/CandidateDashboard";
+import ManagerSystemNotification from '../pages/Manager/ManagerSystemNotification';
 
 import { AuthProvider } from "../context/AuthContext";
 import PrivateRoute from "../context/PrivateRoute";
 import Unauthorized from "../pages/Common/Unauthorized";
-<<<<<<< HEAD
-import CongratulationsCard2 from "../components/CongratulationCard2";
 import LongListInterviewScheduler from "../pages/Manager/LongListInterviewSheduler";
-
-
-=======
 import CongratulationsCard2 from "../components/CandidateComponants/CongratulationCard2";
->>>>>>> 2e5371a50717106e7aca98160a841d33a97658ed
+
 
 const router = createBrowserRouter([
   {
@@ -138,6 +134,10 @@ const router = createBrowserRouter([
       {
         path: "ManualInterviews",
         element: <ManualInterviews />,
+      },
+      {
+        path: "ManagerSystemNotification",
+        element: <ManagerSystemNotification />,
       },
     ],
   },
