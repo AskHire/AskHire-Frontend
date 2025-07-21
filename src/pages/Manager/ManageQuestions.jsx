@@ -93,7 +93,20 @@ const ManageQuestions = () => {
   };
 
   const handleEdit = (question) => {
-    setUpdatedQuestion({ ...question });
+    // Convert answer key back to answer text for display
+    let answerText = '';
+    if (question.answer) {
+      const answerKey = question.answer.toLowerCase();
+      if (answerKey === 'option1') answerText = question.option1;
+      else if (answerKey === 'option2') answerText = question.option2;
+      else if (answerKey === 'option3') answerText = question.option3;
+      else if (answerKey === 'option4') answerText = question.option4;
+    }
+    
+    setUpdatedQuestion({ 
+      ...question, 
+      answerText: answerText 
+    });
     setShowModal(true);
   };
 
@@ -105,14 +118,15 @@ const ManageQuestions = () => {
       option2: '',
       option3: '',
       option4: '',
-      answer: ''
+      answer: '',
+      answerText: ''
     });
     setShowModal(true);
   };
 
   const handleSaveQuestion = async () => {
     try {
-      const answerText = updatedQuestion.answer;
+      const answerText = updatedQuestion.answerText;
 
       let answerKey = '';
       for (let i = 1; i <= 4; i++) {
@@ -126,6 +140,9 @@ const ManageQuestions = () => {
         ...updatedQuestion,
         answer: answerKey
       };
+
+      // Remove answerText from the data to save (it's only for UI purposes)
+      delete dataToSave.answerText;
 
       const method = updatedQuestion.questionId ? 'PUT' : 'POST';
       const url = updatedQuestion.questionId
@@ -288,8 +305,8 @@ const ManageQuestions = () => {
       {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-lg">
-            <div className="flex justify-between items-center mb-4">
+          <div className="bg-white p-6 rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold">
                 {updatedQuestion.questionId ? 'Edit Question' : 'Add New Question'}
               </h2>
@@ -298,31 +315,89 @@ const ManageQuestions = () => {
               </button>
             </div>
 
-            <div className="space-y-4">
-              <input name="questionName" value={updatedQuestion.questionName || ''} onChange={handleChange} placeholder="Question" className="w-full border px-4 py-2 rounded" />
-              <input name="option1" value={updatedQuestion.option1 || ''} onChange={handleChange} placeholder="Option 1" className="w-full border px-4 py-2 rounded" />
-              <input name="option2" value={updatedQuestion.option2 || ''} onChange={handleChange} placeholder="Option 2" className="w-full border px-4 py-2 rounded" />
-              <input name="option3" value={updatedQuestion.option3 || ''} onChange={handleChange} placeholder="Option 3" className="w-full border px-4 py-2 rounded" />
-              <input name="option4" value={updatedQuestion.option4 || ''} onChange={handleChange} placeholder="Option 4" className="w-full border px-4 py-2 rounded" />
+            <div className="space-y-6">
+              {/* Question Section */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Question:
+                </label>
+                <textarea
+                  name="questionName"
+                  value={updatedQuestion.questionName || ''}
+                  onChange={handleChange}
+                  placeholder="Enter your question here..."
+                  className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  rows="3"
+                />
+              </div>
 
-              <select
-                name="answer"
-                value={updatedQuestion.answer || ''}
-                onChange={handleChange}
-                className="w-full border px-4 py-2 rounded"
+              {/* Answers Section */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  Answers:
+                </label>
+                <div className="space-y-3">
+                  {[1, 2, 3, 4].map((num) => (
+                    <div key={num} className="flex items-center space-x-3">
+                      <span className="text-sm font-medium text-gray-600 w-16">
+                        Option {num}:
+                      </span>
+                      <input
+                        name={`option${num}`}
+                        value={updatedQuestion[`option${num}`] || ''}
+                        onChange={handleChange}
+                        placeholder={`Enter option ${num}`}
+                        className="flex-1 border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Correct Answer Selection */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Correct Answer:
+                </label>
+                <select
+                  name="answerText"
+                  value={updatedQuestion.answerText || ''}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select the correct answer</option>
+                  {[1, 2, 3, 4].map((num) => {
+                    const optionValue = updatedQuestion[`option${num}`];
+                    return optionValue ? (
+                      <option key={num} value={optionValue}>
+                        Option {num}: {optionValue}
+                      </option>
+                    ) : null;
+                  })}
+                </select>
+                
+                {/* Show currently selected answer */}
+                {updatedQuestion.answerText && (
+                  <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <span className="text-sm font-medium text-green-800">
+                      Selected Answer: 
+                    </span>
+                    <span className="text-sm text-green-700 ml-1">
+                      {updatedQuestion.answerText}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Save Button */}
+              <button 
+                onClick={handleSaveQuestion} 
+                className="bg-blue-600 text-white py-3 px-6 rounded-lg w-full hover:bg-blue-700 transition-colors font-medium"
+                disabled={!updatedQuestion.questionName || !updatedQuestion.answerText || 
+                  !updatedQuestion.option1 || !updatedQuestion.option2 || 
+                  !updatedQuestion.option3 || !updatedQuestion.option4}
               >
-                <option value="">Select Correct Answer</option>
-                {['option1', 'option2', 'option3', 'option4'].map((optKey, index) => (
-                  updatedQuestion[optKey] && (
-                    <option key={optKey} value={updatedQuestion[optKey]}>
-                      {`Option ${index + 1}: ${updatedQuestion[optKey]}`}
-                    </option>
-                  )
-                ))}
-              </select>
-
-              <button onClick={handleSaveQuestion} className="bg-blue-600 text-white py-2 px-4 rounded w-full hover:bg-blue-700 transition-colors">
-                Save
+                {updatedQuestion.questionId ? 'Update Question' : 'Add Question'}
               </button>
             </div>
           </div>
