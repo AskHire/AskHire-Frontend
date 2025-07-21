@@ -158,6 +158,110 @@
 
 // export default CongratulationsCard2;
 
+// import React, { useState, useEffect } from 'react';
+// import { useParams, useNavigate } from 'react-router-dom';
+// import { Check, XCircle } from 'lucide-react';
+
+// const CongratulationsCard2 = () => {
+//   const { applicationId } = useParams();
+//   const [matchScore, setMatchScore] = useState(0);
+//   const [status, setStatus] = useState('');
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const navigate = useNavigate();
+
+//   useEffect(() => {
+//     const fetchData = async () => {
+//       try {
+//         const res = await fetch(`http://localhost:5190/api/CandidateFile/${applicationId}/cv-status`);
+//         if (!res.ok) {
+//           throw new Error('Failed to fetch data');
+//         }
+
+//         const data = await res.json();
+//         setMatchScore(data.cV_Mark ?? 0);
+//         setStatus(data.status ?? '');
+//       } catch (err) {
+//         console.error('Error:', err);
+//         setError(err.message);
+//         setMatchScore(0);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     if (applicationId) {
+//       fetchData();
+//     }
+//   }, [applicationId]);
+
+//   const isApproved = status === 'Pending';
+
+//   return (
+//     <div className="bg-white shadow-lg rounded-2xl p-8 text-center w-full max-w-sm mx-auto border border-gray-200">
+//       {!loading && !error && isApproved ? (
+//         <>
+//           <div className="mb-6">
+//             <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+//               <Check className="h-8 w-8 text-green-600" />
+//             </div>
+//             <h2 className="text-2xl font-bold mt-4 text-gray-800">Congratulations!</h2>
+//             <p className="text-gray-500">Your CV has been submitted.</p>
+//           </div>
+//         </>
+//       ) : !loading && !error ? (
+//         <>
+//           <div className="mb-6">
+//             <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+//               <XCircle className="h-8 w-8 text-red-600" />
+//             </div>
+//             <h2 className="text-2xl font-bold mt-4 text-gray-800">Sorry!</h2>
+//             <p className="text-red-500">You are not eligible to apply for this vacancy.</p>
+//           </div>
+//         </>
+//       ) : null}
+
+//       <div className={`${isApproved ? 'bg-green-50' : 'bg-red-50'} rounded-xl p-6 mb-6`}>
+//         <div className="flex items-center justify-between mb-2">
+//           <span className="text-sm font-medium text-gray-600">Match Score</span>
+//           <div className="flex">
+//             {[...Array(5)].map((_, i) => (
+//               <span key={i} className={`${isApproved ? 'text-green-500' : 'text-red-500'} text-sm`}>★</span>
+//             ))}
+//           </div>
+//         </div>
+//         {loading ? (
+//           <div className="text-2xl font-bold text-gray-400 mb-1">Loading...</div>
+//         ) : error ? (
+//           <div className="text-2xl font-bold text-red-500 mb-1">{error}</div>
+//         ) : (
+//           <div className={`text-4xl font-bold ${isApproved ? 'text-green-600' : 'text-red-600'} mb-1`}>
+//             {matchScore}%
+//           </div>
+//         )}
+//       </div>
+
+//       {!loading && !error && isApproved ? (
+//         <button
+//           onClick={() => navigate('/candidate/prescreen', { state: { applicationId } })}
+//           className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition"
+//         >
+//           Continue to Pre-Screen Test
+//         </button>
+//       ) : !loading && !error ? (
+//         <button
+//           onClick={() => navigate('/')}
+//           className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition"
+//         >
+//           Back to Home
+//         </button>
+//       ) : null}
+//     </div>
+//   );
+// };
+
+// export default CongratulationsCard2;
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Check, XCircle } from 'lucide-react';
@@ -195,7 +299,7 @@ const CongratulationsCard2 = () => {
     }
   }, [applicationId]);
 
-  const isApproved = status === 'CV Approved';
+  const isApproved = status === 'Pending';
 
   return (
     <div className="bg-white shadow-lg rounded-2xl p-8 text-center w-full max-w-sm mx-auto border border-gray-200">
@@ -221,25 +325,33 @@ const CongratulationsCard2 = () => {
         </>
       ) : null}
 
-      <div className={`${isApproved ? 'bg-green-50' : 'bg-red-50'} rounded-xl p-6 mb-6`}>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-600">Match Score</span>
-          <div className="flex">
-            {[...Array(5)].map((_, i) => (
-              <span key={i} className={`${isApproved ? 'text-green-500' : 'text-red-500'} text-sm`}>★</span>
-            ))}
+      {!loading && !error && (
+        <div className={`${isApproved ? 'bg-green-50' : 'bg-red-50'} rounded-xl p-6 mb-6`}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-600">Match Score</span>
+            <div className="flex">
+              {[...Array(5)].map((_, i) => (
+                <span key={i} className={`${isApproved ? 'text-green-500' : 'text-red-500'} text-sm`}>★</span>
+              ))}
+            </div>
           </div>
-        </div>
-        {loading ? (
-          <div className="text-2xl font-bold text-gray-400 mb-1">Loading...</div>
-        ) : error ? (
-          <div className="text-2xl font-bold text-red-500 mb-1">{error}</div>
-        ) : (
           <div className={`text-4xl font-bold ${isApproved ? 'text-green-600' : 'text-red-600'} mb-1`}>
             {matchScore}%
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {loading && (
+        <div className="rounded-xl p-6 mb-6 bg-gray-100 text-center">
+          <div className="text-2xl font-bold text-gray-400 mb-1">Loading...</div>
+        </div>
+      )}
+
+      {error && (
+        <div className="rounded-xl p-6 mb-6 bg-red-100 text-center">
+          <div className="text-2xl font-bold text-red-500 mb-1">{error}</div>
+        </div>
+      )}
 
       {!loading && !error && isApproved ? (
         <button
@@ -251,7 +363,7 @@ const CongratulationsCard2 = () => {
       ) : !loading && !error ? (
         <button
           onClick={() => navigate('/')}
-          className="w-full bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition"
+          className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition"
         >
           Back to Home
         </button>
@@ -261,4 +373,5 @@ const CongratulationsCard2 = () => {
 };
 
 export default CongratulationsCard2;
+
 

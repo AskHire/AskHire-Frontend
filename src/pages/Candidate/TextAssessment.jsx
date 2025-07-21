@@ -478,7 +478,12 @@ const TextAssessment = () => {
 
   const [questions, setQuestions] = useState([]);
   const [duration, setDuration] = useState(600);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(() => {
+  if (!applicationId) return 0;  // fallback if no ID yet
+  const storedIndex = localStorage.getItem(`currentIndex-${applicationId}`);
+  return storedIndex ? parseInt(storedIndex, 10) : 0;
+});
+
   const [timeRemaining, setTimeRemaining] = useState(600);
   const [testCompleted, setTestCompleted] = useState(false);
   const [resultData, setResultData] = useState(null);
