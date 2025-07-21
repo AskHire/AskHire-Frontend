@@ -45,19 +45,19 @@ const ManagerDashboard = () => {
     },
     {
       id: 2,
+      title: 'Total Applicable Vacancies',
+      count: dashboardData.totalJobs ?? '...',
+      icon: <FiBriefcase className="text-4xl" />,
+      bgColor: 'bg-yellow-100',
+      textColor: 'text-yellow-700'     
+    },
+    {
+      id: 3,
       title: 'Interviews Today',
       count: dashboardData.interviewsToday ?? '...',
       icon: <FiCalendar className="text-4xl" />,
       bgColor: 'bg-blue-100',
       textColor: 'text-blue-700'
-    },
-    {
-      id: 3,
-      title: 'Total Job Vacancies',
-      count: dashboardData.totalJobs ?? '...',
-      icon: <FiBriefcase className="text-4xl" />,
-      bgColor: 'bg-yellow-100',
-      textColor: 'text-yellow-700'
     },
     {
       id: 4,

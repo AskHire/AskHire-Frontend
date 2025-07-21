@@ -1,6 +1,7 @@
 import ManagerTopbar from '../../components/ManagerTopbar';
 import React, { useEffect, useState } from "react";
 import { Search, Edit, Trash2, X } from "lucide-react";
+import DeleteModal from '../../components/DeleteModal';
 
 const ManageVacancy = () => {
   const [vacancies, setVacancies] = useState([]);
@@ -34,7 +35,7 @@ const ManageVacancy = () => {
       });
   }, []);
 
-  const confirmDeleteVacancy = async () => {
+  const confirmDelete = async () => {
     if (!vacancyToDelete) return;
     try {
       const response = await fetch(`http://localhost:5190/api/Vacancy/${vacancyToDelete.vacancyId}`, {
@@ -282,31 +283,12 @@ const ManageVacancy = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full text-center shadow-xl">
-            <h2 className="text-xl font-semibold mb-4">Confirm Deletion</h2>
-            <p className="mb-6 text-gray-600">
-              Are you sure you want to delete the vacancy <strong>{vacancyToDelete?.vacancyName}</strong>?
-            </p>
-            <div className="flex justify-center gap-4">
-              <button 
-                onClick={() => setShowDeleteModal(false)} 
-                className="px-4 py-2 border rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={confirmDeleteVacancy} 
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Yes, Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+      />
+
     </div>
   );
 };
