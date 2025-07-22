@@ -14,8 +14,7 @@ export default function ManageAdmin() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [adminToDelete, setAdminToDelete] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
-
-  const itemsPerPage = 5;
+  const itemsPerPage = 10; // Adjusted for better pagination
   const token = localStorage.getItem("accessToken");
 
   useEffect(() => {
@@ -83,8 +82,8 @@ export default function ManageAdmin() {
   };
 
   return (
-    <div className="flex-1 p-6">
-      <h1 className="mt-3 text-3xl font-bold">Admin Management</h1>
+    <div className="flex-1 pl-2 pr-4 md:pl-6">
+      <h1 className="text-3xl font-bold">Admin Management</h1>
 
       {/* Search and Sort Controls */}
       <div className="flex flex-col gap-2 my-4 sm:flex-row sm:items-center sm:justify-between">

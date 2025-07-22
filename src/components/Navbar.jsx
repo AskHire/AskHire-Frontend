@@ -81,7 +81,7 @@ const Navbar = () => {
 
   return (
     <nav className="bg-white border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="flex items-center justify-between h-16 px-4 mx-auto max-w-7xl">
 
         {/* Logo */}
         <NavLink to="/" className="text-xl font-bold">
@@ -120,7 +120,7 @@ const Navbar = () => {
                   className={`text-2xl cursor-pointer transition-colors ${showNotifications ? 'text-blue-600' : 'text-gray-700 hover:text-gray-900'}`}
                 />
                 {notifications.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  <span className="absolute flex items-center justify-center w-5 h-5 text-xs text-white bg-red-500 rounded-full -top-1 -right-1">
                     {notifications.length > 9 ? '9+' : notifications.length}
                   </span>
                 )}
@@ -143,10 +143,10 @@ const Navbar = () => {
                   <img
                     src={`http://localhost:5190${profilePicture}`}
                     alt="Avatar"
-                    className="w-8 h-8 rounded-full border object-cover"
+                    className="object-cover w-8 h-8 border rounded-full"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-semibold uppercase">
+                  <div className="flex items-center justify-center w-8 h-8 text-sm font-semibold text-white uppercase bg-blue-500 rounded-full">
                     {firstLetter}
                   </div>
                 )}

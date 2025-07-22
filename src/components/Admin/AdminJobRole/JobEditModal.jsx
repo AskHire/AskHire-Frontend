@@ -1,11 +1,30 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 export default function JobEditModal({ job, setJob, onSave, onCancel }) {
+  // Save initial job in local state once when component mounts
+  const [initialJob, setInitialJob] = useState(job);
+  const [isEdited, setIsEdited] = useState(false);
+
+  // Check if any field has changed compared to initialJob
+  useEffect(() => {
+    const fields = ["JobTitle", "Description", "WorkLocation", "WorkType"];
+    const changed = fields.some(field => job[field] !== initialJob[field]);
+    setIsEdited(changed);
+  }, [job, initialJob]);
+
+  // Handler for form submit to prevent if no changes (optional)
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (isEdited) {
+      onSave(e);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <div className="w-full max-w-lg p-6 bg-white shadow-lg rounded-xl">
         <h2 className="mb-4 text-xl font-semibold">Edit Job</h2>
-        <form onSubmit={onSave}>
+        <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
               <label className="font-semibold">Job Title</label>
@@ -74,7 +93,10 @@ export default function JobEditModal({ job, setJob, onSave, onCancel }) {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700"
+                disabled={!isEdited} // Disable if no edits
+                className={`px-4 py-2 text-white rounded-md ${
+                  isEdited ? "bg-green-600 hover:bg-green-700" : "bg-green-300 cursor-not-allowed"
+                }`}
               >
                 Save
               </button>

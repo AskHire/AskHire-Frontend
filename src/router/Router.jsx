@@ -34,6 +34,7 @@ import InterviewScheduler from "../pages/Manager/InterviewScheduler";
 import LongListInterviewScheduler from "../pages/Manager/LongListInterviewSheduler";
 import AutomatedInterviews from "../pages/Manager/AutomatedInterviews";
 import ManualInterviews from "../pages/Manager/ManualInterviews";
+import ManagerApplication from "../pages/Manager/ManagerApplication";
 
 // Admin Pages
 import AdminDashboard from "../pages/Admin/AdminDashboard";
@@ -144,6 +145,10 @@ const router = createBrowserRouter([
       {
         path: "Support",
         element: <SupportHelpPage/>
+      },
+      {
+        path: "ManagerApplication",
+        element: <ManagerApplication />
       },
 
     ],

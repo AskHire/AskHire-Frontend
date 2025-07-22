@@ -29,8 +29,8 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="flex-1 p-4 md:p-6">
-      <h1 className="mt-3 text-2xl font-bold md:text-3xl">Admin Dashboard</h1>
+    <div className="flex-1 pl-2 pr-4 md:pl-6">
+      <h1 className="text-2xl font-bold md:text-3xl">Admin Dashboard</h1>
 
       <div className="grid grid-cols-1 gap-6 mt-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard

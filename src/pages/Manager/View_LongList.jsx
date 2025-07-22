@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import ManagerTopbar from "../../components/ManagerTopbar";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import SuccessModal from "../../components/SuccessModal";
 
 const View_LongList = () => {
   const [vacancies, setVacancies] = useState([]);
@@ -288,11 +289,6 @@ const View_LongList = () => {
       setCandidatesData(candidatesWithTotalMark);
 
       // After setting candidatesWithInterviews, add a fallback redirect if no candidates and vacancy param is present
-      if (!viewAll && selectedVacancy && candidatesWithInterviews.length === 0) {
-        // Redirect to View All Candidates if no candidates found for the selected vacancy
-        navigate('/manager/View_LongList?view=all', { replace: true });
-        return;
-      }
     } catch (error) {
       handleApiError(error, 'fetch candidates');
       setCandidatesData([]);
@@ -663,7 +659,7 @@ const View_LongList = () => {
           </div>
         </div>
 
-        {renderNotification()}
+        <SuccessModal message={notification} onClose={() => setNotification(null)} />
 
         {/* Select Long-List Section */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -671,7 +667,7 @@ const View_LongList = () => {
           
           {/* View All Button and Current Selection */}
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <button
+            {/* <button
               onClick={handleViewAll}
               className={`py-2 px-4 rounded transition-colors ${
                 viewAll 
@@ -680,7 +676,7 @@ const View_LongList = () => {
               }`}
             >
               View All Candidates
-            </button>
+            </button> */}
             
             {selectedVacancy && (
               <div className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
@@ -693,29 +689,25 @@ const View_LongList = () => {
           
           
           
-          {/* Search Input */}
+          {/* Search Input replaced with Dropdown */}
           <div className="relative">
             <div className="flex items-center border rounded-lg bg-white shadow-sm">
-              <div className="absolute left-3">
-                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search for vacancy..."
-                className="w-full py-3 pl-10 pr-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <div className="pr-3">
-                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
+              <select
+                value={selectedVacancy || ''}
+                onChange={e => {
+                  const selected = vacancies.find(v => v.title === e.target.value);
+                  if (selected) handleSelectVacancy(selected);
+                }}
+                className="w-full py-3 pl-3 pr-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white rounded-lg"
+              >
+                <option value="" disabled>Select a vacancy...</option>
+                {vacancies.map(vacancy => (
+                  <option key={vacancy.id} value={vacancy.title}>
+                    {vacancy.title}
+                  </option>
+                ))}
+              </select>
             </div>
-            
-            {renderSearchSuggestions()}
           </div>
         </div>
 

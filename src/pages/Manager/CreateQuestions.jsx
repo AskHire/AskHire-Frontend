@@ -135,7 +135,7 @@ const CreateQuestions = () => {
   );
 
   return (
-    <div className="flex-1 pt-1 pb-4 pr-6 pl-6">
+    <div className="flex-1 pt-1 pb-20 pr-6 pl-6">
       <div className="pb-4">
         <ManagerTopbar />
       </div>
@@ -215,7 +215,7 @@ const CreateQuestions = () => {
 
       {/* Form */}
       {selectedRole && (
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white pt-6 px-6 py-6 rounded-lg shadow-md pb-10">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold">{selectedRole}</h2>
             <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
