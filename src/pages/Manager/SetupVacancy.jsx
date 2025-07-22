@@ -317,7 +317,7 @@ const SetupVacancy = () => {
             {/* Pre-Screening */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-gray-700 font-medium mb-2">📊 Pass Mark (%)</label>
+                <label className="block text-gray-700 font-medium mb-2">📊 Pre-Screening Pass Mark (%)</label>
                 <input
                   type="number"
                   name="preScreenPassMark"

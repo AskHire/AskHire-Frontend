@@ -2,6 +2,7 @@ import ManagerTopbar from '../../components/ManagerTopbar';
 import React, { useEffect, useState } from "react";
 import { Search, Edit, Trash2, X } from "lucide-react";
 import DeleteModal from '../../components/DeleteModal';
+import Pagination from '../../components/Admin/Pagination';
 
 const ManageVacancy = () => {
   const [vacancies, setVacancies] = useState([]);
@@ -127,18 +128,18 @@ const ManageVacancy = () => {
           <h2 className="text-2xl font-bold">Active Vacancies</h2>
           <div className="flex space-x-2">
             <div className="relative">
-              <input 
-                type="text" 
-                placeholder="Search vacancies..." 
-                className="px-4 py-2 pl-10 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors" 
-                value={searchQuery} 
-                onChange={(e) => setSearchQuery(e.target.value)} 
+              <input
+                type="text"
+                placeholder="Search vacancies..."
+                className="px-4 py-2 pl-10 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
               <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
             </div>
-            <select 
-              className="px-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors" 
-              value={sortOption} 
+            <select
+              className="px-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+              value={sortOption}
               onChange={(e) => setSortOption(e.target.value)}
             >
               <option>Newest</option>
@@ -195,46 +196,15 @@ const ManageVacancy = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex justify-center mt-6 space-x-2">
-            <button
-              className={`px-3 py-1 rounded border ${
-                currentPage === 1 
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-              onClick={() => paginate(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </button>
-            
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-              <button
-                key={pageNum}
-                className={`px-3 py-1 rounded border ${
-                  currentPage === pageNum
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-                onClick={() => paginate(pageNum)}
-              >
-                {pageNum}
-              </button>
-            ))}
-            
-            <button
-              className={`px-3 py-1 rounded border ${
-                currentPage === totalPages 
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-              onClick={() => paginate(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </button>
+          <div className="mt-6">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={paginate}
+            />
           </div>
         )}
+
       </div>
 
       {/* Edit Modal */}
@@ -252,12 +222,12 @@ const ManageVacancy = () => {
                 <div key={field} className="space-y-2">
                   <label className="block text-sm font-medium capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
                   {['requiredSkills', 'experience', 'education', 'instructions', 'nonTechnicalSkills'].includes(field) ? (
-                    <textarea 
-                      name={field} 
-                      value={editVacancy?.[field] || ''} 
-                      onChange={handleChange} 
-                      className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                      rows="3" 
+                    <textarea
+                      name={field}
+                      value={editVacancy?.[field] || ''}
+                      onChange={handleChange}
+                      className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows="3"
                     />
                   ) : (
                     <input
