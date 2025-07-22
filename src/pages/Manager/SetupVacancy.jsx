@@ -799,4 +799,3 @@ const SetupVacancy = () => {
 };
 
 export default SetupVacancy;
-
