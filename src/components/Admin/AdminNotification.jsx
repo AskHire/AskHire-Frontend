@@ -1,13 +1,13 @@
 import React from 'react';
 
-const CandidateNotification = ({ notifications, loading, error, onViewAllClick }) => {
+const AdminNotification = ({ notifications, loading, error, onViewAllClick }) => {
   return (
-    <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border z-50"> {/* Removed max-h-96 and overflow-y-auto from here */}
+    <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border z-50">
       <div className="p-4 border-b">
         <h3 className="text-lg font-semibold text-gray-800">Notifications</h3>
       </div>
 
-      <div className="max-h-80 overflow-y-auto"> {/* This is where the single scrollbar should be */}
+      <div className="max-h-80 overflow-y-auto">
         {loading ? (
           <div className="p-4 text-center text-gray-600">Loading notifications...</div>
         ) : error ? (
@@ -17,7 +17,7 @@ const CandidateNotification = ({ notifications, loading, error, onViewAllClick }
         ) : (
           notifications.map((n) => (
             <div
-              key={n.notificationId}
+              key={n.notificationId} // Assuming notificationId is the unique key
               className={`p-4 border-b hover:bg-gray-50 transition ${
                 n.status === 'Admin' || n.type === 'Important'
                   ? 'bg-yellow-50 border-l-2 border-yellow-300'
@@ -54,4 +54,4 @@ const CandidateNotification = ({ notifications, loading, error, onViewAllClick }
   );
 };
 
-export default CandidateNotification;
+export default AdminNotification;

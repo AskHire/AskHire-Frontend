@@ -41,11 +41,11 @@ const Calendar = () => {
 
       const reminderEvents = remindersRes.data.map((reminder) => ({
         id: reminder.reminderId,
-        title: `🔔 ${reminder.title}`,
+        title: reminder.title,
         date: reminder.date,
-        backgroundColor: '#f59e0b',
-        borderColor: '#f59e0b',
-        textColor: 'white',
+        backgroundColor: '#fef9c3',
+        borderColor: '#fef9c3',
+        textColor: 'black',
         extendedProps: {
           type: 'reminder',
           description: reminder.description,
@@ -85,11 +85,11 @@ const Calendar = () => {
         ...prev,
         {
           id: newReminder.reminderId,
-          title: `🔔 ${newReminder.title}`,
+          title: newReminder.title,
           date: newReminder.date,
-          backgroundColor: '#f59e0b',
-          borderColor: '#f59e0b',
-          textColor: 'white',
+          backgroundColor: '#fef9c3',
+          borderColor: '#fef9c3',
+          textColor: 'black',
           extendedProps: {
             type: 'reminder',
             description: newReminder.description,
@@ -156,7 +156,7 @@ const Calendar = () => {
           e.id === selectedEvent.id
             ? {
                 ...e,
-                title: `🔔 ${reminderTitle}`,
+                title: reminderTitle,
                 extendedProps: {
                   ...e.extendedProps,
                   titleRaw: reminderTitle,
@@ -181,6 +181,17 @@ const Calendar = () => {
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
+      <div className="flex items-center gap-4 mb-3">
+        <div className="flex items-center gap-1 text-lg">
+          <div className="w-3 h-3 rounded-full bg-blue-300"></div>
+          <span>Interview</span>
+        </div>
+        <div className="flex items-center gap-1 text-lg">
+          <div className="w-3 h-3 rounded-full bg-yellow-100 border border-yellow-300"></div>
+          <span>Reminder</span>
+        </div>
+      </div>
+
       <FullCalendar
         plugins={[dayGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
@@ -189,12 +200,31 @@ const Calendar = () => {
         events={events}
         eventContent={(eventInfo) => {
           const { event } = eventInfo;
-          const { description, type } = event.extendedProps;
+          const { type, description } = event.extendedProps;
+
+          const bgColor = type === 'reminder' ? '#fef9c3' : '#bfdbfe';
+          const textColor = 'black';
+
+          if (type === 'reminder') {
+            return (
+              <div
+                className="p-1 rounded"
+                style={{
+                  backgroundColor: bgColor,
+                  color: textColor,
+                  fontSize: '0.875rem',
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {event.title}
+              </div>
+            );
+          }
+
+          // INTERVIEW display
           const firstLine = description?.split('\n')[0] ?? '';
-
-          const bgColor = type === 'reminder' ? '#f59e0b' : '#bfdbfe';
-          const textColor = type === 'reminder' ? 'white' : 'black';
-
           return (
             <div
               className="p-1 rounded"
@@ -264,13 +294,27 @@ const Calendar = () => {
         </div>
       )}
 
-      {/* View/Edit Reminder or Interview Modal */}
+      {/* View/Edit Modal */}
       {selectedEvent && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-40">
-          <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-2">{isEditing ? 'Edit Reminder' : selectedEvent.title}</h2>
+          <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md relative">
+            <button
+              className="absolute top-2 right-2 text-xl text-gray-500 hover:text-black"
+              onClick={() => {
+                setIsEditing(false);
+                setSelectedEvent(null);
+              }}
+            >
+              &times;
+            </button>
+
+            <h2 className="text-xl font-semibold mb-2">
+              {isEditing ? 'Edit Reminder' : selectedEvent.title}
+            </h2>
             <p className="text-sm text-gray-500 mb-1">📅 {selectedEvent.date}</p>
-            {selectedEvent.time && <p className="text-sm text-gray-500 mb-2">🕒 {selectedEvent.time}</p>}
+            {selectedEvent.time && (
+              <p className="text-sm text-gray-500 mb-2">🕒 {selectedEvent.time}</p>
+            )}
 
             {isEditing ? (
               <>
@@ -295,7 +339,7 @@ const Calendar = () => {
               {selectedEvent.type === 'reminder' && !isEditing && (
                 <>
                   <button
-                    className="px-3 py-2 rounded bg-yellow-500 hover:bg-yellow-600 text-white text-sm"
+                    className="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm"
                     onClick={() => {
                       setReminderTitle(selectedEvent.title);
                       setReminderDescription(selectedEvent.description);
@@ -312,19 +356,12 @@ const Calendar = () => {
                   </button>
                 </>
               )}
-              {isEditing ? (
+              {isEditing && (
                 <button
                   className="px-4 py-2 rounded bg-green-600 hover:bg-green-700 text-white text-sm"
                   onClick={handleUpdateReminder}
                 >
                   Save
-                </button>
-              ) : (
-                <button
-                  className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm"
-                  onClick={() => setSelectedEvent(null)}
-                >
-                  Close
                 </button>
               )}
             </div>
