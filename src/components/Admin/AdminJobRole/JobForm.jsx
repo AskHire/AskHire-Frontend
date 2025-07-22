@@ -35,9 +35,9 @@ export default function JobForm({ newJob, setNewJob, onSubmit }) {
                 errors.JobTitle ? "border-red-500" : "border-gray-300"
               }`}
               value={newJob.JobTitle}
-              onChange={(e) =>
-                setNewJob({ ...newJob, JobTitle: e.target.value })
-              }
+              onChange={(e) => {
+                setNewJob({ ...newJob, JobTitle: e.target.value });
+              }}
             />
             {errors.JobTitle && (
               <p className="mt-1 text-sm text-red-500">{errors.JobTitle}</p>
@@ -52,9 +52,9 @@ export default function JobForm({ newJob, setNewJob, onSubmit }) {
                 errors.Description ? "border-red-500" : "border-gray-300"
               }`}
               value={newJob.Description}
-              onChange={(e) =>
-                setNewJob({ ...newJob, Description: e.target.value })
-              }
+              onChange={(e) => {
+                setNewJob({ ...newJob, Description: e.target.value });
+              }}
             />
             {errors.Description && (
               <p className="mt-1 text-sm text-red-500">{errors.Description}</p>
@@ -105,7 +105,7 @@ export default function JobForm({ newJob, setNewJob, onSubmit }) {
             </div>
           </div>
 
-          {/* Submit Button (Always Clickable) */}
+          {/* Submit Button */}
           <div className="flex justify-end">
             <button
               type="submit"

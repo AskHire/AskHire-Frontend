@@ -5,6 +5,7 @@ import JobEditModal from "../../components/Admin/AdminJobRole/JobEditModal";
 import Pagination from "../../components/Admin/Pagination";
 import DeleteModal from "../../components/DeleteModal";
 import { BiPencil, BiTrash } from "react-icons/bi";
+import SuccessToast from "../../components/SuccessToast"; // ✅ Import
 
 export default function CreateJobs() {
   const [newJob, setNewJob] = useState({
@@ -20,24 +21,25 @@ export default function CreateJobs() {
   const [itemsPerPage] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOrder, setSortOrder] = useState("");
+  const [sortOrder, setSortOrder] = useState("CreatedDate:desc");
 
-  // Delete modal and toast state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
+
+  const [serverError, setServerError] = useState("");
 
   useEffect(() => {
     fetchJobs(currentPage, searchQuery, sortOrder);
   }, [currentPage, searchQuery, sortOrder]);
 
   const normalizeJob = (job) => ({
-    JobId: job.jobId || job.JobId || job.id,
-    JobTitle: job.jobTitle || job.JobTitle || "No Title",
-    Description: job.description || job.Description || "No Description",
-    WorkType: job.workType || job.WorkType || "N/A",
-    WorkLocation: job.workLocation || job.WorkLocation || "N/A",
-    CreatedAt: job.createdAt || job.CreatedAt || "2000-01-01",
+    JobId: job.jobId ?? job.JobId ?? job.id,
+    JobTitle: job.jobTitle ?? job.JobTitle ?? "No Title",
+    Description: job.description ?? job.Description ?? "No Description",
+    WorkType: job.workType ?? job.WorkType ?? "N/A",
+    WorkLocation: job.workLocation ?? job.WorkLocation ?? "N/A",
+    CreatedAt: job.createdAt ?? job.CreatedAt ?? "2000-01-01",
   });
 
   const fetchJobs = async (page, search, sort) => {
@@ -50,8 +52,8 @@ export default function CreateJobs() {
       if (search) params.append("SearchTerm", search);
       if (sort) {
         const [key, dir] = sort.split(":");
-        params.append("SortBy", key);
-        params.append("IsDescending", dir === "desc");
+        if (key) params.append("SortBy", key);
+        if (dir) params.append("IsDescending", String(dir === "desc"));
       }
 
       const res = await axios.get(
@@ -73,6 +75,7 @@ export default function CreateJobs() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!newJob.JobTitle || !newJob.Description) {
       alert("Please fill all required fields.");
       return;
@@ -81,19 +84,23 @@ export default function CreateJobs() {
     try {
       await axios.post("http://localhost:5190/api/adminjobrole", newJob);
       setSuccessMessage("Job created successfully!");
-      setTimeout(() => setSuccessMessage(""), 3000);
+      setServerError("");
+
       setNewJob({
         JobTitle: "",
         Description: "",
         WorkLocation: "Physical",
         WorkType: "Full-Time",
       });
+
       setCurrentPage(1);
       fetchJobs(1, searchQuery, sortOrder);
     } catch (error) {
-      alert(
-        `Error creating job: ${error.response?.data?.title || error.message}`
-      );
+      if (error.response?.status === 409) {
+        setServerError(error.response.data.title || "This job already exists.");
+      } else {
+        setServerError("An unexpected error occurred.");
+      }
     }
   };
 
@@ -104,7 +111,9 @@ export default function CreateJobs() {
 
   const confirmDelete = async () => {
     try {
-      await axios.delete(`http://localhost:5190/api/adminjobrole/${jobToDelete}`);
+      await axios.delete(
+        `http://localhost:5190/api/adminjobrole/${jobToDelete}`
+      );
       setSuccessMessage("Job deleted successfully!");
       fetchJobs(currentPage, searchQuery, sortOrder);
     } catch (error) {
@@ -112,7 +121,6 @@ export default function CreateJobs() {
     } finally {
       setDeleteModalOpen(false);
       setJobToDelete(null);
-      setTimeout(() => setSuccessMessage(""), 3000);
     }
   };
 
@@ -131,7 +139,6 @@ export default function CreateJobs() {
         editingJob
       );
       setSuccessMessage("Job updated successfully!");
-      setTimeout(() => setSuccessMessage(""), 3000);
       setEditingJob(null);
       fetchJobs(currentPage, searchQuery, sortOrder);
     } catch (error) {
@@ -148,10 +155,23 @@ export default function CreateJobs() {
   };
 
   return (
-    <div className="flex-1 p-6">
-      <h1 className="mt-3 text-3xl font-bold">Create Jobs</h1>
+    <div className="flex-1 pl-2 pr-4 md:pl-6">
+      <h1 className="text-3xl font-bold">Create Jobs</h1>
 
-      <JobForm newJob={newJob} setNewJob={setNewJob} onSubmit={handleSubmit} />
+      {serverError && (
+        <div className="p-3 mb-4 text-red-700 bg-red-100 border border-red-400 rounded">
+          {serverError}
+        </div>
+      )}
+
+      <JobForm
+        newJob={newJob}
+        setNewJob={(job) => {
+          setNewJob(job);
+          setServerError("");
+        }}
+        onSubmit={handleSubmit}
+      />
 
       <h1 className="mt-10 text-3xl font-bold">Manage Jobs</h1>
 
@@ -175,11 +195,10 @@ export default function CreateJobs() {
           }}
           className="px-3 py-2 text-sm text-gray-700 bg-gray-100 border rounded-md"
         >
-          <option value="">Sort By</option>
+          <option value="CreatedDate:desc">Newest (default)</option>
+          <option value="CreatedDate:asc">Oldest</option>
           <option value="JobTitle:asc">Title A-Z</option>
           <option value="JobTitle:desc">Title Z-A</option>
-          <option value="CreatedAt:desc">Newest</option>
-          <option value="CreatedAt:asc">Oldest</option>
         </select>
       </div>
 
@@ -249,12 +268,11 @@ export default function CreateJobs() {
         onConfirm={confirmDelete}
       />
 
-      {/*  Toast-style floating success message */}
-      {successMessage && (
-        <div className="fixed z-50 px-4 py-2 text-blue-800 bg-blue-100 border border-blue-300 rounded-lg shadow-lg top-4 right-4 animate-slide-in-out">
-          <strong className="font-medium">Success!</strong> {successMessage}
-        </div>
-      )}
+      {/* ✅ Toast Component */}
+      <SuccessToast
+        message={successMessage}
+        onClose={() => setSuccessMessage("")}
+      />
     </div>
   );
 }

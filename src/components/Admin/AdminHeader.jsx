@@ -76,7 +76,7 @@ export default function AdminHeader() {
             className={`text-2xl cursor-pointer transition-colors ${showNotifications ? 'text-blue-600' : 'text-gray-700 hover:text-gray-900'}`}
           />
           {notifications.length > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            <span className="absolute flex items-center justify-center w-5 h-5 text-xs text-white bg-red-500 rounded-full -top-1 -right-1">
               {notifications.length > 9 ? '9+' : notifications.length}
             </span>
           )}
