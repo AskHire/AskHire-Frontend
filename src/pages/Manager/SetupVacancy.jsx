@@ -1,802 +1,266 @@
-
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { Search } from "lucide-react";
 import ManagerTopbar from '../../components/ManagerTopbar';
+import React, { useEffect, useState } from "react";
+import { Search, Edit, Trash2, X } from "lucide-react";
+import DeleteModal from '../../components/DeleteModal';
+import Pagination from '../../components/Admin/Pagination';
 
-const SetupVacancy = () => {
-  // Job role selector states
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('');
-  const [selectedJobId, setSelectedJobId] = useState('');
-  const [jobRoles, setJobRoles] = useState([]);
+const ManageVacancy = () => {
+  const [vacancies, setVacancies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingError, setLoadingError] = useState(null);
+  const [error, setError] = useState("");
+  const [editVacancy, setEditVacancy] = useState(null);
+  const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Form states
-  const [formData, setFormData] = useState({
-    VacancyName: "",
-    Instructions: "",
-    education: "",
-    experience: "",
-    requiredSkills: "",
-    nonTechnicalSkills: "",
-    startDate: "",
-    endDate: "",
-    cvPassMark: "",
-    preScreenPassMark: "",
-    questionCount: "",
-    duration: ""
-  });
+  const [sortOption, setSortOption] = useState('Newest');
 
-  // Fetch job roles when component mounts
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [vacancyToDelete, setVacancyToDelete] = useState(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const vacanciesPerPage = 10;
+
   useEffect(() => {
-    const fetchJobRoles = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('http://localhost:5190/api/JobRole');
-        setJobRoles(response.data);
-        
-        // Set the first job role as selected if available
-        if (response.data.length > 0) {
-          setSelectedRole(response.data[0].jobTitle);
-          setSelectedJobId(response.data[0].jobId);
-        }
-      } catch (err) {
-        console.error('Error fetching job roles:', err);
-        setLoadingError('Failed to load job roles. Please try again later.');
-      } finally {
+    fetch("http://localhost:5190/api/Vacancy")
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        return response.json();
+      })
+      .then((data) => {
+        setVacancies(data);
         setLoading(false);
-      }
-    };
-
-    fetchJobRoles();
+      })
+      .catch((error) => {
+        console.error("Error fetching vacancies:", error);
+        setError("Failed to load vacancies.");
+        setLoading(false);
+      });
   }, []);
 
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen);
+  const confirmDelete = async () => {
+    if (!vacancyToDelete) return;
+    try {
+      const response = await fetch(`http://localhost:5190/api/Vacancy/${vacancyToDelete.vacancyId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete vacancy");
+      setVacancies(vacancies.filter(v => v.vacancyId !== vacancyToDelete.vacancyId));
+      setShowDeleteModal(false);
+      setVacancyToDelete(null);
+    } catch (error) {
+      console.error("Error deleting vacancy:", error);
+      alert("Error deleting vacancy.");
+    }
   };
-  
-  const selectRole = (role, id) => {
-    setSelectedRole(role);
-    setSelectedJobId(id);
-    setIsOpen(false);
-    setSearchQuery(''); // Clear search when role is selected
+
+  const handleDelete = (vacancy) => {
+    setVacancyToDelete(vacancy);
+    setShowDeleteModal(true);
+  };
+
+  const handleEdit = (vacancy) => {
+    setEditVacancy({ ...vacancy });
+    setShowModal(true);
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    const dataToSubmit = {
-      ...formData,
-      jobId: selectedJobId
-    };
-    
-    try {
-      const response = await axios.post("http://localhost:5190/api/Vacancy", dataToSubmit, {
-        headers: { "Content-Type": "application/json" }
-      });
-      alert("Vacancy created successfully!");
-      console.log(response.data);
-      
-      // Reset form fields but keep selected job
-      setFormData({
-        VacancyName: "",
-        Instructions: "",
-        education: "",
-        experience: "",
-        requiredSkills: "",
-        nonTechnicalSkills: "",
-        startDate: "",
-        endDate: "",
-        cvPassMark: "",
-        preScreenPassMark: "",
-        questionCount: "",
-        duration: ""
-      });
-    } catch (error) {
-      alert("Error creating vacancy: " + (error.response?.data?.message || error.message));
-      console.error(error);
+    const { name, value, type } = e.target;
+    if (type === 'number') {
+      setEditVacancy({ ...editVacancy, [name]: parseInt(value, 10) });
+    } else {
+      setEditVacancy({ ...editVacancy, [name]: value });
     }
   };
-  
-  const handleClear = () => {
-    setFormData({
-      VacancyName: "",
-      Instructions: "",
-      education: "",
-      experience: "",
-      requiredSkills: "",
-      nonTechnicalSkills: "",
-      startDate: "",
-      endDate: "",
-      cvPassMark: "",
-      preScreenPassMark: "",
-      questionCount: "",
-      duration: ""
-    });
+
+  const handleSave = async () => {
+    if (!editVacancy) return;
+    try {
+      const response = await fetch(`http://localhost:5190/api/Vacancy/${editVacancy.vacancyId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editVacancy),
+      });
+      if (!response.ok) throw new Error("Failed to update vacancy");
+      setVacancies(
+        vacancies.map((v) =>
+          v.vacancyId === editVacancy.vacancyId ? editVacancy : v
+        )
+      );
+      setShowModal(false);
+    } catch (error) {
+      console.error("Error updating vacancy:", error);
+      alert("Error updating vacancy.");
+    }
   };
 
-  // Filter job roles based on search query
-  const filteredJobRoles = jobRoles.filter(role =>
-    role.jobTitle.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredVacancies = vacancies.filter(v =>
+    v.vacancyName.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const sortedVacancies = [...filteredVacancies].sort((a, b) => {
+    if (sortOption === 'Newest') return new Date(b.startDate) - new Date(a.startDate);
+    if (sortOption === 'Oldest') return new Date(a.startDate) - new Date(b.startDate);
+    if (sortOption === 'Alphabetical') return a.vacancyName.localeCompare(b.vacancyName);
+    return 0;
+  });
+
+  // Pagination logic
+  const indexOfLast = currentPage * vacanciesPerPage;
+  const indexOfFirst = indexOfLast - vacanciesPerPage;
+  const currentVacancies = sortedVacancies.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(sortedVacancies.length / vacanciesPerPage);
+
+  const paginate = (pageNum) => setCurrentPage(pageNum);
+
+  // Reset to first page when search or sort changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sortOption]);
+
+  if (loading) return <div className="flex-1 pt-1 pb-4 pr-6 pl-6"><div className="pb-4"><ManagerTopbar /></div><p className="text-center py-8">Loading vacancies...</p></div>;
+  if (error) return <div className="flex-1 pt-1 pb-4 pr-6 pl-6"><div className="pb-4"><ManagerTopbar /></div><p className="text-red-500 text-center py-8">{error}</p></div>;
 
   return (
     <div className="flex-1 pt-1 pb-4 pr-6 pl-6">
-      <div className="pb-4">
-        <ManagerTopbar />
-      </div>
-      <h1 className="text-3xl font-bold mb-6">Setup Vacancy</h1>
-      
-      {/* Job Role Selector Card */}
-      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-        <h2 className="text-xl font-bold mb-4">Select Job Role</h2>
-        
-        <div className="relative w-full">
-          <div
-            className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-            onClick={toggleDropdown}
-          >
-            <div className="text-gray-700">
-              {loading ? 'Loading...' : selectedRole || 'Select a job role'}
+      <div className="pb-4"><ManagerTopbar /></div>
+      <h1 className="text-3xl font-bold mb-6">Manage Vacancy</h1>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Active Vacancies</h2>
+          <div className="flex space-x-2">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search vacancies..."
+                className="px-4 py-2 pl-10 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
             </div>
-            <div className={`text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}>▼</div>
+            <select
+              className="px-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value)}
+            >
+              <option>Newest</option>
+              <option>Oldest</option>
+              <option>Alphabetical</option>
+            </select>
           </div>
-          
-          {isOpen && !loading && (
-            <div className="absolute w-full mt-1 bg-white border rounded-lg shadow-lg z-10">
-              {/* Search Bar */}
-              <div className="p-3 border-b">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search job roles..."
-                    className="w-full px-4 py-2 pl-10 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onClick={(e) => e.stopPropagation()} // Prevent dropdown from closing
-                  />
-                  <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
-                </div>
-              </div>
-
-              {/* Results */}
-              <div className="max-h-60 overflow-y-auto">
-                {loadingError ? (
-                  <p className="px-4 py-2 text-red-500">{loadingError}</p>
-                ) : filteredJobRoles.length === 0 ? (
-                  <p className="px-4 py-2 text-gray-500">
-                    {searchQuery ? `No job roles found matching "${searchQuery}"` : 'No job roles found'}
-                  </p>
-                ) : (
-                  <ul className="py-1">
-                    {filteredJobRoles.map((role) => (
-                      <li
-                        key={role.jobId}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer transition-colors"
-                        onClick={() => selectRole(role.jobTitle, role.jobId)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span>{role.jobTitle}</span>
-                          {role.jobId === selectedJobId && (
-                            <span className="text-blue-600 text-sm">✓ Selected</span>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              {/* Results summary */}
-              {searchQuery && filteredJobRoles.length > 0 && (
-                <div className="px-4 py-2 border-t bg-gray-50 text-sm text-gray-600">
-                  Showing {filteredJobRoles.length} result{filteredJobRoles.length !== 1 ? 's' : ''} for "{searchQuery}"
-                </div>
-              )}
-            </div>
-          )}
         </div>
-      </div>
-      
-      {/* Vacancy Form Card */}
-      {selectedRole && (
-        <div className="bg-white p-6 rounded-lg shadow-md border border-blue-200">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">{selectedRole}</h2>
-            <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-              Job ID: {selectedJobId}
-            </span>
-          </div>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Instructions */}
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Instructions
-              </label>
-              <textarea
-                name="Instructions"
-                value={formData.Instructions}
-                onChange={handleChange}
-                placeholder="Enter details about vacancy..."
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                rows={3}
-              />
-            </div>
 
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Vacancy Name
-              </label>
-              <input
-                type="text"
-                name="VacancyName"
-                value={formData.VacancyName}
-                onChange={handleChange}
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-              />
-            </div>
-            
-            {/* Education */}
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Education
-              </label>
-              <input
-                type="text"
-                name="education"
-                value={formData.education}
-                onChange={handleChange}
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-              />
-            </div>
-            
-            {/* Experience */}
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Experience
-              </label>
-              <input
-                type="text"
-                name="experience"
-                value={formData.experience}
-                onChange={handleChange}
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-              />
-            </div>
-            
-            {/* Technical Skills */}
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Technical Skills
-              </label>
-              <input
-                type="text"
-                name="requiredSkills"
-                value={formData.requiredSkills}
-                onChange={handleChange}
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-              />
-            </div>
-            
-            {/* Non-Technical Skills */}
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Non-Technical Skills
-              </label>
-              <input
-                type="text"
-                name="nonTechnicalSkills"
-                value={formData.nonTechnicalSkills}
-                onChange={handleChange}
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-              />
-            </div>
-            
-            {/* Date Range */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  📅 Start Date
-                </label>
-                <input
-                  type="date"
-                  name="startDate"
-                  value={formData.startDate}
-                  onChange={handleChange}
-                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                />
+        {/* Results summary */}
+        {searchQuery && (
+          <div className="mb-4 text-sm text-gray-600">
+            Showing {sortedVacancies.length} result{sortedVacancies.length !== 1 ? 's' : ''} for "{searchQuery}"
+          </div>
+        )}
+
+        {/* Header Row */}
+        <div className="grid grid-cols-12 py-2 border-b text-gray-500 text-sm">
+          <div className="col-span-1 px-4">#</div>
+          <div className="col-span-5 px-4">Vacancy Name</div>
+          <div className="col-span-2 px-4">Start Date</div>
+          <div className="col-span-2 px-4">End Date</div>
+          <div className="col-span-1 text-center">Edit</div>
+          <div className="col-span-1 text-center">Delete</div>
+        </div>
+
+        {/* Vacancy Rows */}
+        {currentVacancies.length > 0 ? (
+          currentVacancies.map((vacancy, index) => (
+            <div key={vacancy.vacancyId} className="grid grid-cols-12 py-4 border-b items-center hover:bg-gray-50 transition-colors">
+              <div className="col-span-1 px-4 text-gray-500">
+                {(currentPage - 1) * vacanciesPerPage + index + 1}
               </div>
-              
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  📅 End Date
-                </label>
-                <input
-                  type="date"
-                  name="endDate"
-                  value={formData.endDate}
-                  onChange={handleChange}
-                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                />
+              <div className="col-span-5 px-4 font-medium">{vacancy.vacancyName}</div>
+              <div className="col-span-2 px-4">{new Date(vacancy.startDate).toLocaleDateString()}</div>
+              <div className="col-span-2 px-4">{new Date(vacancy.endDate).toLocaleDateString()}</div>
+              <div className="col-span-1 flex justify-center">
+                <button className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors" onClick={() => handleEdit(vacancy)}>
+                  <Edit size={16} />
+                </button>
+              </div>
+              <div className="col-span-1 flex justify-center">
+                <button className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors" onClick={() => handleDelete(vacancy)}>
+                  <Trash2 size={16} />
+                </button>
               </div>
             </div>
-            
-            {/* CV Pass Mark */}
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                📋 CV Pass Mark (%)
-              </label>
-              <input
-                type="number"
-                name="cvPassMark"
-                value={formData.cvPassMark}
-                onChange={handleChange}
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                min="0"
-                max="100"
-              />
-            </div>
-            
-            {/* Pre-Screening Section */}
-            <div className="mt-6">
-              <h3 className="text-lg font-medium mb-4">Pre-Screening</h3>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-700 font-medium mb-2">
-                    📊 Pass Mark (%)
-                  </label>
-                  <input
-                    type="number"
-                    name="preScreenPassMark"
-                    value={formData.preScreenPassMark}
-                    onChange={handleChange}
-                    className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                    min="0"
-                    max="100"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-gray-700 font-medium mb-2">
-                    ❓ Question Count
-                  </label>
-                  <input
-                    type="number"
-                    name="questionCount"
-                    value={formData.questionCount}
-                    onChange={handleChange}
-                    className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                    min="1"
-                  />
-                </div>
-              </div>
-              
-              <div className="mt-4">
-                <label className="block text-gray-700 font-medium mb-2">
-                  ⏰ Duration (Minutes)
-                </label>
-                <input
-                  type="number"
-                  name="duration"
-                  value={formData.duration}
-                  onChange={handleChange}
-                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                  min="1"
-                />
-              </div>
-            </div>
-            
-            {/* Form Buttons */}
-            <div className="flex justify-end space-x-4 mt-8">
-              <button
-                type="button"
-                onClick={handleClear}
-                className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium"
-              >
-                Clear
-              </button>
-              <button
-                type="submit"
-                className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium"
-              >
-                Create
+          ))
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            {searchQuery ? `No vacancies found matching "${searchQuery}"` : 'No vacancies available'}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-6">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={paginate}
+            />
+          </div>
+        )}
+
+      </div>
+
+      {/* Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-5xl max-h-screen overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Edit Vacancy</h2>
+              <button className="text-gray-500 hover:text-gray-700" onClick={() => setShowModal(false)}>
+                <X size={20} />
               </button>
             </div>
-          </form>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {['vacancyName', 'startDate', 'endDate', 'duration', 'requiredSkills', 'experience', 'education', 'instructions', 'nonTechnicalSkills', 'cvPassMark', 'preScreenPassMark', 'questionCount'].map(field => (
+                <div key={field} className="space-y-2">
+                  <label className="block text-sm font-medium capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
+                  {['requiredSkills', 'experience', 'education', 'instructions', 'nonTechnicalSkills'].includes(field) ? (
+                    <textarea
+                      name={field}
+                      value={editVacancy?.[field] || ''}
+                      onChange={handleChange}
+                      className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows="3"
+                    />
+                  ) : (
+                    <input
+                      type={['cvPassMark', 'preScreenPassMark', 'questionCount', 'duration'].includes(field) ? 'number' : field.includes('Date') ? 'date' : 'text'}
+                      name={field}
+                      value={field.includes('Date') ? editVacancy?.[field]?.split('T')[0] || '' : editVacancy?.[field] || ''}
+                      onChange={handleChange}
+                      className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex space-x-2 pt-6 mt-4 border-t">
+              <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors" onClick={handleSave}>
+                Save Changes
+              </button>
+              <button className="bg-gray-300 px-6 py-2 rounded-lg font-medium hover:bg-gray-400 transition-colors" onClick={() => setShowModal(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
+
+      <DeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+      />
+
     </div>
   );
 };
 
-export default SetupVacancy;
-=======
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { Search } from "lucide-react";
-import ManagerTopbar from '../../components/ManagerTopbar';
-
-const SetupVacancy = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('');
-  const [selectedJobId, setSelectedJobId] = useState('');
-  const [jobRoles, setJobRoles] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingError, setLoadingError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const [formData, setFormData] = useState({
-    VacancyName: "",
-    Instructions: "",
-    education: "",
-    experience: "",
-    requiredSkills: "",
-    nonTechnicalSkills: "",
-    startDate: "",
-    endDate: "",
-    cvPassMark: "",
-    preScreenPassMark: "",
-    questionCount: "",
-    duration: ""
-  });
-
-  useEffect(() => {
-    const fetchJobRoles = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('http://localhost:5190/api/JobRole');
-        setJobRoles(response.data);
-
-        if (response.data.length > 0) {
-          setSelectedRole(response.data[0].jobTitle);
-          setSelectedJobId(response.data[0].jobId);
-        }
-      } catch (err) {
-        console.error('Error fetching job roles:', err);
-        setLoadingError('Failed to load job roles. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchJobRoles();
-  }, []);
-
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const selectRole = (role, id) => {
-    setSelectedRole(role);
-    setSelectedJobId(id);
-    setIsOpen(false);
-    setSearchQuery('');
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const dataToSubmit = {
-      ...formData,
-      jobId: selectedJobId
-    };
-
-    try {
-      const response = await axios.post("http://localhost:5190/api/Vacancy", dataToSubmit, {
-        headers: { "Content-Type": "application/json" }
-      });
-      alert("Vacancy created successfully!");
-      console.log(response.data);
-
-      setFormData({
-        VacancyName: "",
-        Instructions: "",
-        education: "",
-        experience: "",
-        requiredSkills: "",
-        nonTechnicalSkills: "",
-        startDate: "",
-        endDate: "",
-        cvPassMark: "",
-        preScreenPassMark: "",
-        questionCount: "",
-        duration: ""
-      });
-    } catch (error) {
-      alert("Error creating vacancy: " + (error.response?.data?.message || error.message));
-      console.error(error);
-    }
-  };
-
-  const handleClear = () => {
-    setFormData({
-      VacancyName: "",
-      Instructions: "",
-      education: "",
-      experience: "",
-      requiredSkills: "",
-      nonTechnicalSkills: "",
-      startDate: "",
-      endDate: "",
-      cvPassMark: "",
-      preScreenPassMark: "",
-      questionCount: "",
-      duration: ""
-    });
-  };
-
-  const filteredJobRoles = jobRoles.filter(role =>
-    role.jobTitle.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  return (
-    <div className="flex-1 pt-1 pb-4 pr-6 pl-6">
-      <div className="pb-4">
-        <ManagerTopbar />
-      </div>
-      <h1 className="text-3xl font-bold mb-6">Setup Vacancy</h1>
-
-      {/* Job Role Selector */}
-      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-        <h2 className="text-xl font-bold mb-4">Select Job Role</h2>
-        <div className="relative w-full">
-          <div
-            className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors"
-            onClick={toggleDropdown}
-          >
-            <div className="text-gray-700">
-              {loading ? 'Loading...' : selectedRole || 'Select a job role'}
-            </div>
-            <div className={`text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}>▼</div>
-          </div>
-
-          {isOpen && !loading && (
-            <div className="absolute w-full mt-1 bg-white border rounded-lg shadow-lg z-10">
-              <div className="p-3 border-b">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search job roles..."
-                    className="w-full px-4 py-2 pl-10 bg-gray-50 rounded-lg"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
-                </div>
-              </div>
-
-              <div className="max-h-60 overflow-y-auto">
-                {loadingError ? (
-                  <p className="px-4 py-2 text-red-500">{loadingError}</p>
-                ) : filteredJobRoles.length === 0 ? (
-                  <p className="px-4 py-2 text-gray-500">
-                    {searchQuery ? `No job roles found matching "${searchQuery}"` : 'No job roles found'}
-                  </p>
-                ) : (
-                  <ul className="py-1">
-                    {filteredJobRoles.map((role) => (
-                      <li
-                        key={role.jobId}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        onClick={() => selectRole(role.jobTitle, role.jobId)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span>{role.jobTitle}</span>
-                          {role.jobId === selectedJobId && (
-                            <span className="text-blue-600 text-sm">✓ Selected</span>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Vacancy Form */}
-      {selectedRole && (
-        <div className="bg-white p-6 rounded-lg shadow-md border border-blue-200">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <h2 className="text-xl font-bold mb-4">{selectedRole}</h2>
-
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Vacancy Name</label>
-              <input
-                type="text"
-                name="VacancyName"
-                value={formData.VacancyName}
-                onChange={handleChange}
-                className="w-full p-3 border rounded-lg"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Instructions</label>
-              <textarea
-                name="Instructions"
-                value={formData.Instructions}
-                onChange={handleChange}
-                onInput={(e) => {
-                  e.target.style.height = "auto";
-                  e.target.style.height = `${e.target.scrollHeight}px`;
-                }}
-                className="w-full h-10 p-3 border rounded-lg overflow-hidden resize-none transition-all duration-200 ease-in-out focus:h-32"
-              />
-            </div>
-
-
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Education</label>
-              <textarea
-                name="education"
-                value={formData.education}
-                onChange={handleChange}
-                ronInput={(e) => {
-                  e.target.style.height = "auto";
-                  e.target.style.height = `${e.target.scrollHeight}px`;
-                }}
-                className="w-full h-10 p-3 border rounded-lg overflow-hidden resize-none transition-all duration-200 ease-in-out focus:h-32"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Experience</label>
-              <textarea
-                name="experience"
-                value={formData.experience}
-                onChange={handleChange}
-                onInput={(e) => {
-                  e.target.style.height = "auto";
-                  e.target.style.height = `${e.target.scrollHeight}px`;
-                }}
-                className="w-full h-10 p-3 border rounded-lg overflow-hidden resize-none transition-all duration-200 ease-in-out focus:h-32"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Technical Skills</label>
-              <textarea
-                name="requiredSkills"
-                value={formData.requiredSkills}
-                onChange={handleChange}
-                onInput={(e) => {
-                  e.target.style.height = "auto";
-                  e.target.style.height = `${e.target.scrollHeight}px`;
-                }}
-                className="w-full h-10 p-3 border rounded-lg overflow-hidden resize-none transition-all duration-200 ease-in-out focus:h-32"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Non-Technical Skills</label>
-              <textarea
-                name="nonTechnicalSkills"
-                value={formData.nonTechnicalSkills}
-                onChange={handleChange}
-                onInput={(e) => {
-                  e.target.style.height = "auto";
-                  e.target.style.height = `${e.target.scrollHeight}px`;
-                }}
-                className="w-full h-10 p-3 border rounded-lg overflow-hidden resize-none transition-all duration-200 ease-in-out focus:h-32"
-              />
-            </div>
-
-            {/* Dates */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">📅 Start Date</label>
-                <input
-                  type="date"
-                  name="startDate"
-                  value={formData.startDate}
-                  onChange={handleChange}
-                  className="w-full p-3 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">📅 End Date</label>
-                <input
-                  type="date"
-                  name="endDate"
-                  value={formData.endDate}
-                  onChange={handleChange}
-                  className="w-full p-3 border rounded-lg"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">📋 CV Pass Mark (%)</label>
-              <input
-                type="number"
-                name="cvPassMark"
-                value={formData.cvPassMark}
-                onChange={handleChange}
-                min="0"
-                max="100"
-                className="w-full p-3 border rounded-lg"
-              />
-            </div>
-
-            {/* Pre-Screening */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">📊 Pre-Screening Pass Mark (%)</label>
-                <input
-                  type="number"
-                  name="preScreenPassMark"
-                  value={formData.preScreenPassMark}
-                  onChange={handleChange}
-                  min="0"
-                  max="100"
-                  className="w-full p-3 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">❓ Question Count</label>
-                <input
-                  type="number"
-                  name="questionCount"
-                  value={formData.questionCount}
-                  onChange={handleChange}
-                  min="1"
-                  className="w-full p-3 border rounded-lg"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">⏰ Duration (Minutes)</label>
-              <input
-                type="number"
-                name="duration"
-                value={formData.duration}
-                onChange={handleChange}
-                min="1"
-                className="w-full p-3 border rounded-lg"
-              />
-            </div>
-
-            <div className="flex justify-end space-x-4 mt-6">
-              <button
-                type="button"
-                onClick={handleClear}
-                className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600"
-              >
-                Clear
-              </button>
-              <button
-                type="submit"
-                className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-              >
-                Create
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default SetupVacancy;
-
+export default ManageVacancy;
