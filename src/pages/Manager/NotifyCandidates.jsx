@@ -55,7 +55,7 @@ function ManagerNotificationForm({ onNotify }) {
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject, message, type, time: new Date().toISOString() })
+        body: JSON.stringify({ subject, message, type, time: new Date().toISOString(), senderRole: "Manager", Status: "Manager" })
       });
 
       console.log('API Response:', res);
