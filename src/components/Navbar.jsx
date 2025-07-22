@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom'; // Changed Link to NavLink
 import { AiOutlineBell } from 'react-icons/ai';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -76,31 +76,36 @@ const Navbar = () => {
     }
   };
 
+  const getNavLinkClass = ({ isActive }) =>
+    `text-gray-600 hover:text-blue-700 hover:font-bold ${isActive ? 'text-blue-700 font-bold' : ''}`;
+
   return (
     <nav className="bg-white border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="flex items-center justify-between h-16 px-4 mx-auto max-w-7xl">
 
         {/* Logo */}
-        <Link to="/" className="text-xl font-bold">
+        <NavLink to="/" className="text-xl font-bold">
           <span className="text-blue-600">Ask</span><span className="text-black">Hire</span>
-        </Link>
+        </NavLink>
 
 
         {/* Navigation Links */}
         <div className="flex items-center space-x-8 text-lg">
-          <Link to="/" className="text-gray-600 hover:text-blue-700 hover:font-bold">Home</Link>
-          <Link to="/jobs" className="text-gray-600 hover:text-blue-700 hover:font-bold">Jobs</Link>
+          {/* Home link should match exactly */}
+          <NavLink to="/" className={getNavLinkClass} end>Home</NavLink>
+          <NavLink to="/jobs" className={getNavLinkClass}>Jobs</NavLink>
 
           {isAuthenticated && (
             <>
-              <Link to={`/${currentUser?.role.toLowerCase()}`} className="text-gray-600 hover:text-blue-700 hover:font-bold">Dashboard</Link>
+              {/* Dashboard links should match exactly the role's root path */}
+              <NavLink to={`/${currentUser?.role.toLowerCase()}`} className={getNavLinkClass} end>Dashboard</NavLink>
               {currentUser?.role === 'Candidate' && (
-                <Link to="/candidate/interview" className="text-gray-600 hover:text-blue-700 hover:font-bold">Interviews</Link>
+                <NavLink to="/candidate/interview" className={getNavLinkClass}>Interviews</NavLink>
               )}
             </>
           )}
 
-          <Link to="/aboutus" className="text-gray-600 hover:text-blue-700 hover:font-bold">About Us</Link>
+          <NavLink to="/aboutus" className={getNavLinkClass}>About Us</NavLink>
         </div>
 
         {/* Auth Controls */}
@@ -115,7 +120,7 @@ const Navbar = () => {
                   className={`text-2xl cursor-pointer transition-colors ${showNotifications ? 'text-blue-600' : 'text-gray-700 hover:text-gray-900'}`}
                 />
                 {notifications.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  <span className="absolute flex items-center justify-center w-5 h-5 text-xs text-white bg-red-500 rounded-full -top-1 -right-1">
                     {notifications.length > 9 ? '9+' : notifications.length}
                   </span>
                 )}
@@ -138,10 +143,10 @@ const Navbar = () => {
                   <img
                     src={`http://localhost:5190${profilePicture}`}
                     alt="Avatar"
-                    className="w-8 h-8 rounded-full border object-cover"
+                    className="object-cover w-8 h-8 border rounded-full"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-semibold uppercase">
+                  <div className="flex items-center justify-center w-8 h-8 text-sm font-semibold text-white uppercase bg-blue-500 rounded-full">
                     {firstLetter}
                   </div>
                 )}
@@ -154,16 +159,16 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <Link to="/signup">
+              <NavLink to="/signup">
                 <button className="px-4 py-1.5 text-sm bg-gray-800 text-white rounded-full hover:bg-gray-900">
                   Sign Up
                 </button>
-              </Link>
-              <Link to="/login">
+              </NavLink>
+              <NavLink to="/login">
                 <button className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-full hover:bg-blue-700">
                   Login
                 </button>
-              </Link>
+              </NavLink>
             </>
           )}
         </div>

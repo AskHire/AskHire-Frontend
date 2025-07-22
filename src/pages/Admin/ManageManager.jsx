@@ -10,12 +10,10 @@ export default function ManageManager() {
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState(""); // e.g., "firstName:asc"
-
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [managerToDelete, setManagerToDelete] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
-
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
   const token = localStorage.getItem("accessToken");
 
   useEffect(() => {
@@ -81,8 +79,8 @@ export default function ManageManager() {
   };
 
   return (
-    <div className="flex-1 p-6">
-      <h1 className="mt-3 text-3xl font-bold">Manager Management</h1>
+    <div className="flex-1 pl-2 pr-4 md:pl-6">
+      <h1 className="text-3xl font-bold ">Manager Management</h1>
 
       {/* Search and Sort Controls */}
       <div className="flex flex-col gap-2 my-4 sm:flex-row sm:items-center sm:justify-between">
