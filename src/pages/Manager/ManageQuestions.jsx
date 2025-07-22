@@ -3,6 +3,7 @@ import { Search, Edit, Trash2, X } from 'lucide-react';
 import ManagerTopbar from '../../components/ManagerTopbar';
 import DeleteModal from '../../components/DeleteModal';
 import SearchableDropdown from '../../components/SearchableDropdown';
+import Pagination from '../../components/Admin/Pagination';
 
 const ManageQuestions = () => {
   const [selectedRole, setSelectedRole] = useState('');
@@ -16,10 +17,9 @@ const ManageQuestions = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('Newest');
   const [showModal, setShowModal] = useState(false);
-  const [updatedQuestion, setUpdatedQuestion] = useState({});
+  const [updatedQuestion, setUpdatedQuestion] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState(null);
-
   const [currentPage, setCurrentPage] = useState(1);
   const questionsPerPage = 10;
 
@@ -93,7 +93,12 @@ const ManageQuestions = () => {
   };
 
   const handleEdit = (question) => {
-    setUpdatedQuestion({ ...question });
+    let answerText = '';
+    if (question.answer) {
+      const answerKey = question.answer.toLowerCase();
+      answerText = question[`option${answerKey.charAt(answerKey.length - 1)}`];
+    }
+    setUpdatedQuestion({ ...question, answerText });
     setShowModal(true);
   };
 
@@ -105,15 +110,15 @@ const ManageQuestions = () => {
       option2: '',
       option3: '',
       option4: '',
-      answer: ''
+      answer: '',
+      answerText: ''
     });
     setShowModal(true);
   };
 
   const handleSaveQuestion = async () => {
     try {
-      const answerText = updatedQuestion.answer;
-
+      const { answerText, ...rest } = updatedQuestion;
       let answerKey = '';
       for (let i = 1; i <= 4; i++) {
         if (updatedQuestion[`option${i}`] === answerText) {
@@ -121,11 +126,7 @@ const ManageQuestions = () => {
           break;
         }
       }
-
-      const dataToSave = {
-        ...updatedQuestion,
-        answer: answerKey
-      };
+      const dataToSave = { ...rest, answer: answerKey };
 
       const method = updatedQuestion.questionId ? 'PUT' : 'POST';
       const url = updatedQuestion.questionId
@@ -155,6 +156,10 @@ const ManageQuestions = () => {
     setUpdatedQuestion(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleAnswerChange = (e) => {
+    setUpdatedQuestion(prev => ({ ...prev, answerText: e.target.value }));
+  };
+
   const filteredQuestions = questions.filter(q =>
     q.questionName.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -177,8 +182,6 @@ const ManageQuestions = () => {
     <div className="flex-1 pt-1 pb-4 pr-6 pl-6">
       <div className="pb-4"><ManagerTopbar /></div>
       <h1 className="text-3xl font-bold mb-6">Manage Questions</h1>
-
-      {/* Job Role Selector */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-bold mb-4">Select Job Role</h2>
         <SearchableDropdown
@@ -193,7 +196,6 @@ const ManageQuestions = () => {
         />
       </div>
 
-      {/* Questions Table */}
       {selectedJobId && (
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="flex justify-between items-center mb-6">
@@ -232,10 +234,7 @@ const ManageQuestions = () => {
             <div className="text-center py-8 text-gray-500">Loading questions...</div>
           ) : currentQuestions.length > 0 ? (
             currentQuestions.map((question, index) => (
-              <div
-                key={question.questionId}
-                className="grid grid-cols-12 py-4 border-b items-center hover:bg-gray-50"
-              >
+              <div key={question.questionId} className="grid grid-cols-12 py-4 border-b items-center hover:bg-gray-50">
                 <div className="col-span-1 px-4 text-gray-500">
                   {(currentPage - 1) * questionsPerPage + index + 1}
                 </div>
@@ -258,22 +257,9 @@ const ManageQuestions = () => {
             </div>
           )}
 
-          {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center mt-6 space-x-2">
-              {Array.from({ length: totalPages }, (_, idx) => (
-                <button
-                  key={idx + 1}
-                  className={`px-4 py-2 rounded-lg border transition-colors ${
-                    currentPage === idx + 1
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-blue-600 border-blue-600 hover:bg-blue-50'
-                  }`}
-                  onClick={() => paginate(idx + 1)}
-                >
-                  {idx + 1}
-                </button>
-              ))}
+            <div className="mt-6">
+              <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={paginate} />
             </div>
           )}
 
@@ -285,56 +271,35 @@ const ManageQuestions = () => {
         </div>
       )}
 
-      {/* Add/Edit Modal */}
-      {showModal && (
+      {showModal && updatedQuestion && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-lg">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">
-                {updatedQuestion.questionId ? 'Edit Question' : 'Add New Question'}
-              </h2>
-              <button className="text-gray-500 hover:text-gray-700" onClick={() => setShowModal(false)}>
-                <X size={20} />
-              </button>
-            </div>
-
+          <div className="bg-white p-6 rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto relative">
+            <button className="absolute top-2 right-2" onClick={() => setShowModal(false)}>
+              <X />
+            </button>
+            <h2 className="text-xl font-bold mb-4">{updatedQuestion.questionId ? 'Edit Question' : 'Add New Question'}</h2>
             <div className="space-y-4">
-              <input name="questionName" value={updatedQuestion.questionName || ''} onChange={handleChange} placeholder="Question" className="w-full border px-4 py-2 rounded" />
-              <input name="option1" value={updatedQuestion.option1 || ''} onChange={handleChange} placeholder="Option 1" className="w-full border px-4 py-2 rounded" />
-              <input name="option2" value={updatedQuestion.option2 || ''} onChange={handleChange} placeholder="Option 2" className="w-full border px-4 py-2 rounded" />
-              <input name="option3" value={updatedQuestion.option3 || ''} onChange={handleChange} placeholder="Option 3" className="w-full border px-4 py-2 rounded" />
-              <input name="option4" value={updatedQuestion.option4 || ''} onChange={handleChange} placeholder="Option 4" className="w-full border px-4 py-2 rounded" />
-
-              <select
-                name="answer"
-                value={updatedQuestion.answer || ''}
-                onChange={handleChange}
-                className="w-full border px-4 py-2 rounded"
-              >
-                <option value="">Select Correct Answer</option>
-                {['option1', 'option2', 'option3', 'option4'].map((optKey, index) => (
-                  updatedQuestion[optKey] && (
-                    <option key={optKey} value={updatedQuestion[optKey]}>
-                      {`Option ${index + 1}: ${updatedQuestion[optKey]}`}
-                    </option>
-                  )
+              <label className="block font-semibold">Question</label>
+              <input className="w-full border rounded p-2" name="questionName" value={updatedQuestion.questionName} onChange={handleChange} />
+              {[1, 2, 3, 4].map(i => (
+                <div key={i}>
+                  <label className="block font-semibold">Option {i}</label>
+                  <input className="w-full border rounded p-2" name={`option${i}`} value={updatedQuestion[`option${i}`]} onChange={handleChange} />
+                </div>
+              ))}
+              <label className="block font-semibold">Correct Answer</label>
+              <select className="w-full border rounded p-2" value={updatedQuestion.answerText} onChange={handleAnswerChange}>
+                {[1, 2, 3, 4].map(i => (
+                  <option key={i} value={updatedQuestion[`option${i}`]}>Option {i}: {updatedQuestion[`option${i}`]}</option>
                 ))}
               </select>
-
-              <button onClick={handleSaveQuestion} className="bg-blue-600 text-white py-2 px-4 rounded w-full hover:bg-blue-700 transition-colors">
-                Save
-              </button>
+              <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" onClick={handleSaveQuestion}>Save</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      <DeleteModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={confirmDelete}
-      />
+      <DeleteModal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} onConfirm={confirmDelete} />
     </div>
   );
 };

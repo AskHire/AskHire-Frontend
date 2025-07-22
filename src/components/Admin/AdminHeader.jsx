@@ -1,13 +1,23 @@
-import React, { useState, useEffect } from "react";
-import { IoIosSearch } from "react-icons/io";
-import { FaBell, FaBars } from "react-icons/fa";
+import React, { useState, useEffect, useRef } from "react";
+import { AiOutlineBell } from "react-icons/ai"; // Changed from FaBell to AiOutlineBell
 import axios from "axios";
 import ProfileModal from "../ProfileModal";
+import AdminNotification from "./AdminNotification";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminHeader() {
+  const navigate = useNavigate();
+
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profilePicture, setProfilePicture] = useState(null);
-  const [userFirstLetter, setUserFirstLetter] = useState("U"); // Default to U if firstName missing
+  const [userFirstLetter, setUserFirstLetter] = useState("U");
+
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [notificationError, setNotificationError] = useState(null);
+
+  const notificationRef = useRef(null);
 
   useEffect(() => {
     axios
@@ -19,36 +29,71 @@ export default function AdminHeader() {
       .catch((err) => console.error("Failed to fetch profile", err));
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notificationRef.current && !notificationRef.current.contains(e.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleAvatarChange = (newAvatarUrl) => {
     setProfilePicture(newAvatarUrl);
   };
 
+  const fetchAdminNotifications = async () => {
+    setLoadingNotifications(true);
+    setNotificationError(null);
+    try {
+      const res = await axios.get('http://localhost:5190/api/NotificationShow/admin', { withCredentials: true });
+      const sorted = res.data.sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 5);
+      setNotifications(sorted);
+    } catch (err) {
+      console.error('Failed to load admin notifications:', err);
+      setNotificationError('Failed to load notifications.');
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  const handleBellClick = () => {
+    if (!showNotifications) {
+      fetchAdminNotifications();
+    }
+    setShowNotifications((prev) => !prev);
+  };
+
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-3">
-      
-      {/* Left section: toggle + search bar */}
-      <div className="flex items-center flex-1 min-w-[200px] gap-2">
-        <button className="p-2 bg-white rounded shadow-md sm:hidden">
-          <FaBars />
-        </button>
-
-        <div className="relative w-full sm:max-w-md md:max-w-lg">
-          <input
-            type="text"
-            placeholder="Search jobs"
-            className="w-full p-2 pl-10 border border-gray-300 shadow-md rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+    <div className="w-full px-4 pt-3 ">
+      <div className="ml-auto flex items-center justify-end gap-4 max-w-[300px]">
+        {/* Notifications */}
+        <div className="relative" ref={notificationRef}>
+          <AiOutlineBell // Changed from FaBell to AiOutlineBell
+            title="Notifications"
+            onClick={handleBellClick}
+            className={`text-2xl cursor-pointer transition-colors ${showNotifications ? 'text-blue-600' : 'text-gray-700 hover:text-gray-900'}`}
           />
-          <IoIosSearch className="absolute text-gray-600 transform -translate-y-1/2 left-3 top-1/2" />
+          {notifications.length > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              {notifications.length > 9 ? '9+' : notifications.length}
+            </span>
+          )}
+          {showNotifications && (
+            <AdminNotification
+              notifications={notifications}
+              loading={loadingNotifications}
+              error={notificationError}
+              onViewAllClick={() => {
+                setShowNotifications(false);
+                navigate('/admin/notifications');
+              }}
+            />
+          )}
         </div>
-      </div>
 
-      {/* Right section: icons */}
-      <div className="flex items-center space-x-4 sm:space-x-6">
-        <FaBell
-          className="text-2xl text-gray-700 cursor-pointer hover:text-gray-900"
-          title="Notifications"
-        />
-
+        {/* Profile Picture */}
         <button
           onClick={() => setShowProfileModal(true)}
           title="Profile"
@@ -66,15 +111,15 @@ export default function AdminHeader() {
             </div>
           )}
         </button>
-      </div>
 
-      {/* Profile Modal */}
-      {showProfileModal && (
-        <ProfileModal
-          onClose={() => setShowProfileModal(false)}
-          onAvatarChange={handleAvatarChange}
-        />
-      )}
+        {/* Profile Modal */}
+        {showProfileModal && (
+          <ProfileModal
+            onClose={() => setShowProfileModal(false)}
+            onAvatarChange={handleAvatarChange}
+          />
+        )}
+      </div>
     </div>
   );
 }

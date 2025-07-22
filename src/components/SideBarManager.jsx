@@ -121,7 +121,7 @@ const SidebarManager = () => {
             <div className="flex items-center justify-center">
               <AiOutlineLogout size={18} />
             </div>
-            <span className="ml-2 text-xs font-medium whitespace-nowrap">Log Out</span>
+            <span className="ml-2 text-sm font-medium whitespace-nowrap">Log Out</span>
           </button>
         </div>
       </div>
@@ -138,7 +138,7 @@ const NavItem = ({ icon, label, path, active, hasBorder }) => {
       } ${hasBorder ? "border-t border-gray-200" : ""}`}
     >
       <div className="flex items-center justify-center">{icon}</div>
-      <span className="ml-2 text-xs font-medium whitespace-nowrap">{label}</span>
+      <span className="ml-2 text-sm font-medium whitespace-nowrap">{label}</span>
     </Link>
   );
 };

@@ -19,7 +19,7 @@ const Admin = () => {
         <div className="flex-1 overflow-auto ">
           {/* Move AdminHeader here */}
           <AdminHeader />
-          <div className="p-4 md:p-6">
+          <div>
             <Outlet />
           </div>
         </div>
