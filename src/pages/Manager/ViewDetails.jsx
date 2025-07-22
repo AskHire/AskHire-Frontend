@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import ManagerTopbar from '../../components/ManagerTopbar';
 
 const ViewDetails = () => {
@@ -8,6 +8,8 @@ const ViewDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showDownloadSuccess, setShowDownloadSuccess] = useState(false);
+  const navigate = useNavigate(); // Add this line
 
   // Helper function to get auth headers
   const getAuthHeaders = () => {
@@ -148,7 +150,7 @@ const ViewDetails = () => {
       }, 100);
 
       console.log('CV downloaded successfully');
-      alert('CV downloaded successfully!');
+      setShowDownloadSuccess(true);
       
     } catch (error) {
       console.error('Error downloading CV:', error);
@@ -156,6 +158,22 @@ const ViewDetails = () => {
     } finally {
       setIsDownloading(false);
     }
+  };
+
+  // Helper to get the candidate's vacancy name for navigation
+  const getVacancyName = () => {
+    if (!candidateData) return '';
+    // Try all possible fields for vacancy name
+    return (
+      candidateData.vacancy?.vacancyName ||
+      candidateData.vacancy?.name ||
+      candidateData.vacancy?.title ||
+      candidateData.jobRole?.jobTitle ||
+      candidateData.jobRole?.title ||
+      candidateData.jobTitle ||
+      candidateData.vacancyName ||
+      ''
+    );
   };
 
   if (isLoading) {
@@ -314,6 +332,44 @@ const ViewDetails = () => {
           </button>
         </div>
       </div>
+
+      {/* Go Back Button - OUTSIDE the card, at the bottom */}
+      <div className="flex justify-end pb-8">
+        <button
+          onClick={() => {
+            const vacancy = getVacancyName();
+            if (vacancy) {
+              navigate(`/manager/View_LongList?vacancy=${encodeURIComponent(vacancy)}`);
+            } else {
+              navigate('/manager/View_LongList');
+            }
+          }}
+          className="px-8 py-3 bg-blue-600 border border-blue-700 text-white rounded-lg font-normal hover:bg-blue-700 hover:border-blue-800 transition-colors mr-4"
+        >
+          Go Back to Long List
+        </button>
+      </div>
+
+      {/* Success Modal */}
+      {showDownloadSuccess && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center">
+            <div className="flex justify-center mb-4">
+              <svg className="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold mb-2 text-gray-800">CV Downloaded Successfully!</h3>
+            <p className="text-gray-600 mb-4">The candidate's CV has been downloaded to your device.</p>
+            <button
+              onClick={() => setShowDownloadSuccess(false)}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

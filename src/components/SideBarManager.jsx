@@ -4,14 +4,18 @@ import {
   AiOutlineDashboard,
   AiOutlineFileText,
   AiOutlineSetting,
-  AiOutlineAppstoreAdd,
+  AiOutlineEdit,
   AiOutlineMenu,
   AiOutlineClose,
   AiOutlineBell,
   AiOutlineQuestionCircle,
-  AiOutlineLogout
+  AiOutlineLogout,
+  AiOutlineUnorderedList,
+  AiOutlineUserAdd,
+  AiOutlineFileDone
 } from "react-icons/ai";
-import { FiBriefcase, FiList } from "react-icons/fi";
+import { FiBriefcase, FiUsers } from "react-icons/fi";
+import { MdOutlineQuiz, MdManageSearch } from "react-icons/md";
 import { useAuth } from "../context/AuthContext";
 
 const SidebarManager = () => {
@@ -35,12 +39,13 @@ const SidebarManager = () => {
 
   const menuItems = [
     { icon: <AiOutlineDashboard size={18} />, label: "Dashboard", path: "/manager/dashboard" },
-    { icon: <AiOutlineFileText size={18} />, label: "Create Questions", path: "/manager/CreateQuestions" },
-    { icon: <AiOutlineAppstoreAdd size={18} />, label: "Manage Questions", path: "/manager/ManageQuestions" },
-    { icon: <AiOutlineSetting size={18} />, label: "Setup Vacancy", path: "/manager/SetupVacancy" },
+    { icon: <MdOutlineQuiz size={18} />, label: "Create Questions", path: "/manager/CreateQuestions" },
+    { icon: <MdManageSearch size={18} />, label: "Manage Questions", path: "/manager/ManageQuestions" },
+    { icon: <AiOutlineUserAdd size={18} />, label: "Setup Vacancy", path: "/manager/SetupVacancy" },
     { icon: <FiBriefcase size={18} />, label: "Manage Vacancy", path: "/manager/ManageVacancy" },
-    { icon: <FiList size={18} />, label: "Long-List", path: "/manager/LongList" },
+    { icon: <AiOutlineUnorderedList size={18} />, label: "Long-List", path: "/manager/LongList" },
     { icon: <AiOutlineBell size={18} />, label: "Notify Candidates", path: "/manager/NotifyCandidates" },
+    { icon: <AiOutlineFileDone size={18} />, label: "Application", path: "/manager/ManagerApplication" },
   ];
 
   const footerItems = [
