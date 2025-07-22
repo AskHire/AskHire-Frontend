@@ -11,6 +11,7 @@ export default function NotificationForm({ onNotify }) {
   });
 
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const validateForm = () => {
     const newErrors = {};
@@ -29,11 +30,12 @@ export default function NotificationForm({ onNotify }) {
 
     const formErrors = validateForm();
     if (Object.keys(formErrors).length > 0) {
-      setErrors(formErrors);  // Show errors inline
+      setErrors(formErrors);
       return;
     }
 
-    setErrors({}); // Clear errors if no issues
+    setErrors({});
+    setLoading(true);
 
     const payload = {
       ...form,
@@ -42,12 +44,15 @@ export default function NotificationForm({ onNotify }) {
 
     try {
       await axios.post(API_URL, payload);
-      alert("Notification sent successfully!");
       setForm({ subject: '', message: '', type: 'normal' });
-      setTimeout(() => onNotify(), 500);
+      if (onNotify) onNotify(true);
     } catch (error) {
-      // Removed console.error here
-      alert(`Error: ${error.response?.data?.title || "Unknown error"}`);
+      if (onNotify) {
+        const errorMsg = error.response?.data?.title || error.message || "Unknown error";
+        onNotify(false, errorMsg);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -114,9 +119,12 @@ export default function NotificationForm({ onNotify }) {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              disabled={loading}
+              className={`px-4 py-2 text-white rounded-md ${
+                loading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+              }`}
             >
-              Notify
+              {loading ? "Sending..." : "Notify"}
             </button>
           </div>
 

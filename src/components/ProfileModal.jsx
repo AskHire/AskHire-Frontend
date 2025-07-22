@@ -4,10 +4,10 @@ import axios from "axios";
 export default function ProfileModal({ onClose, onAvatarChange }) {
   const [profile, setProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const avatarList = ["avatar1.png", "avatar2.png", "avatar3.png", "avatar4.png"];
 
-  useEffect(() => 
-  {
+  useEffect(() => {
     axios
       .get("http://localhost:5190/api/profile", { withCredentials: true })
       .then((res) => setProfile(res.data))
@@ -22,18 +22,20 @@ export default function ProfileModal({ onClose, onAvatarChange }) {
         {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
-        });
+        }
+      );
       const newUrl = `/avatars/${avatar}`;
       setProfile((prev) => ({
-      ...prev,
-      profilePictureUrl: newUrl,
+        ...prev,
+        profilePictureUrl: newUrl,
       }));
-
-      // Notify parent (e.g., AdminHeader)
-      onAvatarChange && onAvatarChange(newUrl);} 
-    catch (error) {
-      console.error("Avatar update failed", error);}
-    };
+      onAvatarChange && onAvatarChange(newUrl);
+      setSuccessMessage("Avatar updated successfully!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      console.error("Avatar update failed", error);
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -46,16 +48,15 @@ export default function ProfileModal({ onClose, onAvatarChange }) {
         address: profile.address,
       };
 
-      const response = await axios.put("http://localhost:5190/api/profile", dto, {
+      await axios.put("http://localhost:5190/api/profile", dto, {
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
       });
 
-      console.log("Save response:", response);
       setIsEditing(false);
-      alert("Profile updated successfully!");
-    } 
-    catch (error) {
+      setSuccessMessage("Profile updated successfully!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
       console.error("Error updating profile", error);
       alert("Failed to update profile.");
     }
@@ -68,10 +69,19 @@ export default function ProfileModal({ onClose, onAvatarChange }) {
       <div className="relative w-[90%] max-w-md max-h-[80vh] overflow-y-auto p-6 bg-white shadow-lg rounded-xl">
         <button
           onClick={onClose}
-          className="absolute text-2xl text-gray-500 top-2 right-4 hover:text-gray-700">
-        &times; </button>
+          className="absolute text-2xl text-gray-500 top-2 right-4 hover:text-gray-700"
+        >
+          &times;
+        </button>
 
         <h2 className="mb-4 text-xl font-bold text-center">Profile</h2>
+
+        {/* Success Toast */}
+        {successMessage && (
+          <div className="p-2 mb-4 text-center text-green-700 bg-green-100 border border-green-400 rounded">
+            {successMessage}
+          </div>
+        )}
 
         <div className="mb-4 text-center">
           <img

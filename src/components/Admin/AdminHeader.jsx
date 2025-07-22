@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { IoIosSearch } from "react-icons/io";
 import { FaBell, FaBars } from "react-icons/fa";
 import axios from "axios";
 import ProfileModal from "../ProfileModal";
@@ -26,20 +25,11 @@ export default function AdminHeader() {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-3">
       
-      {/* Left section: toggle + search bar */}
+      {/* Left section: toggle */}
       <div className="flex items-center flex-1 min-w-[200px] gap-2">
         <button className="p-2 bg-white rounded shadow-md sm:hidden">
           <FaBars />
         </button>
-
-        <div className="relative w-full sm:max-w-md md:max-w-lg">
-          <input
-            type="text"
-            placeholder="Search jobs"
-            className="w-full p-2 pl-10 border border-gray-300 shadow-md rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-          <IoIosSearch className="absolute text-gray-600 transform -translate-y-1/2 left-3 top-1/2" />
-        </div>
       </div>
 
       {/* Right section: icons */}
