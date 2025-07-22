@@ -15,13 +15,17 @@ const ManageQuestions = () => {
   const [questionsLoading, setQuestionsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOption, setSortOption] = useState('Newest');
   const [showModal, setShowModal] = useState(false);
   const [updatedQuestion, setUpdatedQuestion] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const questionsPerPage = 10;
+
+  // New state for the SearchableDropdown
+  const [jobSearchQuery, setJobSearchQuery] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [recentJobRoles, setRecentJobRoles] = useState([]);
 
   useEffect(() => {
     const fetchJobRoles = async () => {
@@ -44,7 +48,8 @@ const ManageQuestions = () => {
       try {
         setQuestionsLoading(true);
         const response = await fetch('http://localhost:5190/api/Question');
-        setAllQuestions(await response.json());
+        const data = await response.json();
+        setAllQuestions(data);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -63,13 +68,19 @@ const ManageQuestions = () => {
     }
   }, [selectedJobId, allQuestions]);
 
-  const handleJobRoleSelect = (jobRole) => {
-    if (jobRole) {
-      setSelectedRole(jobRole.jobTitle);
-      setSelectedJobId(jobRole.jobId);
-    } else {
-      setSelectedRole('');
-      setSelectedJobId(null);
+  // Updated handler for job role selection
+  const handleJobRoleSelect = (jobTitle, jobId) => {
+    setSelectedRole(jobTitle);
+    setSelectedJobId(jobId);
+    setJobSearchQuery('');
+    
+    // Add to recent items if not already there
+    const selectedRole = jobRoles.find(role => role.jobId === jobId);
+    if (selectedRole) {
+      setRecentJobRoles(prev => {
+        const filtered = prev.filter(item => item.jobId !== jobId);
+        return [selectedRole, ...filtered].slice(0, 5); // Keep only 5 recent items
+      });
     }
   };
 
@@ -164,17 +175,10 @@ const ManageQuestions = () => {
     q.questionName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const sortedQuestions = [...filteredQuestions].sort((a, b) => {
-    if (sortOption === 'Newest') return b.questionId - a.questionId;
-    if (sortOption === 'Oldest') return a.questionId - b.questionId;
-    if (sortOption === 'Alphabetical') return a.questionName.localeCompare(b.questionName);
-    return 0;
-  });
-
   const indexOfLast = currentPage * questionsPerPage;
   const indexOfFirst = indexOfLast - questionsPerPage;
-  const currentQuestions = sortedQuestions.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(sortedQuestions.length / questionsPerPage);
+  const currentQuestions = filteredQuestions.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filteredQuestions.length / questionsPerPage);
 
   const paginate = (pageNum) => setCurrentPage(pageNum);
 
@@ -184,42 +188,39 @@ const ManageQuestions = () => {
       <h1 className="text-3xl font-bold mb-6">Manage Questions</h1>
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-bold mb-4">Select Job Role</h2>
-        <SearchableDropdown
-          options={jobRoles}
-          value={selectedJobId}
-          onSelect={handleJobRoleSelect}
-          placeholder="Search and select job role..."
-          loading={loading}
-          error={error}
-          displayKey="jobTitle"
-          valueKey="jobId"
-        />
+        {loading ? (
+          <div className="text-center py-4 text-gray-500">Loading job roles...</div>
+        ) : error ? (
+          <div className="text-center py-4 text-red-500">{error}</div>
+        ) : (
+          <SearchableDropdown
+            items={jobRoles}
+            searchQuery={jobSearchQuery}
+            setSearchQuery={setJobSearchQuery}
+            onSelect={handleJobRoleSelect}
+            selectedId={selectedJobId}
+            recentItems={recentJobRoles}
+            title={selectedRole || "Select a job role..."}
+            placeholder="Search job roles..."
+            isOpen={isDropdownOpen}
+            setIsOpen={setIsDropdownOpen}
+          />
+        )}
       </div>
 
       {selectedJobId && (
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">{selectedRole}</h2>
-            <div className="flex space-x-2">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search questions..."
-                  className="px-4 py-2 pl-10 bg-gray-100 rounded-lg"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                />
-                <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
-              </div>
-              <select
-                className="px-4 py-2 bg-gray-100 rounded-lg"
-                value={sortOption}
-                onChange={e => setSortOption(e.target.value)}
-              >
-                <option>Newest</option>
-                <option>Oldest</option>
-                <option>Alphabetical</option>
-              </select>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search questions..."
+                className="px-4 py-2 pl-10 bg-gray-100 rounded-lg"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+              <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
             </div>
           </div>
 
@@ -289,6 +290,7 @@ const ManageQuestions = () => {
               ))}
               <label className="block font-semibold">Correct Answer</label>
               <select className="w-full border rounded p-2" value={updatedQuestion.answerText} onChange={handleAnswerChange}>
+                <option value="">Select correct answer...</option>
                 {[1, 2, 3, 4].map(i => (
                   <option key={i} value={updatedQuestion[`option${i}`]}>Option {i}: {updatedQuestion[`option${i}`]}</option>
                 ))}

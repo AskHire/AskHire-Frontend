@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Search } from "lucide-react";
 import ManagerTopbar from '../../components/ManagerTopbar';
+import SearchableDropdown from '../../components/SearchableDropdown';
 
 const SetupVacancy = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
   const [selectedJobId, setSelectedJobId] = useState('');
   const [jobRoles, setJobRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingError, setLoadingError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [jobSearchQuery, setJobSearchQuery] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [recentJobRoles, setRecentJobRoles] = useState([]);
 
   const [formData, setFormData] = useState({
     VacancyName: "",
@@ -49,15 +50,19 @@ const SetupVacancy = () => {
     fetchJobRoles();
   }, []);
 
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const selectRole = (role, id) => {
-    setSelectedRole(role);
-    setSelectedJobId(id);
-    setIsOpen(false);
-    setSearchQuery('');
+  const handleJobRoleSelect = (jobTitle, jobId) => {
+    setSelectedRole(jobTitle);
+    setSelectedJobId(jobId);
+    setJobSearchQuery('');
+    
+    // Add to recent items if not already there
+    const selectedRole = jobRoles.find(role => role.jobId === jobId);
+    if (selectedRole) {
+      setRecentJobRoles(prev => {
+        const filtered = prev.filter(item => item.jobId !== jobId);
+        return [selectedRole, ...filtered].slice(0, 5); // Keep only 5 recent items
+      });
+    }
   };
 
   const handleChange = (e) => {
@@ -117,10 +122,6 @@ const SetupVacancy = () => {
     });
   };
 
-  const filteredJobRoles = jobRoles.filter(role =>
-    role.jobTitle.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <div className="flex-1 pt-1 pb-4 pr-6 pl-6">
       <div className="pb-4">
@@ -131,62 +132,24 @@ const SetupVacancy = () => {
       {/* Job Role Selector */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-bold mb-4">Select Job Role</h2>
-        <div className="relative w-full">
-          <div
-            className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors"
-            onClick={toggleDropdown}
-          >
-            <div className="text-gray-700">
-              {loading ? 'Loading...' : selectedRole || 'Select a job role'}
-            </div>
-            <div className={`text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}>▼</div>
-          </div>
-
-          {isOpen && !loading && (
-            <div className="absolute w-full mt-1 bg-white border rounded-lg shadow-lg z-10">
-              <div className="p-3 border-b">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search job roles..."
-                    className="w-full px-4 py-2 pl-10 bg-gray-50 rounded-lg"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
-                </div>
-              </div>
-
-              <div className="max-h-60 overflow-y-auto">
-                {loadingError ? (
-                  <p className="px-4 py-2 text-red-500">{loadingError}</p>
-                ) : filteredJobRoles.length === 0 ? (
-                  <p className="px-4 py-2 text-gray-500">
-                    {searchQuery ? `No job roles found matching "${searchQuery}"` : 'No job roles found'}
-                  </p>
-                ) : (
-                  <ul className="py-1">
-                    {filteredJobRoles.map((role) => (
-                      <li
-                        key={role.jobId}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        onClick={() => selectRole(role.jobTitle, role.jobId)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span>{role.jobTitle}</span>
-                          {role.jobId === selectedJobId && (
-                            <span className="text-blue-600 text-sm">✓ Selected</span>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+        {loading ? (
+          <div className="text-center py-4 text-gray-500">Loading job roles...</div>
+        ) : loadingError ? (
+          <div className="text-center py-4 text-red-500">{loadingError}</div>
+        ) : (
+          <SearchableDropdown
+            items={jobRoles}
+            searchQuery={jobSearchQuery}
+            setSearchQuery={setJobSearchQuery}
+            onSelect={handleJobRoleSelect}
+            selectedId={selectedJobId}
+            recentItems={recentJobRoles}
+            title={selectedRole || "Select a job role..."}
+            placeholder="Search job roles..."
+            isOpen={isDropdownOpen}
+            setIsOpen={setIsDropdownOpen}
+          />
+        )}
       </div>
 
       {/* Vacancy Form */}
@@ -220,14 +183,13 @@ const SetupVacancy = () => {
               />
             </div>
 
-
             <div>
               <label className="block text-gray-700 font-medium mb-2">Education</label>
               <textarea
                 name="education"
                 value={formData.education}
                 onChange={handleChange}
-                ronInput={(e) => {
+                onInput={(e) => {
                   e.target.style.height = "auto";
                   e.target.style.height = `${e.target.scrollHeight}px`;
                 }}
