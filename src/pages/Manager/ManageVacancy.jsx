@@ -1,6 +1,6 @@
 import ManagerTopbar from '../../components/ManagerTopbar';
 import React, { useEffect, useState } from "react";
-import { Search, Edit, Trash2, X } from "lucide-react";
+import { Search, Edit, Trash2, X, ArrowUpDown } from "lucide-react";
 import DeleteModal from '../../components/DeleteModal';
 import Pagination from '../../components/Admin/Pagination';
 
@@ -11,7 +11,8 @@ const ManageVacancy = () => {
   const [editVacancy, setEditVacancy] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOption, setSortOption] = useState('Newest');
+  const [sortOption, setSortOption] = useState('Start Date');
+  const [sortOrder, setSortOrder] = useState('desc'); // 'asc' or 'desc'
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [vacancyToDelete, setVacancyToDelete] = useState(null);
@@ -92,15 +93,26 @@ const ManageVacancy = () => {
     }
   };
 
+  const toggleSortOrder = () => {
+    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+  };
+
   const filteredVacancies = vacancies.filter(v =>
     v.vacancyName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const sortedVacancies = [...filteredVacancies].sort((a, b) => {
-    if (sortOption === 'Newest') return new Date(b.startDate) - new Date(a.startDate);
-    if (sortOption === 'Oldest') return new Date(a.startDate) - new Date(b.startDate);
-    if (sortOption === 'Alphabetical') return a.vacancyName.localeCompare(b.vacancyName);
-    return 0;
+    let comparison = 0;
+    
+    if (sortOption === 'Start Date') {
+      comparison = new Date(a.startDate) - new Date(b.startDate);
+    } else if (sortOption === 'End Date') {
+      comparison = new Date(a.endDate) - new Date(b.endDate);
+    } else if (sortOption === 'Alphabetical') {
+      comparison = a.vacancyName.localeCompare(b.vacancyName);
+    }
+    
+    return sortOrder === 'asc' ? comparison : -comparison;
   });
 
   // Pagination logic
@@ -114,7 +126,7 @@ const ManageVacancy = () => {
   // Reset to first page when search or sort changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, sortOption]);
+  }, [searchQuery, sortOption, sortOrder]);
 
   if (loading) return <div className="flex-1 pt-1 pb-4 pr-6 pl-6"><div className="pb-4"><ManagerTopbar /></div><p className="text-center py-8">Loading vacancies...</p></div>;
   if (error) return <div className="flex-1 pt-1 pb-4 pr-6 pl-6"><div className="pb-4"><ManagerTopbar /></div><p className="text-red-500 text-center py-8">{error}</p></div>;
@@ -125,8 +137,8 @@ const ManageVacancy = () => {
       <h1 className="text-3xl font-bold mb-6">Manage Vacancy</h1>
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Active Vacancies</h2>
-          <div className="flex space-x-2">
+          <h2 className="text-2xl font-bold">Vacancies</h2>
+          <div className="flex space-x-2 items-center">
             <div className="relative">
               <input
                 type="text"
@@ -137,15 +149,25 @@ const ManageVacancy = () => {
               />
               <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
             </div>
-            <select
-              className="px-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
-              value={sortOption}
-              onChange={(e) => setSortOption(e.target.value)}
-            >
-              <option>Newest</option>
-              <option>Oldest</option>
-              <option>Alphabetical</option>
-            </select>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-600">Sort by:</span>
+              <select
+                className="px-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+              >
+                <option>Start Date</option>
+                <option>End Date</option>
+                <option>Alphabetical</option>
+              </select>
+              <button
+                onClick={toggleSortOrder}
+                className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                title={`Sort ${sortOrder === 'asc' ? 'Ascending' : 'Descending'}`}
+              >
+                <ArrowUpDown size={16} className="text-gray-600" />
+              </button>
+            </div>
           </div>
         </div>
 

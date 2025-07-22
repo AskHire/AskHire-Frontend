@@ -35,7 +35,7 @@ const InterviewLoadChart = () => {
         const today = new Date();
         const day = today.getDay(); // 0 (Sun) - 6 (Sat)
         const monday = new Date(today);
-        monday.setDate(today.getDate() - ((day + 6) % 7)); // Go to Monday
+        monday.setDate(today.getDate() - ((day + 6) % 7));
         monday.setHours(0, 0, 0, 0);
 
         const labels = [];
