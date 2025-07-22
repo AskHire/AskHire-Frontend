@@ -40,7 +40,7 @@ const ManagerDashboard = () => {
       title: 'Total Candidates',
       count: dashboardData.totalUsers ?? '...',
       icon: <FiUsers className="text-4xl" />,
-      bgColor: 'bg-green-100',
+      bgColor: 'bg-white',
       textColor: 'text-green-700'
     },
     {
@@ -48,7 +48,7 @@ const ManagerDashboard = () => {
       title: 'Total Applicable Vacancies',
       count: dashboardData.totalJobs ?? '...',
       icon: <FiBriefcase className="text-4xl" />,
-      bgColor: 'bg-yellow-100',
+      bgColor: 'bg-white',
       textColor: 'text-yellow-700'     
     },
     {
@@ -56,7 +56,7 @@ const ManagerDashboard = () => {
       title: 'Interviews Today',
       count: dashboardData.interviewsToday ?? '...',
       icon: <FiCalendar className="text-4xl" />,
-      bgColor: 'bg-blue-100',
+      bgColor: 'bg-white',
       textColor: 'text-blue-700'
     },
     {
@@ -64,7 +64,7 @@ const ManagerDashboard = () => {
       title: 'Reminders Today',
       count: dashboardData.remindersToday ?? '...',
       icon: <FiBell className="text-4xl" />,
-      bgColor: 'bg-pink-100',
+      bgColor: 'bg-white',
       textColor: 'text-pink-700'
     }
 
