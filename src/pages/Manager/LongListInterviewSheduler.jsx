@@ -757,12 +757,21 @@ const SuccessView = () => {
                   <div className="bg-gray-50 p-4 rounded-lg max-h-40 overflow-y-auto">
                     <ul className="space-y-2">
                       {unscheduledCandidates.map(candidate => (
-                        <li key={candidate.applicationId} className="flex justify-between">
-                          <span className="font-medium">{candidate.firstName} {candidate.lastName}</span>
-                          <span className="ml-2 text-purple-700">CV: {candidate.cvMark || candidate.cV_Mark || 0}%</span>
-                          <span className="ml-2 text-yellow-700">Prescreen: {candidate.prescreenMark}%</span>
-                          <span className="ml-2 text-blue-700 font-bold">Total: {candidate.totalMark ? candidate.totalMark.toFixed(2) : 'N/A'}%</span>
-                        </li>
+                        <li key={candidate.applicationId} className="grid grid-cols-2 md:grid-cols-4 gap-2 py-2 border-b">
+  <span className="font-medium">
+    {candidate.firstName} {candidate.lastName}
+  </span>
+  <span className="text-purple-700">
+    CV: {candidate.cvMark || candidate.cV_Mark || 0}%
+  </span>
+  <span className="text-yellow-700">
+    Prescreen: {candidate.prescreenMark}%
+  </span>
+  <span className="text-blue-700 font-bold">
+    Total: {candidate.totalMark ? candidate.totalMark.toFixed(2) : 'N/A'}%
+  </span>
+</li>
+
                       ))}
                     </ul>
                   </div>

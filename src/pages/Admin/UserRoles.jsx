@@ -1,41 +1,50 @@
 import React, { useState, useEffect } from "react";
-import AdminHeader from "../../components/Admin/AdminHeader";
-import SearchAndSortBar from "../../components/Admin/AdminUserRoles/SearchAndSortBar";
-import UserRow from "../../components/Admin/AdminUserRoles/UserRow";
+import UserRoleBadge from "../../components/Admin/AdminUserRoles/UserRoleBadge";
+import UserDetailsModal from "../../components/Admin/AdminUserRoles/UserDetailsModal";
+import Pagination from "../../components/Admin/Pagination";
 
-export default function UserRolesPage() {
+export default function UserRoles() {
   const [users, setUsers] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortOrder, setSortOrder] = useState("newest");
-  const [selectedUser, setSelectedUser] = useState(null);
   const [editingUserId, setEditingUserId] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterRole, setFilterRole] = useState(""); // renamed from sortOrder
 
   const token = localStorage.getItem("accessToken");
 
   useEffect(() => {
+    fetchUsers(currentPage, searchQuery, filterRole);
+  }, [currentPage, searchQuery, filterRole, token]);
 
-    fetch("http://localhost:5190/api/AdminUser", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+  const fetchUsers = async (page, search, role) => {
+    try {
+      const params = new URLSearchParams({
+        Page: page,
+        PageSize: 5,
+      });
 
-      .then((response) => response.json())
-      .then((data) => setUsers(data))
-      .catch((error) => console.error("Error fetching users:", error));
-  }, [token]);
+      if (search) params.append("SearchTerm", search);
+      if (role) params.append("RoleFilter", role); // <-- pass role filter
 
-  const filteredUsers = users
-    .filter((u) => u.firstName?.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) =>
-      sortOrder === "newest"
-        ? b.id.localeCompare(a.id)
-        : a.id.localeCompare(b.id)
-    );
+      const res = await fetch(`http://localhost:5190/api/AdminUser?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+
+      setUsers(data.data || []);
+      setTotalPages(data.totalPages || 1);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
 
   const handleRoleChange = (userId, newRole) => {
     setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+      prev.map((user) => (user.id === userId ? { ...user, role: newRole } : user))
     );
   };
 
@@ -53,25 +62,47 @@ export default function UserRolesPage() {
         body: JSON.stringify({ userId: updatedUser.id, newRole: updatedUser.role }),
       });
       setEditingUserId(null);
+      fetchUsers(currentPage, searchQuery, filterRole);
     } catch (err) {
-      console.error("Save error:", err);
+      console.error("Failed to save role:", err);
     }
   };
 
   return (
     <div className="flex-1 p-6">
-      <AdminHeader />
-      <h1 className="mt-8 text-3xl font-bold">Admin Users Role Manager</h1>
+      <h1 className="mt-3 text-3xl font-bold">Users Role Manager</h1>
 
-      <SearchAndSortBar
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        sortOrder={sortOrder}
-        onSortChange={setSortOrder}
-      />
+      {/* Search and Role Filter */}
+      <div className="flex flex-col gap-2 my-4 sm:flex-row sm:items-center sm:justify-between">
+        <input
+          type="text"
+          placeholder="Search by first name..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="px-3 py-2 text-sm bg-gray-100 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200"
+        />
 
-      <div className="p-4">
-        <div className="grid grid-cols-12 p-3 font-semibold rounded-md">
+        <select
+          value={filterRole}
+          onChange={(e) => {
+            setFilterRole(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="px-3 py-2 text-sm text-gray-700 bg-gray-100 border rounded-md"
+        >
+          <option value="">Filter by Role</option>
+          <option value="Admin">Admin</option>
+          <option value="Manager">Manager</option>
+          <option value="Candidate">Candidate</option>
+        </select>
+      </div>
+
+      {/* Users Table */}
+      <div className="p-4 overflow-x-auto bg-white shadow-md rounded-xl min-w-[768px]">
+        <div className="grid grid-cols-12 px-4 py-3 text-sm font-semibold text-gray-600 border-b bg-gray-50 rounded-t-md">
           <span className="col-span-1">#</span>
           <span className="col-span-2">Profile</span>
           <span className="col-span-5">Name</span>
@@ -79,30 +110,79 @@ export default function UserRolesPage() {
           <span className="col-span-1 text-right">More</span>
         </div>
 
-        <div className="p-1">
-          {filteredUsers.length > 0 ? (
-            filteredUsers.map((user, index) => (
-              <UserRow
-                key={user.id}
-                user={user}
-                index={index}
-                isEditing={editingUserId === user.id}
-                selectedUser={selectedUser}
-                onEditClick={setEditingUserId}
-                onRoleChange={handleRoleChange}
-                onSave={handleSaveRole}
-                onCancel={() => setEditingUserId(null)}
-                onToggleDetail={(u) =>
-                  setSelectedUser((prev) => (prev?.id === u.id ? null : u))
-                }
-                onCloseDetail={() => setSelectedUser(null)}
-              />
-            ))
-          ) : (
-            <p className="py-4 text-center text-gray-500">No users found.</p>
-          )}
-        </div>
+        {users.length > 0 ? (
+          users.map((user, index) => (
+            <div
+              key={user.id}
+              className="grid grid-cols-12 px-4 py-3 text-sm bg-white border-b hover:bg-gray-50"
+            >
+              <span className="col-span-1">{(currentPage - 1) * 5 + index + 1}</span>
+
+              <div className="col-span-2">
+                <img
+                  src={user.profilePictureUrl ? `http://localhost:5190${user.profilePictureUrl}` : "https://via.placeholder.com/40"}
+                  alt={user.firstName || "User"}
+                  className="w-10 h-10 rounded-full"
+                />
+              </div>
+
+              <span className="col-span-5">{user.firstName} {user.lastName}</span>
+
+              <div className="col-span-3">
+                {editingUserId === user.id ? (
+                  <div className="flex items-center gap-2">
+                    <select
+                      className="px-3 py-1 text-sm border rounded-md"
+                      value={user.role}
+                      onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                    >
+                      <option value="Admin">Admin</option>
+                      <option value="Manager">Manager</option>
+                      <option value="Candidate">Candidate</option>
+                    </select>
+                    <button
+                      className="text-sm text-blue-600 underline"
+                      onClick={() => handleSaveRole(user.id)}
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="text-sm text-red-500 underline"
+                      onClick={() => setEditingUserId(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <UserRoleBadge role={user.role} onClick={() => setEditingUserId(user.id)} />
+                )}
+              </div>
+
+              <div className="col-span-1 text-right">
+                <button
+                  className="text-2xl text-gray-500 rounded hover:text-gray-700"
+                  onClick={() => setSelectedUser(selectedUser?.id === user.id ? null : user)}
+                >
+                  ...
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="col-span-12 px-4 py-6 text-center text-gray-400">No matching records.</div>
+        )}
       </div>
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
+        onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+        onPageChange={(page) => setCurrentPage(page)}
+      />
+
+      <UserDetailsModal user={selectedUser} onClose={() => setSelectedUser(null)} />
     </div>
   );
 }

@@ -2,7 +2,6 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:5190/api/Auth';
 
-// Axios instance with base config
 const apiClient = axios.create({
   baseURL: API_URL,
   withCredentials: true,
@@ -11,11 +10,9 @@ const apiClient = axios.create({
   }
 });
 
-// Store tokens in memory
 let accessToken = null;
 let refreshTokenTimeoutId = null;
 
-// Utility to read cookies with better error handling
 const getCookie = (name) => {
   try {
     const cookies = document.cookie.split(';');
@@ -27,7 +24,7 @@ const getCookie = (name) => {
           return decodeURIComponent(cookieValue);
         } catch (e) {
           console.warn('Failed to decode cookie value:', cookieValue);
-          return cookieValue; // Return raw value if decoding fails
+          return cookieValue;
         }
       }
     }
@@ -38,7 +35,6 @@ const getCookie = (name) => {
   }
 };
 
-// Parse JWT to get expiration time
 const parseJwt = (token) => {
   try {
     const base64Url = token.split('.')[1];
@@ -57,12 +53,10 @@ const parseJwt = (token) => {
   }
 };
 
-// Set up automatic refresh before token expires
 const setupRefreshTimer = (token) => {
   try {
     if (!token) return;
-    
-    // Clear any existing timeout
+
     if (refreshTokenTimeoutId) {
       clearTimeout(refreshTokenTimeoutId);
     }
@@ -70,18 +64,16 @@ const setupRefreshTimer = (token) => {
     const tokenData = parseJwt(token);
     if (!tokenData || !tokenData.exp) return;
 
-    // Get time until expiration (in ms) and subtract buffer time (2 minutes)
     const expiresIn = (tokenData.exp * 1000) - Date.now() - 120000;
-    
-    // Only set timeout if token is not already expired
+
     if (expiresIn <= 0) {
-      console.log('Token already expired, refreshing now...');
+      console.log('Token already expired or near expiration, refreshing now...');
       refreshAccessToken();
       return;
     }
 
     console.log(`Setting up refresh timer for ${Math.round(expiresIn / 1000)} seconds from now`);
-    
+
     refreshTokenTimeoutId = setTimeout(() => {
       console.log('Token refresh timer triggered');
       refreshAccessToken();
@@ -91,12 +83,10 @@ const setupRefreshTimer = (token) => {
   }
 };
 
-// Function to refresh access token using the refresh token stored in cookies
 const refreshAccessToken = async () => {
   try {
     console.log('Attempting to refresh access token...');
-    
-    // Skip the interceptor for this call to avoid infinite loops
+
     const response = await axios.post(`${API_URL}/refresh-token`, {}, {
       withCredentials: true,
       headers: {
@@ -104,27 +94,31 @@ const refreshAccessToken = async () => {
       },
       skipAuthRefresh: true
     });
-    
+
     if (response.data && response.data.accessToken) {
       accessToken = response.data.accessToken;
       console.log('Access token refreshed successfully');
-      
-      // Set up the next refresh
+
       setupRefreshTimer(accessToken);
-      
+
       return accessToken;
     } else {
       console.warn('Refresh response did not contain accessToken:', response.data);
+      if (window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('auth:tokenRefreshFailed', { detail: { message: 'Refresh token response missing access token.' } }));
+      }
       return null;
     }
   } catch (error) {
     console.error('Refresh token failed:', error);
-    accessToken = null; // Clear invalid token
+    accessToken = null;
+    if (window.dispatchEvent) {
+      window.dispatchEvent(new CustomEvent('auth:tokenRefreshFailed', { detail: { message: error.response?.data?.detail || 'Failed to refresh session.' } }));
+    }
     throw error;
   }
 };
 
-// Initialize token from cookies when module loads
 const initializeTokenFromCookies = () => {
   const token = getCookie('jwt');
   if (token) {
@@ -133,13 +127,10 @@ const initializeTokenFromCookies = () => {
   }
 };
 
-// Call initialization
 initializeTokenFromCookies();
 
-// Attach JWT token from in-memory storage to each request
 apiClient.interceptors.request.use(
   config => {
-    // Skip adding token for refresh requests marked with skipAuthRefresh
     if (config.skipAuthRefresh) {
       return config;
     }
@@ -151,7 +142,6 @@ apiClient.interceptors.request.use(
       if (token) {
         accessToken = token;
         config.headers['Authorization'] = `Bearer ${token}`;
-        // Set up timer for future refresh
         setupRefreshTimer(token);
       }
     }
@@ -160,7 +150,6 @@ apiClient.interceptors.request.use(
   error => Promise.reject(error)
 );
 
-// Queue to manage token refresh requests to prevent multiple simultaneous refresh calls
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -175,26 +164,26 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-// Response interceptor to handle 401 errors and refresh the token automatically
 apiClient.interceptors.response.use(
   response => response,
   async error => {
     const originalRequest = error.config;
 
-    // Don't retry refresh token requests to avoid loops
-    if (originalRequest.url === '/refresh-token') {
+    if (originalRequest.url === '/refresh-token' || originalRequest.skipAuthRefresh) {
+      if (error.response?.status === 401) {
+        if (window.dispatchEvent) {
+          window.dispatchEvent(new CustomEvent('auth:tokenRefreshFailed', { detail: { message: error.response?.data?.detail || 'Session refresh failed unexpectedly.' } }));
+        }
+      }
       return Promise.reject(error);
     }
 
-    // Handle cases where there's no response object (network errors)
     if (!error.response) {
       return Promise.reject(error);
     }
 
-    // If token expired (401), retry the request with a new token
     if (error.response.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        // If a token refresh is in progress, queue the request
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
         })
@@ -207,32 +196,28 @@ apiClient.interceptors.response.use(
           });
       }
 
-      // Mark the request as retried
       originalRequest._retry = true;
       isRefreshing = true;
 
       try {
-        const newToken = await refreshAccessToken(); // Get a new token
-        
+        const newToken = await refreshAccessToken();
+
         if (!newToken) {
           throw new Error('Failed to get new token during refresh');
         }
-        
-        accessToken = newToken; // Update the in-memory access token
-        processQueue(null, newToken); // Resolve the queue with new token
 
-        // Retry the failed request with the new token
+        accessToken = newToken;
+        processQueue(null, newToken);
+
         originalRequest.headers['Authorization'] = 'Bearer ' + newToken;
         return apiClient(originalRequest);
       } catch (err) {
-        processQueue(err, null); // Reject the queue if token refresh fails
-        
-        // If refreshing fails, we might need to redirect to login
+        processQueue(err, null);
+
         if (window.dispatchEvent) {
-          // Dispatch custom event that AuthContext can listen for
-          window.dispatchEvent(new CustomEvent('auth:tokenRefreshFailed'));
+          window.dispatchEvent(new CustomEvent('auth:tokenRefreshFailed', { detail: { message: err.message || 'Authentication session ended.' } }));
         }
-        
+
         return Promise.reject(err);
       } finally {
         isRefreshing = false;
@@ -243,57 +228,49 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Auth Service with exported methods
 export const authService = {
   async register(userData) {
     try {
       const response = await apiClient.post('/register', userData);
-      // Backend returns user data, not tokens, so no need to set accessToken
-      return response.data; // Return user data (e.g., { Email, Id, Role })
+      return response.data;
     } catch (error) {
-      throw handleError(error);
+      throw handleError(error, 'Registration failed.');
     }
   },
 
   async login(credentials) {
     try {
       const response = await apiClient.post('/login', credentials);
-      
-      // Handle both explicit token in response and cookie-based tokens
+
       if (response.data && response.data.accessToken) {
         accessToken = response.data.accessToken;
         setupRefreshTimer(accessToken);
       } else {
-        // Try to get token from cookies
         const cookieToken = getCookie('jwt');
         if (cookieToken) {
           accessToken = cookieToken;
           setupRefreshTimer(cookieToken);
         }
       }
-      
+
       console.log('Login successful, tokens set up');
       return response.data;
     } catch (error) {
-      throw handleError(error);
+      throw handleError(error, 'Login failed. Please check your credentials.');
     }
   },
 
   async logout() {
     try {
-      // Clear token refresh timer
       if (refreshTokenTimeoutId) {
         clearTimeout(refreshTokenTimeoutId);
         refreshTokenTimeoutId = null;
       }
-      
-      // Clear in-memory token
       accessToken = null;
-      
-      // Call logout endpoint
       await apiClient.post('/logout');
     } catch (error) {
-      throw handleError(error);
+      console.error('Logout failed on backend:', error);
+      throw handleError(error, 'Logout failed.');
     }
   },
 
@@ -305,45 +282,45 @@ export const authService = {
       if (error.response?.status === 401 && retry) {
         console.log('Getting current user failed, trying refresh...');
         try {
-          const newToken = await refreshAccessToken(); // Refresh the token
+          const newToken = await refreshAccessToken();
           if (!newToken) {
-            console.error('Token refresh failed in getCurrentUser');
+            console.error('Token refresh failed in getCurrentUser - no new token obtained.');
             return null;
           }
-          
-          // Retry with new token
+
           const retryResponse = await apiClient.get('/user', {
-            headers: { 'Authorization': `Bearer ${newToken}` }
+            headers: { 'Authorization': `Bearer ${newToken}` },
+            skipAuthRefresh: true
           });
           return retryResponse.data;
         } catch (refreshError) {
-          console.error('Retry after refresh failed:', refreshError);
+          console.error('Retry after refresh failed in getCurrentUser:', refreshError);
           return null;
         }
       }
       if (error.response?.status === 401) {
         return null;
       }
-      throw handleError(error);
+      throw handleError(error, 'Failed to fetch current user data.');
     }
   },
-  
+
   async forceTokenRefresh() {
     try {
       return await refreshAccessToken();
     } catch (error) {
       console.error('Force refresh failed:', error);
-      throw error;
+      throw handleError(error, 'Forced token refresh failed.');
     }
   },
-  
+
   isAuthenticated() {
     if (accessToken) {
       try {
         const tokenData = parseJwt(accessToken);
-        // Check if token is valid and not expired
         return tokenData && tokenData.exp && (tokenData.exp * 1000 > Date.now());
       } catch (e) {
+        console.error('Error parsing token in isAuthenticated:', e);
         return false;
       }
     }
@@ -356,17 +333,62 @@ export const authService = {
       setupRefreshTimer(token);
     }
   },
+
+  // --- New methods for Forgot Password feature ---
+  async requestPasswordReset(email) {
+    try {
+      const response = await apiClient.post('/forgot-password', { email });
+      return response.data;
+    } catch (error) {
+      throw handleError(error, 'Failed to request password reset link. Please try again.');
+    }
+  },
+
+  async resetPassword(userId, token, newPassword, confirmNewPassword) {
+    try {
+      const response = await apiClient.post('/reset-password', { userId, token, newPassword, confirmNewPassword });
+      return response.data;
+    } catch (error) {
+      throw handleError(error, 'Failed to reset password. The link might be invalid or expired, or your new password does not meet requirements.');
+    }
+  }
+  // --- End new methods ---
 };
 
-// Error handler utility for cleaner code
-function handleError(error) {
+function handleError(error, defaultMessage = 'An unexpected error occurred.') {
   console.error('API Error:', error);
   if (error.response) {
-    return new Error(error.response.data?.message || error.response.statusText);
+    if (error.response.data && error.response.data.detail) {
+      return new Error(error.response.data.detail);
+    }
+    if (error.response.data && error.response.data.message) { // For your custom anonymous error objects
+      return new Error(error.response.data.message);
+    }
+    if (error.response.data && typeof error.response.data === 'string') {
+        return new Error(error.response.data);
+    }
+    if (error.response.statusText) {
+      return new Error(error.response.statusText);
+    }
+    // Handle validation errors returned as ModelState dictionary (common from ASP.NET Core)
+    if (error.response.data && typeof error.response.data === 'object') {
+      const errors = [];
+      for (const key in error.response.data) {
+        if (Array.isArray(error.response.data[key])) {
+          errors.push(...error.response.data[key]);
+        } else if (typeof error.response.data[key] === 'string') {
+          errors.push(error.response.data[key]);
+        }
+      }
+      if (errors.length > 0) {
+        return new Error(errors.join(' '));
+      }
+    }
+    return new Error(defaultMessage);
   } else if (error.request) {
-    return new Error('No response from server');
+    return new Error('No response from server. Please check your internet connection or try again later.');
   } else {
-    return new Error(error.message || 'API request failed');
+    return new Error(error.message || defaultMessage);
   }
 }
 

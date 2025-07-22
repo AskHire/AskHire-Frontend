@@ -1,29 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FiUsers, FiCalendar, FiBriefcase, FiFileText } from 'react-icons/fi';
+import { FiUsers, FiCalendar, FiBriefcase, FiBell } from 'react-icons/fi';
 import Calendar from '../../components/Calendar';
 import ManagerTopbar from '../../components/ManagerTopbar';
 import PieChart from '../../components/ManagerDb/PieChart';
 import InterviewLoadChart from '../../components/ManagerDb/BarChart';
 
 const ManagerDashboard = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState('Monthly');
   const [dashboardData, setDashboardData] = useState({});
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [jobsResponse, usersResponse, InterviewResponse] = await Promise.all([
+        const [jobsResponse, usersResponse, InterviewResponse, reminderResponse] = await Promise.all([
           axios.get('http://localhost:5190/api/manager-dashboard/total-jobs'),
           axios.get('http://localhost:5190/api/manager-dashboard/total-candidates'),
           axios.get('http://localhost:5190/api/manager-dashboard/total-interviews-today'),
+          axios.get('http://localhost:5190/api/manager-dashboard/total-reminders-today'),
         ]);
 
         setDashboardData(prev => ({
           ...prev,
           totalJobs: jobsResponse.data,
           totalUsers: usersResponse.data,
-          interviewsToday: InterviewResponse.data
+          interviewsToday: InterviewResponse.data,
+          remindersToday: reminderResponse.data
         }));
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -60,12 +61,13 @@ const ManagerDashboard = () => {
     },
     {
       id: 4,
-      title: 'Pending Reviews',
-      count: dashboardData.pendingReviews ?? '...',
-      icon: <FiFileText className="text-4xl" />,
+      title: 'Reminders Today',
+      count: dashboardData.remindersToday ?? '...',
+      icon: <FiBell className="text-4xl" />,
       bgColor: 'bg-pink-100',
       textColor: 'text-pink-700'
     }
+
   ];
 
   const Card = ({ children, className = "" }) => (
@@ -94,29 +96,29 @@ const ManagerDashboard = () => {
         {statsData.map(stat => <StatCard key={stat.id} stat={stat} />)}
       </div>
 
-      {/* Calendar & Pie Chart */}
+      {/* Pie Chart & Bar Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        <Card>
-          <h2 className="text-xl font-semibold mb-4">Calendar and Reminders</h2>
-          <p className="text-sm text-gray-500 mb-4">Click on a date to add a reminder</p>
-          <Calendar />
-        </Card>
-
         <Card>
           <PieChart />
         </Card>
+
+        <Card>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">Interview Overview</h2>
+              <p className="text-gray-500 text-sm">This Week</p>
+            </div>
+          </div>
+
+          <InterviewLoadChart />
+        </Card>
       </div>
 
-      {/* Interview Load Chart */}
+      {/* Calendar */}
       <Card className="mt-6">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-xl font-semibold">Interview Overview</h2>
-            <p className="text-gray-500 text-sm">This Month</p>
-          </div>
-        </div>
-
-        <InterviewLoadChart />
+        <h2 className="text-xl font-semibold mb-4">Calendar and Reminders</h2>
+        <p className="text-sm text-gray-500 mb-4">Click on a date to add a reminder</p>
+        <Calendar />
       </Card>
     </div>
   );

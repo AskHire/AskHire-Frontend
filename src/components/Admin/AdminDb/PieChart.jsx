@@ -7,46 +7,46 @@ import {
   Legend,
 } from "chart.js";
 
-// Register necessary Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const PieChart = () => {
-  // Sample data for the Pie chart
+export default function PieChart({ ageGroupData }) {
+  if (!ageGroupData) return <p className="p-4">Loading chart...</p>;
+
+  const labels = Object.keys(ageGroupData);
+  const dataValues = Object.values(ageGroupData);
+
   const data = {
-    labels: ["Active Users", "Inactive Users", "New Users", "Returning Users"],
+    labels: labels,
     datasets: [
       {
-        label: "User Distribution",
-        data: [55, 30, 15], 
-        backgroundColor: ["#4F46E5", "#EC4899", "#FACC15"], // Tailwind colors
-        hoverOffset: 4, // Slight separation on hover
+        label: "Users by Age Group",
+        data: dataValues,
+        backgroundColor: ["#4F46E5", "#EC4899", "#FACC15", "#10B981"],
+        hoverOffset: 4,
       },
     ],
   };
 
-  // Chart Options
   const options = {
     responsive: true,
-    maintainAspectRatio: false, // Ensures dynamic resizing
+    maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: "bottom", // Display legend at the bottom
+        position: "bottom",
         labels: {
-          boxWidth: 20, // Width of the colored box
-          padding: 10, // Padding between legend items
+          boxWidth: 20,
+          padding: 10,
         },
       },
     },
   };
 
   return (
-    <div className="flex flex-col w-full p-4 rounded-lg ">
-      <h2 className="mb-4 text-lg font-bold text-gray-700">New Candidates</h2>
+    <div className="flex flex-col w-full p-4 rounded-lg">
+      <h2 className="mb-4 text-lg font-bold text-gray-700">Users by Age Group</h2>
       <div className="w-full h-64 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
         <Pie data={data} options={options} />
       </div>
     </div>
   );
-};
-
-export default PieChart;
+}

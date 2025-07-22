@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, Search, Edit, Trash2, X } from 'lucide-react';
+import { Search, Edit, Trash2, X } from 'lucide-react';
 import ManagerTopbar from '../../components/ManagerTopbar';
+import DeleteModal from '../../components/DeleteModal';
+import SearchableDropdown from '../../components/SearchableDropdown';
 
 const ManageQuestions = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
   const [selectedJobId, setSelectedJobId] = useState(null);
   const [jobRoles, setJobRoles] = useState([]);
@@ -16,6 +17,8 @@ const ManageQuestions = () => {
   const [sortOption, setSortOption] = useState('Newest');
   const [showModal, setShowModal] = useState(false);
   const [updatedQuestion, setUpdatedQuestion] = useState({});
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const questionsPerPage = 10;
@@ -60,20 +63,32 @@ const ManageQuestions = () => {
     }
   }, [selectedJobId, allQuestions]);
 
-  const toggleDropdown = () => setIsOpen(!isOpen);
-  const selectRole = (role, jobId) => {
-    setSelectedRole(role);
-    setSelectedJobId(jobId);
-    setIsOpen(false);
+  const handleJobRoleSelect = (jobRole) => {
+    if (jobRole) {
+      setSelectedRole(jobRole.jobTitle);
+      setSelectedJobId(jobRole.jobId);
+    } else {
+      setSelectedRole('');
+      setSelectedJobId(null);
+    }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this question?')) return;
+  const handleDeleteClick = (id) => {
+    setQuestionToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
     try {
-      await fetch(`http://localhost:5190/api/Question/${id}`, { method: 'DELETE' });
-      setAllQuestions(prev => prev.filter(q => q.questionId !== id));
+      await fetch(`http://localhost:5190/api/Question/${questionToDelete}`, {
+        method: 'DELETE',
+      });
+      setAllQuestions(prev => prev.filter(q => q.questionId !== questionToDelete));
     } catch (err) {
       setError(err.message);
+    } finally {
+      setShowDeleteModal(false);
+      setQuestionToDelete(null);
     }
   };
 
@@ -166,38 +181,16 @@ const ManageQuestions = () => {
       {/* Job Role Selector */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-bold mb-4">Select Job Role</h2>
-        <div className="relative w-full">
-          <div className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer" onClick={toggleDropdown}>
-            <div className="flex items-center gap-2">
-              <Search size={20} className="text-gray-400" />
-              <span className="text-lg">
-                {loading ? 'Loading...' : selectedRole || 'Select Job Role'}
-              </span>
-            </div>
-            <ChevronDown className={`text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-          </div>
-          {isOpen && !loading && (
-            <div className="absolute w-full mt-1 bg-white rounded-lg shadow-lg border z-10">
-              {error ? (
-                <p className="px-4 py-2 text-red-500">{error}</p>
-              ) : jobRoles.length === 0 ? (
-                <p className="px-4 py-2">No job roles found</p>
-              ) : (
-                <ul className="py-1 max-h-60 overflow-y-auto">
-                  {jobRoles.map(role => (
-                    <li
-                      key={role.jobId}
-                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => selectRole(role.jobTitle, role.jobId)}
-                    >
-                      {role.jobTitle}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-        </div>
+        <SearchableDropdown
+          options={jobRoles}
+          value={selectedJobId}
+          onSelect={handleJobRoleSelect}
+          placeholder="Search and select job role..."
+          loading={loading}
+          error={error}
+          displayKey="jobTitle"
+          valueKey="jobId"
+        />
       </div>
 
       {/* Questions Table */}
@@ -209,7 +202,7 @@ const ManageQuestions = () => {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search"
+                  placeholder="Search questions..."
                   className="px-4 py-2 pl-10 bg-gray-100 rounded-lg"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
@@ -235,7 +228,9 @@ const ManageQuestions = () => {
             <div className="col-span-1 text-center">Delete</div>
           </div>
 
-          {currentQuestions.length > 0 ? (
+          {questionsLoading ? (
+            <div className="text-center py-8 text-gray-500">Loading questions...</div>
+          ) : currentQuestions.length > 0 ? (
             currentQuestions.map((question, index) => (
               <div
                 key={question.questionId}
@@ -246,12 +241,12 @@ const ManageQuestions = () => {
                 </div>
                 <div className="col-span-9 px-4 font-medium">{question.questionName}</div>
                 <div className="col-span-1 flex justify-center">
-                  <button className="p-2 bg-blue-100 text-blue-600 rounded-full" onClick={() => handleEdit(question)}>
+                  <button className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors" onClick={() => handleEdit(question)}>
                     <Edit size={16} />
                   </button>
                 </div>
                 <div className="col-span-1 flex justify-center">
-                  <button className="p-2 bg-red-100 text-red-600 rounded-full" onClick={() => handleDelete(question.questionId)}>
+                  <button className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors" onClick={() => handleDeleteClick(question.questionId)}>
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -259,7 +254,7 @@ const ManageQuestions = () => {
             ))
           ) : (
             <div className="text-center py-8 text-gray-500">
-              No questions found for this job role.
+              {searchQuery ? `No questions found matching "${searchQuery}"` : 'No questions found for this job role.'}
             </div>
           )}
 
@@ -269,10 +264,10 @@ const ManageQuestions = () => {
               {Array.from({ length: totalPages }, (_, idx) => (
                 <button
                   key={idx + 1}
-                  className={`px-4 py-2 rounded-lg border ${
+                  className={`px-4 py-2 rounded-lg border transition-colors ${
                     currentPage === idx + 1
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-blue-600 border-blue-600'
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-blue-600 border-blue-600 hover:bg-blue-50'
                   }`}
                   onClick={() => paginate(idx + 1)}
                 >
@@ -283,14 +278,14 @@ const ManageQuestions = () => {
           )}
 
           <div className="flex justify-center mt-8">
-            <button className="bg-blue-600 text-white py-3 px-6 rounded-full text-lg font-medium" onClick={handleAddNewQuestion}>
+            <button className="bg-blue-600 text-white py-3 px-6 rounded-full text-lg font-medium hover:bg-blue-700 transition-colors" onClick={handleAddNewQuestion}>
               + Add New Question
             </button>
           </div>
         </div>
       )}
 
-      {/* Modal for Add/Edit */}
+      {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-lg">
@@ -304,33 +299,42 @@ const ManageQuestions = () => {
             </div>
 
             <div className="space-y-4">
-              <input name="questionName" value={updatedQuestion.questionName} onChange={handleChange} placeholder="Question" className="w-full border px-4 py-2 rounded" />
-              <input name="option1" value={updatedQuestion.option1} onChange={handleChange} placeholder="Option 1" className="w-full border px-4 py-2 rounded" />
-              <input name="option2" value={updatedQuestion.option2} onChange={handleChange} placeholder="Option 2" className="w-full border px-4 py-2 rounded" />
-              <input name="option3" value={updatedQuestion.option3} onChange={handleChange} placeholder="Option 3" className="w-full border px-4 py-2 rounded" />
-              <input name="option4" value={updatedQuestion.option4} onChange={handleChange} placeholder="Option 4" className="w-full border px-4 py-2 rounded" />
+              <input name="questionName" value={updatedQuestion.questionName || ''} onChange={handleChange} placeholder="Question" className="w-full border px-4 py-2 rounded" />
+              <input name="option1" value={updatedQuestion.option1 || ''} onChange={handleChange} placeholder="Option 1" className="w-full border px-4 py-2 rounded" />
+              <input name="option2" value={updatedQuestion.option2 || ''} onChange={handleChange} placeholder="Option 2" className="w-full border px-4 py-2 rounded" />
+              <input name="option3" value={updatedQuestion.option3 || ''} onChange={handleChange} placeholder="Option 3" className="w-full border px-4 py-2 rounded" />
+              <input name="option4" value={updatedQuestion.option4 || ''} onChange={handleChange} placeholder="Option 4" className="w-full border px-4 py-2 rounded" />
 
               <select
                 name="answer"
-                value={updatedQuestion.answer}
+                value={updatedQuestion.answer || ''}
                 onChange={handleChange}
                 className="w-full border px-4 py-2 rounded"
               >
                 <option value="">Select Correct Answer</option>
                 {['option1', 'option2', 'option3', 'option4'].map((optKey, index) => (
-                  <option key={optKey} value={updatedQuestion[optKey]}>
-                    {`Option ${index + 1}`}
-                  </option>
+                  updatedQuestion[optKey] && (
+                    <option key={optKey} value={updatedQuestion[optKey]}>
+                      {`Option ${index + 1}: ${updatedQuestion[optKey]}`}
+                    </option>
+                  )
                 ))}
               </select>
 
-              <button onClick={handleSaveQuestion} className="bg-blue-600 text-white py-2 px-4 rounded w-full">
+              <button onClick={handleSaveQuestion} className="bg-blue-600 text-white py-2 px-4 rounded w-full hover:bg-blue-700 transition-colors">
                 Save
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 };

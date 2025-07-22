@@ -1,124 +1,189 @@
-import React, { useState, useRef, useEffect } from "react";
-import AdminHeader from "../../components/Admin/AdminHeader";
-import { BiTrash, BiChevronDown } from "react-icons/bi";
-import { IoIosSearch } from "react-icons/io";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { BiTrash } from "react-icons/bi";
+import Pagination from "../../components/Admin/Pagination";
+import DeleteModal from "../../components/DeleteModal"; 
 
 export default function ManageCandidate() {
   const [candidates, setCandidates] = useState([]);
-  const [sortOrder, setSortOrder] = useState("Newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const [sortOrder, setSortOrder] = useState(""); // e.g., "firstName:asc"
 
-  // Fetch candidates from the backend
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [candidateToDelete, setCandidateToDelete] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const itemsPerPage = 5;
+  const token = localStorage.getItem("accessToken");
+
   useEffect(() => {
-    const fetchCandidates = async () => {
-      try {
+    fetchCandidates(currentPage, searchQuery, sortOrder);
+  }, [currentPage, searchQuery, sortOrder]);
 
-        const response = await axios.get("http://localhost:5190/api/AdminUser"); // 🚫 No token
-        const allUsers = response.data;
-
-        const candidateOnly = allUsers.filter(user => user.role === "Candidate");
-        setCandidates(candidateOnly);
-
-      } catch (error) {
-        console.error("Error fetching candidates:", error);
-      }
-    };
-
-    fetchCandidates();
-  }, []);
-  
-
-  
-  // Handle candidate deletion
-  const handleDeleteCandidate = async (candidateId) => {
-    if (!window.confirm("Are you sure you want to delete this candidate?")) return;
-
+  const fetchCandidates = async (page, search, sort) => {
     try {
+      const params = new URLSearchParams({
+        Page: page,
+        PageSize: itemsPerPage,
+        RoleFilter: "Candidate",
+      });
 
-      await axios.delete(`http://localhost:5190/api/AdminUser/${candidateId}`); // 🚫 No token
+      if (search) params.append("SearchTerm", search);
+      if (sort) {
+        const [key, dir] = sort.split(":");
+        params.append("SortBy", key);
+        params.append("IsDescending", dir === "desc");
+      }
 
-      setCandidates((prevCandidates) => prevCandidates.filter(candidate => candidate.id !== candidateId));
-      alert("Candidate deleted successfully.");
+      const response = await axios.get(`http://localhost:5190/api/AdminUser?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setCandidates(response.data.data || []);
+      setTotalPages(response.data.totalPages || 1);
     } catch (error) {
-
-      console.error("Error deleting candidate:", error);
-
-      const errorMessage = error.response?.data?.title || error.response?.data?.message || error.message;
-      alert(`Failed to delete candidate: ${errorMessage}`);
+      console.error("Error fetching candidates:", error);
     }
   };
-  
 
-  // Sort candidates
-  const sortedCandidates = [...candidates].sort((a, b) =>
-    sortOrder === "Newest" ? new Date(b.createdAt) - new Date(a.createdAt) : new Date(a.createdAt) - new Date(b.createdAt)
-  );
+  // When delete icon clicked, open modal and set candidate to delete
+  const handleDeleteClick = (candidateId) => {
+    setCandidateToDelete(candidateId);
+    setDeleteModalOpen(true);
+  };
 
-  // Filter candidate based on search query
-  const filteredCandidates = sortedCandidates.filter((candidate) =>
-    candidate.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    candidate.lastName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Confirm delete from modal
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`http://localhost:5190/api/AdminUser/${candidateToDelete}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSuccessMessage("Candidate deleted successfully!");
+      fetchCandidates(currentPage, searchQuery, sortOrder);
+    } catch (error) {
+      console.error("Error deleting candidate:", error);
+      const msg = error.response?.data?.title || error.response?.data?.message || error.message;
+      alert(`Failed to delete candidate: ${msg}`);
+    } finally {
+      setDeleteModalOpen(false);
+      setCandidateToDelete(null);
+      setTimeout(() => setSuccessMessage(""), 3000); // Clear success message after 3 seconds
+    }
+  };
+
+  // Cancel modal
+  const cancelDelete = () => {
+    setDeleteModalOpen(false);
+    setCandidateToDelete(null);
+  };
 
   return (
     <div className="flex-1 p-6">
-      <AdminHeader />
-      <h1 className="mt-8 text-3xl font-bold">Candidate Management</h1>
-      <div className="mt-4">
-        <div className="flex items-center justify-end gap-3 mb-4">
-          <div className="relative">
-            <input type="text" placeholder="Search admins..." className="w-64 px-8 py-2 border rounded-xl"
-              value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-              <IoIosSearch className="absolute w-5 h-5 text-gray-900 transform -translate-y-1/2 left-3 top-1/2" 
-            />
-          </div>
+      <h1 className="mt-3 text-3xl font-bold">Candidate Management</h1>
 
-          {/* Sort Dropdown */}
-          <div className="relative" ref={dropdownRef}>
-            <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center px-3 py-2 bg-gray-200 border rounded-md">
-              Sort by: {sortOrder} <BiChevronDown className="ml-2" />
-            </button>
-            {dropdownOpen && (
-              <div className="absolute right-0 w-32 mt-2 bg-white border rounded-md shadow-md">
-                <button className="w-full px-3 py-2 text-left hover:bg-gray-100" onClick={() => { setSortOrder("Newest"); setDropdownOpen(false); }}>Newest</button>
-                <button className="w-full px-3 py-2 text-left hover:bg-gray-100" onClick={() => { setSortOrder("Oldest"); setDropdownOpen(false); }}>Oldest</button>
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Search and Sort Controls */}
+      <div className="flex flex-col gap-2 my-4 sm:flex-row sm:items-center sm:justify-between">
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="px-3 py-2 text-sm bg-gray-100 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200"
+        />
 
-        {/* Candidate List */}
-        <div className="p-1">
-          <div className="grid grid-cols-12 p-3 font-semibold">
-            <span className="col-span-1">#</span>
-            <span className="col-span-2">Profile</span>
-            <span className="col-span-3">Name</span>
-            <span className="col-span-5 text-right">Delete</span>
-          </div>
-
-          <ul className="space-y-2">
-            {filteredCandidates.map((candidate, index) => (
-              <div key={candidate.id} className="grid items-center grid-cols-12 p-2 bg-white rounded-md shadow-sm">
-                <span className="col-span-1">{index + 1}</span>
-                <div className="col-span-2">
-                    <img className="w-10 h-10 rounded-full" src={candidate.image || "https://via.placeholder.com/40"} alt={candidate.firstName} />
-                </div>
-
-                <span className="col-span-3">{candidate.firstName} {candidate.lastName}</span>
-                <div className="col-span-5 text-right">
-                  <button onClick={() => handleDeleteCandidate(candidate.id)} className="p-2 text-red-600 hover:text-red-800">
-                    <BiTrash className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </ul>
-        </div>
+        <select
+          value={sortOrder}
+          onChange={(e) => {
+            setSortOrder(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="px-3 py-2 text-sm text-gray-700 bg-gray-100 border rounded-md"
+        >
+          <option value="">Sort by</option>
+          <option value="firstName:asc">Name (A-Z)</option>
+          <option value="firstName:desc">Name (Z-A)</option>
+        </select>
       </div>
+
+      {/*  Toast-style floating success message */}
+      {successMessage && (
+        <div className="fixed z-50 px-4 py-2 text-blue-800 bg-blue-100 border border-blue-300 rounded-lg shadow-lg top-4 right-4 animate-slide-in-out">
+          <strong className="font-medium">Success!</strong> {successMessage}
+        </div>
+      )}
+
+      {/* Candidates Table */}
+      <div className="p-4 overflow-x-auto bg-white shadow-md rounded-xl min-w-[768px]">
+        <div className="grid grid-cols-12 px-4 py-3 text-sm font-semibold text-gray-600 border-b bg-gray-50 rounded-t-md">
+          <span className="col-span-1">#</span>
+          <span className="col-span-2">Profile</span>
+          <span className="col-span-5">Name</span>
+          <span className="col-span-4 text-right">Delete</span>
+        </div>
+
+        {candidates.length > 0 ? (
+          candidates.map((candidate, index) => (
+            <div
+              key={candidate.id}
+              className="grid grid-cols-12 px-4 py-3 text-sm bg-white border-b hover:bg-gray-50"
+            >
+              <span className="col-span-1">
+                {(currentPage - 1) * itemsPerPage + index + 1}
+              </span>
+
+              <div className="col-span-2">
+                <img
+                  className="w-10 h-10 rounded-full"
+                  src={
+                    candidate.profilePictureUrl
+                      ? `http://localhost:5190${candidate.profilePictureUrl}`
+                      : "https://via.placeholder.com/40"
+                  }
+                  alt={candidate.firstName}
+                />
+              </div>
+
+              <span className="col-span-5">
+                {candidate.firstName} {candidate.lastName}
+              </span>
+
+              <div className="col-span-4 text-right">
+                <button
+                  onClick={() => handleDeleteClick(candidate.id)}
+                  className="p-2 text-red-600 hover:text-red-800"
+                >
+                  <BiTrash className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="col-span-12 px-4 py-6 text-center text-gray-400">
+            No candidates found.
+          </div>
+        )}
+      </div>
+
+      {/* Pagination Controls */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPrev={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+        onNext={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+        onPageChange={(page) => setCurrentPage(page)}
+      />
+
+      {/* Delete Modal */}
+      <DeleteModal
+        isOpen={deleteModalOpen}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }
-

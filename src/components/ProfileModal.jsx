@@ -1,162 +1,199 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 
-export default function ProfileModal({ onClose }) {
-  const [user, setUser] = useState(null);
-  const [form, setForm] = useState({});
-  const [viewMode, setViewMode] = useState("view"); // view | edit | password
-  const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "" });
+export default function ProfileModal({ onClose, onAvatarChange }) {
+  const [profile, setProfile] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const avatarList = ["avatar1.png", "avatar2.png", "avatar3.png", "avatar4.png"];
 
-  useEffect(() => {
-    if (!userId) return;
-  
-    axios.get(`http://localhost:5190/api/Profile/get-profile/${userId}`)
-      .then(res => {
-        setUser(res.data);
-        setForm(res.data);
-      })
-      .catch(err => console.error("Failed to fetch user", err));
-  }, [userId]);
+  useEffect(() => 
+  {
+    axios
+      .get("http://localhost:5190/api/profile", { withCredentials: true })
+      .then((res) => setProfile(res.data))
+      .catch(console.error);
+  }, []);
 
-  const handleChange = (e) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const handleAvatarSelect = async (avatar) => {
+    try {
+      await axios.post(
+        "http://localhost:5190/api/profile/set-avatar",
+        `"${avatar}"`,
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        });
+      const newUrl = `/avatars/${avatar}`;
+      setProfile((prev) => ({
+      ...prev,
+      profilePictureUrl: newUrl,
+      }));
+
+      // Notify parent (e.g., AdminHeader)
+      onAvatarChange && onAvatarChange(newUrl);} 
+    catch (error) {
+      console.error("Avatar update failed", error);}
+    };
 
   const handleSave = async () => {
     try {
-      await axios.put("http://localhost:5190/api/Profile/update-profile", {
-        ...form,
-        userId: user.id
+      const dto = {
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        gender: profile.gender,
+        dob: profile.dob,
+        mobileNumber: profile.mobileNumber,
+        address: profile.address,
+      };
+
+      const response = await axios.put("http://localhost:5190/api/profile", dto, {
+        headers: { "Content-Type": "application/json" },
+        withCredentials: true,
       });
-      alert("Profile updated.");
-      setViewMode("view");
-    } catch (err) {
-      console.error(err);
-      alert("Update failed.");
+
+      console.log("Save response:", response);
+      setIsEditing(false);
+      alert("Profile updated successfully!");
+    } 
+    catch (error) {
+      console.error("Error updating profile", error);
+      alert("Failed to update profile.");
     }
   };
 
-  const handlePasswordChange = async () => {
-    const { currentPassword, newPassword } = passwords;
-
-    if (!currentPassword || newPassword.length < 6) {
-      alert("Please fill out all fields correctly.");
-      return;
-    }
-
-    try {
-      await axios.post("http://localhost:5190/api/Profile/change-password", {
-        userId: user.id,
-        currentPassword,
-        newPassword
-      });
-
-      alert("Password changed successfully.");
-      setPasswords({ currentPassword: "", newPassword: "" });
-      setViewMode("view");
-    } catch (err) {
-      console.error(err);
-      alert("Password change failed.");
-    }
-  };
+  if (!profile) return <div className="p-6">Loading...</div>;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="relative w-full max-w-3xl p-6 bg-white rounded-lg shadow-lg">
-        <h2 className="mb-4 text-2xl font-bold">My Profile</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="relative w-[90%] max-w-md max-h-[80vh] overflow-y-auto p-6 bg-white shadow-lg rounded-xl">
+        <button
+          onClick={onClose}
+          className="absolute text-2xl text-gray-500 top-2 right-4 hover:text-gray-700">
+        &times; </button>
 
-        {viewMode === "view" && user && (
-          <div className="space-y-2">
-            <ProfileRow label="First Name" value={user.firstName} />
-            <ProfileRow label="Last Name" value={user.lastName} />
-            <ProfileRow label="Mobile" value={user.mobileNumber} />
-            <ProfileRow label="Gender" value={user.gender} />
-            <ProfileRow label="DOB" value={user.dob?.substring(0, 10)} />
-            <ProfileRow label="NIC" value={user.nic} />
-            <ProfileRow label="Address" value={user.address} />
-            <ProfileRow label="Image URL" value={user.image} />
+        <h2 className="mb-4 text-xl font-bold text-center">Profile</h2>
+
+        <div className="mb-4 text-center">
+          <img
+            src={`http://localhost:5190${profile.profilePictureUrl || "/avatars/avatar1.png"}`}
+            alt="Profile"
+            className="w-24 h-24 mx-auto border rounded-full"
+          />
+          <p className="mt-2 text-gray-600">{profile.role}</p>
+          <p className="text-gray-600">{profile.email}</p>
+        </div>
+
+        <div className="space-y-3 text-sm text-gray-700">
+          <div>
+            <label>First Name:</label>
+            <input
+              type="text"
+              className="w-full p-1 border rounded"
+              value={profile.firstName || ""}
+              disabled={!isEditing}
+              onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
+            />
           </div>
-        )}
-
-        {viewMode === "edit" && (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Input name="firstName" label="First Name" value={form.firstName} onChange={handleChange} />
-            <Input name="lastName" label="Last Name" value={form.lastName} onChange={handleChange} />
-            <Input name="mobileNumber" label="Mobile" value={form.mobileNumber} onChange={handleChange} />
-            <Input name="gender" label="Gender" value={form.gender} onChange={handleChange} />
-            <Input name="dob" label="DOB" type="date" value={form.dob?.substring(0, 10)} onChange={handleChange} />
-            <Input name="nic" label="NIC" value={form.nic} onChange={handleChange} />
-            <Input name="address" label="Address" value={form.address} onChange={handleChange} />
-            <Input name="image" label="Image URL" value={form.image || ""} onChange={handleChange} />
+          <div>
+            <label>Last Name:</label>
+            <input
+              type="text"
+              className="w-full p-1 border rounded"
+              value={profile.lastName || ""}
+              disabled={!isEditing}
+              onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
+            />
           </div>
-        )}
-
-        {viewMode === "password" && (
-          <div className="max-w-md space-y-4">
-            <div>
-              <label className="block mb-1 text-sm">Current Password</label>
-              <input
-                type="password"
-                value={passwords.currentPassword}
-                onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })}
-                className="w-full px-3 py-2 border rounded"
-              />
-            </div>
-            <div>
-              <label className="block mb-1 text-sm">New Password</label>
-              <input
-                type="password"
-                value={passwords.newPassword}
-                onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
-                className="w-full px-3 py-2 border rounded"
-              />
-            </div>
+          <div>
+            <label>Gender:</label>
+            <select
+              className="w-full p-1 border rounded"
+              value={profile.gender || ""}
+              disabled={!isEditing}
+              onChange={(e) => setProfile({ ...profile, gender: e.target.value })}
+            >
+              <option value="">Select</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
-        )}
+          <div>
+            <label>DOB:</label>
+            <input
+              type="date"
+              className="w-full p-1 border rounded"
+              value={profile.dob || ""}
+              disabled={!isEditing}
+              onChange={(e) => setProfile({ ...profile, dob: e.target.value })}
+            />
+          </div>
+          <div>
+            <label>Mobile Number:</label>
+            <input
+              type="text"
+              className="w-full p-1 border rounded"
+              value={profile.mobileNumber || ""}
+              disabled={!isEditing}
+              onChange={(e) => setProfile({ ...profile, mobileNumber: e.target.value })}
+            />
+          </div>
+          <div>
+            <label>Address:</label>
+            <textarea
+              className="w-full p-1 border rounded"
+              value={profile.address || ""}
+              disabled={!isEditing}
+              onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+            ></textarea>
+          </div>
+        </div>
 
-        <div className="flex justify-between mt-6">
-          <button onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">Close</button>
+        {/* Avatar selection */}
+        <h3 className="mt-4 mb-2 font-semibold text-center text-md">Choose Avatar</h3>
+        <div className="flex justify-center gap-4">
+          {avatarList.map((avatar) => (
+            <img
+              key={avatar}
+              src={`http://localhost:5190/avatars/${avatar}`}
+              alt={avatar}
+              className={`w-12 h-12 rounded-full cursor-pointer border-2 ${
+                profile.profilePictureUrl?.includes(avatar)
+                  ? "border-blue-500"
+                  : "border-transparent"
+              } hover:border-blue-300`}
+              onClick={() => handleAvatarSelect(avatar)}
+            />
+          ))}
+        </div>
 
-          {viewMode === "view" && (
-            <div className="space-x-2">
-              <button onClick={() => setViewMode("edit")} className="px-4 py-2 text-white bg-blue-600 rounded">Edit</button>
-              <button onClick={() => setViewMode("password")} className="px-4 py-2 text-white bg-green-600 rounded">Change Password</button>
-            </div>
-          )}
-
-          {viewMode === "edit" && (
-            <button onClick={handleSave} className="px-4 py-2 text-white bg-blue-600 rounded">Save Changes</button>
-          )}
-
-          {viewMode === "password" && (
-            <button onClick={handlePasswordChange} className="px-4 py-2 text-white bg-green-600 rounded">Save Password</button>
+        {/* Buttons */}
+        <div className="flex justify-between mt-4">
+          {!isEditing ? (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
+            >
+              Edit Profile
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 text-white bg-green-500 rounded hover:bg-green-600"
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="px-4 py-2 text-gray-800 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </>
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-function Input({ label, name, value, onChange, type = "text" }) {
-  return (
-    <div>
-      <label className="block mb-1 text-sm font-medium">{label}</label>
-      <input
-        type={type}
-        name={name}
-        value={value || ""}
-        onChange={onChange}
-        className="w-full px-3 py-2 border rounded"
-      />
-    </div>
-  );
-}
-
-function ProfileRow({ label, value }) {
-  return (
-    <div>
-      <p className="text-sm font-semibold">{label}</p>
-      <p className="mb-2 text-gray-700">{value || "-"}</p>
     </div>
   );
 }
