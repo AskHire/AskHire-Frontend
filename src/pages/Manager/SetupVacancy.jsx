@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import ManagerTopbar from '../../components/ManagerTopbar';
 import SearchableDropdown from '../../components/SearchableDropdown';
+import SuccessToast from '../../components/SuccessToast';
 
 const SetupVacancy = () => {
   const [selectedRole, setSelectedRole] = useState('');
@@ -12,6 +13,8 @@ const SetupVacancy = () => {
   const [jobSearchQuery, setJobSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [recentJobRoles, setRecentJobRoles] = useState([]);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [submissionError, setSubmissionError] = useState("");
 
   const [formData, setFormData] = useState({
     VacancyName: "",
@@ -82,7 +85,13 @@ const SetupVacancy = () => {
       const response = await axios.post("http://localhost:5190/api/Vacancy", dataToSubmit, {
         headers: { "Content-Type": "application/json" }
       });
-      alert("Vacancy created successfully!");
+      
+      // Clear any previous submission errors
+      setSubmissionError("");
+      
+      // Show success toast
+      setSuccessMessage("Vacancy added successfully!");
+      
       console.log(response.data);
 
       setFormData({
@@ -100,8 +109,8 @@ const SetupVacancy = () => {
         duration: ""
       });
     } catch (error) {
-      alert("Error creating vacancy: " + (error.response?.data?.message || error.message));
       console.error(error);
+      setSubmissionError("Error creating vacancy: " + (error.response?.data?.message || error.message));
     }
   };
 
@@ -122,12 +131,23 @@ const SetupVacancy = () => {
     });
   };
 
+  const handleCloseSuccessToast = () => {
+    setSuccessMessage("");
+  };
+
   return (
     <div className="flex-1 pt-1 pb-4 pr-6 pl-6">
       <div className="pb-4">
         <ManagerTopbar />
       </div>
       <h1 className="text-3xl font-bold mb-6">Setup Vacancy</h1>
+
+      {/* Success Toast */}
+      <SuccessToast
+        message={successMessage}
+        onClose={handleCloseSuccessToast}
+        duration={3000}
+      />
 
       {/* Job Role Selector */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
@@ -157,6 +177,13 @@ const SetupVacancy = () => {
         <div className="bg-white p-6 rounded-lg shadow-md border border-blue-200">
           <form onSubmit={handleSubmit} className="space-y-4">
             <h2 className="text-xl font-bold mb-4">{selectedRole}</h2>
+
+            {/* Submission Error */}
+            {submissionError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+                {submissionError}
+              </div>
+            )}
 
             <div>
               <label className="block text-gray-700 font-medium mb-2">Vacancy Name</label>

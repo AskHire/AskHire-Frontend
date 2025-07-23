@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import ManagerTopbar from '../../components/ManagerTopbar';
 import SearchableDropdown from '../../components/SearchableDropdown';
+import SuccessToast from '../../components/SuccessToast';
 
 const CreateQuestions = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,6 +15,7 @@ const CreateQuestions = () => {
   const [submissionError, setSubmissionError] = useState("");
   const [searchQuery, setSearchQuery] = useState('');
   const [recentJobRoles, setRecentJobRoles] = useState([]);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const [options, setOptions] = useState([
     { id: 1, text: "" },
@@ -106,7 +108,12 @@ const CreateQuestions = () => {
 
     try {
       const response = await axios.post("http://localhost:5190/api/Question", dataToSubmit);
-      alert("Question added successfully!");
+      
+      // Clear any previous submission errors
+      setSubmissionError("");
+      
+      // Show success toast
+      setSuccessMessage("Question added successfully!");
 
       // Reset form
       setFormData({
@@ -132,6 +139,10 @@ const CreateQuestions = () => {
     }
   };
 
+  const handleCloseSuccessToast = () => {
+    setSuccessMessage("");
+  };
+
   const getAnswerLabel = (optionFormat) => {
     if (!optionFormat) return '';
     const num = optionFormat.replace("Option", "");
@@ -146,11 +157,18 @@ const CreateQuestions = () => {
 
       <h1 className="text-3xl font-bold mb-6">Create Questions</h1>
 
+      {/* Success Toast */}
+      <SuccessToast
+        message={successMessage}
+        onClose={handleCloseSuccessToast}
+        duration={3000}
+      />
+
       {/* Job Role Selector */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-bold mb-4">Select Job Role</h2>
 
-{loading ? (
+        {loading ? (
           <div className="p-3 border rounded-lg bg-gray-50 text-gray-500">
             Loading job roles...
           </div>
